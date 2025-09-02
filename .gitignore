@@ -1,0 +1,332 @@
+# .gitignore - Sistema Consultorio Jurídico UCMC
+# Archivo principal para ignorar archivos sensibles y temporales
+
+# ============================================================================
+# ARCHIVOS SENSIBLES Y DE CONFIGURACIÓN
+# ============================================================================
+
+# Variables de entorno (CRÍTICO - nunca subir)
+CLAUDE.md
+.claude
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+*.env
+
+# Claves SSH y certificados
+*.pem
+*.key
+*.crt
+*.csr
+id_rsa*
+id_ed25519*
+
+# Archivos de configuración con credenciales
+config.ini
+config.yaml
+secrets.json
+
+# ============================================================================
+# ARCHIVOS DE BASE DE DATOS
+# ============================================================================
+
+# Base de datos SQLite (EXCEPCIÓN: mantener app_derecho.db principal)
+*.db
+!app_derecho.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Backups de base de datos
+*.backup
+*.bak
+*.sql.gz
+database_backup_*
+backup_*
+
+# ============================================================================
+# ARCHIVOS DE LOGS
+# ============================================================================
+
+# Logs del sistema
+*.log
+logs/
+server.log
+server.pid
+access.log
+error.log
+debug.log
+
+# ============================================================================
+# ARCHIVOS TEMPORALES DE SISTEMA
+# ============================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Windows
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.nfs*
+
+# ============================================================================
+# EDITORES DE CÓDIGO Y IDEs
+# ============================================================================
+
+# Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+*.code-workspace
+
+# JetBrains (PyCharm, WebStorm, etc.)
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*.tmp
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# ============================================================================
+# PYTHON (BACKEND)
+# ============================================================================
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv/
+.env/
+env.bak/
+venv.bak/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# ============================================================================
+# NODE.JS (FRONTEND)
+# ============================================================================
+
+# Dependencias
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+dist/
+build/
+out/
+
+# Logs de npm/yarn
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Cache
+.npm
+.eslintcache
+.parcel-cache/
+.cache/
+.next/
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.prod.yml
+docker-compose.dev.yml
+
+# ============================================================================
+# ARCHIVOS DE UPLOADS Y MEDIA
+# ============================================================================
+
+# Archivos subidos por usuarios (mantener directorio, ignorar contenido)
+uploads/*
+!uploads/.gitkeep
+media/
+static_collected/
+user_uploads/
+
+# Documentos temporales
+temp/
+tmp/
+*.tmp
+*.temp
+
+# PDFs generados
+generated_pdfs/
+reports/
+
+# ============================================================================
+# ARCHIVOS DE TESTING
+# ============================================================================
+
+# Screenshots de tests
+screenshots/
+test-results/
+playwright-report/
+test-artifacts/
+
+# ============================================================================
+# ARCHIVOS DE RESPALDO Y VERSIONING
+# ============================================================================
+
+# Respaldos
+*.backup
+*.old
+*.orig
+*_backup
+*_old
+
+# Archivos de patch
+*.patch
+*.diff
+*.rej
+
+# ============================================================================
+# SSL Y CERTIFICADOS
+# ============================================================================
+
+# Certificados SSL
+ssl/
+certificates/
+*.pem
+*.crt
+*.key
+*.p12
+*.pfx
+
+# ============================================================================
+# HERRAMIENTAS DE BUILD Y CI/CD
+# ============================================================================
+
+# Webpack
+.webpack/
+
+# Vite
+vite.config.*.timestamp-*
+
+# ESBuild
+.esbuild/
+
+# ============================================================================
+# DOCUMENTACIÓN GENERADA
+# ============================================================================
+
+# Sphinx documentation
+docs/_build/
+
+# mkdocs documentation
+/site
+
+# ============================================================================
+# ARCHIVOS ESPECÍFICOS DEL PROYECTO
+# ============================================================================
+
+# Archivos de test específicos del proyecto
+test_*.html
+debug_*.html
+test_search_logic.js
+
+# Archivos de migración temporal
+migrate_*.py
+reset_*.py
+create_test_*.py
+
+# Scripts de desarrollo temporal
+temp_*.py
+debug_*.py
+fix_*.py
+test_*.py
+
+# ============================================================================
+# NOTAS IMPORTANTES
+# ============================================================================
+
+# NUNCA ELIMINAR:
+# - README.md files
+# - requirements.txt
+# - package.json
+# - docker-compose.yml base
+# - Configuraciones de proyecto esenciales
+
+# SIEMPRE VERIFICAR ANTES DE COMMIT:
+# - No hay credenciales en el código
+# - Variables de entorno en archivos .env (no en código)
+# - Base de datos no se sube al repositorio

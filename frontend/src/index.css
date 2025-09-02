@@ -1,0 +1,445 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Variables CSS para temas */
+  :root {
+    /* Tema Claro */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --bg-quaternary: #f1f3f4;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #adb5bd;
+    --text-inverse: #ffffff;
+    --border-color: #dee2e6;
+    --border-light: #f0f0f0;
+    --shadow: rgba(0,0,0,0.1);
+    --shadow-hover: rgba(0,0,0,0.15);
+    --shadow-dark: rgba(0,0,0,0.25);
+    --accent-blue: #3b82f6;
+    --accent-green: #10b981;
+    --accent-purple: #8b5cf6;
+    --accent-orange: #f59e0b;
+    --accent-red: #ef4444;
+  }
+
+  [data-theme="dark"] {
+    /* Tema Oscuro */
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #0f0f0f;
+    --bg-tertiary: #2a2a2a;
+    --bg-quaternary: #3a3a3a;
+    --text-primary: #f5f5f5;
+    --text-secondary: #d0d0d0;
+    --text-muted: #9ca3af;
+    --text-inverse: #000000;
+    --border-color: #374151;
+    --border-light: #2d3748;
+    --shadow: rgba(0,0,0,0.6);
+    --shadow-hover: rgba(0,0,0,0.8);
+    --shadow-dark: rgba(0,0,0,0.9);
+    --accent-blue: #4f46e5;
+    --accent-green: #059669;
+    --accent-purple: #7c3aed;
+    --accent-orange: #d97706;
+    --accent-red: #dc2626;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  body {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    @apply antialiased;
+    margin: 0;
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Aplicar variables a elementos comunes */
+  .bg-theme-primary {
+    background-color: var(--bg-primary);
+  }
+
+  .bg-theme-secondary {
+    background-color: var(--bg-secondary);
+  }
+
+  .bg-theme-tertiary {
+    background-color: var(--bg-tertiary);
+  }
+
+  .bg-theme-quaternary {
+    background-color: var(--bg-quaternary);
+  }
+
+  /* Tema claro mantiene colores originales */
+  :root .bg-theme-secondary {
+    background-color: #f8f9fa;
+  }
+
+  :root .bg-theme-tertiary {
+    background-color: #f1f3f4;
+  }
+
+  /* Solo aplicar variables oscuras en tema oscuro */
+  [data-theme="dark"] .bg-theme-secondary {
+    background-color: var(--bg-secondary);
+  }
+
+  [data-theme="dark"] .bg-theme-tertiary {
+    background-color: var(--bg-tertiary);
+  }
+
+  .text-theme-primary {
+    color: var(--text-primary);
+  }
+
+  .text-theme-secondary {
+    color: var(--text-secondary);
+  }
+
+  .text-theme-muted {
+    color: var(--text-muted);
+  }
+
+  .text-theme-inverse {
+    color: var(--text-inverse);
+  }
+
+  /* Tema claro mantiene colores originales */
+  :root .text-theme-primary {
+    color: #111827;
+  }
+
+  :root .text-theme-secondary {
+    color: #6b7280;
+  }
+
+  :root .text-theme-muted {
+    color: #9ca3af;
+  }
+
+  /* Solo aplicar variables oscuras en tema oscuro */
+  [data-theme="dark"] .text-theme-primary {
+    color: var(--text-primary);
+  }
+
+  [data-theme="dark"] .text-theme-secondary {
+    color: var(--text-secondary);
+  }
+
+  [data-theme="dark"] .text-theme-muted {
+    color: var(--text-muted);
+  }
+
+  .border-theme {
+    border-color: var(--border-color);
+  }
+
+  .border-theme-light {
+    border-color: var(--border-light);
+  }
+
+  .shadow-theme {
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+
+  .shadow-theme-hover:hover {
+    box-shadow: 0 4px 12px var(--shadow-hover);
+  }
+
+  .shadow-theme-dark {
+    box-shadow: 0 8px 25px var(--shadow-dark);
+  }
+
+  /* Cards con tema */
+  .card-theme {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+  }
+
+  .card-theme:hover {
+    box-shadow: 0 4px 12px var(--shadow-hover);
+  }
+
+  /* Cards específicas para tema claro (mantener blanco) */
+  :root .card-theme {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+  }
+
+  [data-theme="dark"] .card-theme {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+  }
+
+  /* Inputs con tema */
+  .input-theme {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+  }
+
+  .input-theme:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Botones con tema */
+  .btn-theme-primary {
+    background-color: var(--accent-blue);
+    color: var(--text-inverse);
+    border: 1px solid var(--accent-blue);
+    transition: all 0.3s ease;
+  }
+
+  .btn-theme-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-theme-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+  }
+
+  .btn-theme-secondary:hover {
+    background-color: var(--bg-quaternary);
+  }
+}
+
+@layer components {
+  /* Animaciones personalizadas */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+  }
+  
+  @keyframes fade-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes slide-up {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes bounce-soft {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  
+  @keyframes float-slow {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    33% { transform: translate3d(8px, -8px, 0) rotate(0.5deg); }
+    66% { transform: translate3d(-5px, 5px, 0) rotate(-0.5deg); }
+  }
+  
+  @keyframes float-reverse {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    50% { transform: translate3d(-6px, -4px, 0) rotate(-0.3deg); }
+  }
+  
+  @keyframes float-fast {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    25% { transform: translate3d(3px, -3px, 0) scale(1.01); }
+    75% { transform: translate3d(-4px, 2px, 0) scale(0.99); }
+  }
+  
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out;
+  }
+  
+  .animate-bounce-soft {
+    animation: bounce-soft 3s ease-in-out infinite;
+  }
+  
+  .animate-float-slow {
+    animation: float-slow 30s ease-in-out infinite;
+  }
+  
+  .animate-float-reverse {
+    animation: float-reverse 25s ease-in-out infinite reverse;
+  }
+  
+  .animate-float-fast {
+    animation: float-fast 20s ease-in-out infinite;
+  }
+
+
+  /* Pulse muy lento y sutil para el escudo */
+  @keyframes pulse-very-slow {
+    0%, 100% { 
+      opacity: 0.01; 
+    }
+    50% { 
+      opacity: 0.03; 
+    }
+  }
+
+  .animate-pulse-very-slow {
+    animation: pulse-very-slow 12s ease-in-out infinite;
+  }
+
+  /* Efectos ultra sutiles para el fondo */
+  @keyframes pulse-ultra-slow {
+    0%, 100% { 
+      opacity: 0.02; 
+      transform: scale(1);
+    }
+    50% { 
+      opacity: 0.06; 
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes float-ultra-slow {
+    0%, 100% { 
+      opacity: 0.03; 
+      transform: translateY(0px);
+    }
+    50% { 
+      opacity: 0.08; 
+      transform: translateY(-5px);
+    }
+  }
+
+  .animate-pulse-ultra-slow {
+    animation: pulse-ultra-slow 20s ease-in-out infinite;
+  }
+
+  .animate-float-ultra-slow {
+    animation: float-ultra-slow 25s ease-in-out infinite;
+  }
+
+  /* Animaciones para intercambio de formularios */
+  @keyframes slide-out-left {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-100%); opacity: 0; }
+  }
+
+  @keyframes slide-in-right {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slide-out-right {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+  }
+
+  @keyframes slide-in-left {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+
+  .animate-slide-out-left {
+    animation: slide-out-left 0.5s ease-in-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.5s ease-in-out forwards;
+  }
+
+  .animate-slide-out-right {
+    animation: slide-out-right 0.5s ease-in-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.5s ease-in-out forwards;
+  }
+
+  /* Animación simple para transición solo de registro a login */
+  @keyframes fadeSlideOut {
+    0% { 
+      opacity: 1; 
+      transform: translateX(0);
+    }
+    100% { 
+      opacity: 0; 
+      transform: translateX(-30px);
+    }
+  }
+
+  @keyframes fadeSlideIn {
+    0% { 
+      opacity: 0; 
+      transform: translateX(30px);
+    }
+    100% { 
+      opacity: 1; 
+      transform: translateX(0);
+    }
+  }
+
+  .animate-fade-slide-out {
+    animation: fadeSlideOut 0.4s ease-in-out forwards;
+  }
+
+  .animate-fade-slide-in {
+    animation: fadeSlideIn 0.4s ease-in-out forwards;
+  }
+
+
+  /* Botones corporativos */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-university-blue hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200;
+  }
+  
+  .btn-gold {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-university-gold hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200;
+  }
+  
+  /* Cards corporativas */
+  .card-corporate {
+    @apply bg-white rounded-lg shadow-corporate border border-gray-200 overflow-hidden;
+  }
+  
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-slate-100;
+  }
+  
+  .card-body {
+    @apply px-6 py-4;
+  }
+  
+  /* Formularios */
+  .form-input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+  }
+  
+  .form-error {
+    @apply mt-1 text-sm text-red-600;
+  }
+}
