@@ -442,4 +442,58 @@
   .form-error {
     @apply mt-1 text-sm text-red-600;
   }
+
+  /* Utilidades adicionales para MisControles */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Efectos hover mejorados para cards */
+  .card-hover-effect {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover-effect:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  [data-theme="dark"] .card-hover-effect:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Estados de badge mejorados */
+  .badge-pendiente {
+    @apply bg-orange-100 text-orange-800 border border-orange-200;
+  }
+
+  [data-theme="dark"] .badge-pendiente {
+    @apply bg-orange-900/30 text-orange-400 border border-orange-500/30;
+  }
+
+  .badge-completo {
+    @apply bg-blue-100 text-blue-800 border border-blue-200;
+  }
+
+  [data-theme="dark"] .badge-completo {
+    @apply bg-blue-900/30 text-blue-400 border border-blue-500/30;
+  }
+
+  .badge-finalizado {
+    @apply bg-green-100 text-green-800 border border-green-200;
+  }
+
+  [data-theme="dark"] .badge-finalizado {
+    @apply bg-green-900/30 text-green-400 border border-green-500/30;
+  }
 }

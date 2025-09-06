@@ -21,7 +21,8 @@ const ControlOperativoEstudiante = () => {
   const [editingId, setEditingId] = useState(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [infoModalData, setInfoModalData] = useState({})
-  const inicialNombreEstudiante = (user?.nombre && user?.apellidos) ? `${user.nombre} ${user.apellidos}` : ''
+  const [profesores, setProfesores] = useState([])
+  const inicialNombreEstudiante = (user?.nombres && user?.apellidos) ? `${user.nombres} ${user.apellidos}` : ''
 
   const [formData, setFormData] = useState({
     ciudad: 'Bogotá D.C',
@@ -53,16 +54,28 @@ const ControlOperativoEstudiante = () => {
     profesion_oficio: '',
     descripcion_caso: '',
     concepto_estudiante: '',
-    concepto_asesor: '',
   })
 
   useEffect(() => {
     cargarControles()
+    cargarProfesores()
   }, [])
 
+  const cargarProfesores = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get('http://localhost:8000/api/profesores', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setProfesores(response.data)
+    } catch (error) {
+      console.error('Error cargando profesores:', error)
+    }
+  }
+
   useEffect(() => {
-    if (user?.nombre && user?.apellidos) {
-      const nombreCompleto = `${user.nombre} ${user.apellidos}`
+    if (user?.nombres && user?.apellidos) {
+      const nombreCompleto = `${user.nombres} ${user.apellidos}`
       setFormData(prev => ({
         ...prev,
         nombre_estudiante: nombreCompleto
@@ -183,11 +196,55 @@ const ControlOperativoEstudiante = () => {
     return anos
   })()
 
+  // Función para obtener el estado dinámico del control
+  const getEstadoDinamico = (control) => {
+    // Si tiene estado_resultado, mostrar el resultado del coordinador
+    if (control.estado_resultado) {
+      const estadosResultado = {
+        'asesoria_consulta': 'Asesoría/Consulta',
+        'auto_reparto': 'Auto Reparto', 
+        'reparto': 'Reparto',
+        'solicitud_conciliacion': 'Solicitud de Conciliación'
+      }
+      return {
+        text: estadosResultado[control.estado_resultado] || control.estado_resultado,
+        color: 'bg-blue-100 text-blue-800',
+        darkColor: 'bg-blue-900/30 text-blue-300'
+      }
+    }
+
+    // Si el estado_flujo es 'completo', el profesor ya completó su parte
+    if (control.estado_flujo === 'completo') {
+      return {
+        text: 'Completo - Esperando coordinador',
+        color: 'bg-green-100 text-green-800', 
+        darkColor: 'bg-green-900/30 text-green-300'
+      }
+    }
+
+    // Si el estado_flujo es 'pendiente_profesor', esperando que el profesor complete
+    if (control.estado_flujo === 'pendiente_profesor') {
+      return {
+        text: 'Pendiente - Esperando profesor',
+        color: 'bg-yellow-100 text-yellow-800',
+        darkColor: 'bg-yellow-900/30 text-yellow-300'
+      }
+    }
+
+    // Estado por defecto
+    return {
+      text: control.estado_flujo || 'Sin estado',
+      color: 'bg-gray-100 text-gray-800',
+      darkColor: 'bg-gray-900/30 text-gray-300'
+    }
+  }
+
   const cargarControles = async (page = 1) => {
     try {
       setLoading(true)
-      // Cargar todos los controles para permitir filtrado completo
+      // Cargar controles del estudiante actual - el backend filtra automáticamente por created_by_id
       const response = await axios.get('/api/control-operativo/list')
+      // Backend devuelve directamente el array de controles del estudiante
       setControles(response.data || [])
     } catch (error) {
       console.error('Error cargando controles:', error)
@@ -260,39 +317,47 @@ const ControlOperativoEstudiante = () => {
       
       const dataToSend = {
         ...formData,
-        fecha_dia: formData.fecha_dia ? parseInt(formData.fecha_dia) : null,
-        fecha_mes: formData.fecha_mes ? parseInt(formData.fecha_mes) : null,
-        fecha_ano: formData.fecha_ano ? parseInt(formData.fecha_ano) : new Date().getFullYear(),
-        fecha_nacimiento_dia: formData.fecha_nacimiento_dia ? parseInt(formData.fecha_nacimiento_dia) : null,
-        fecha_nacimiento_mes: formData.fecha_nacimiento_mes ? parseInt(formData.fecha_nacimiento_mes) : null,
-        fecha_nacimiento_ano: formData.fecha_nacimiento_ano ? parseInt(formData.fecha_nacimiento_ano) : null,
-        edad: formData.edad ? parseInt(formData.edad) : null,
-        estrato: formData.estrato ? parseInt(formData.estrato) : null
+        // Campos obligatorios garantizados
+        ciudad: formData.ciudad || 'Bogotá D.C',
+        nombre_estudiante: formData.nombre_estudiante || user?.nombres + ' ' + user?.apellidos || 'Estudiante',
+        nombre_consultante: formData.nombre_consultante || 'Consultante',
+        area_consulta: formData.area_consulta || 'General',
+        descripcion_caso: formData.descripcion_caso || 'Caso pendiente de descripción',
+        concepto_estudiante: formData.concepto_estudiante || 'Análisis pendiente',
+        // Fechas requeridas
+        fecha_dia: parseInt(formData.fecha_dia) || new Date().getDate(),
+        fecha_mes: parseInt(formData.fecha_mes) || (new Date().getMonth() + 1),
+        fecha_ano: parseInt(formData.fecha_ano) || new Date().getFullYear(),
+        // Campos opcionales con valores por defecto seguros
+        fecha_nacimiento_dia: formData.fecha_nacimiento_dia ? parseInt(formData.fecha_nacimiento_dia) : 1,
+        fecha_nacimiento_mes: formData.fecha_nacimiento_mes ? parseInt(formData.fecha_nacimiento_mes) : 1,
+        fecha_nacimiento_ano: formData.fecha_nacimiento_ano ? parseInt(formData.fecha_nacimiento_ano) : 1990,
+        edad: formData.edad ? parseInt(formData.edad) : 0,
+        estrato: formData.estrato ? parseInt(formData.estrato) : 0
       }
       
-      const response = await axios.post('/api/control-operativo/', dataToSend)
+      const response = await axios.post('/api/control-operativo', dataToSend)
       console.log('✅ Control operativo guardado con ID:', response.data.id)
       
       // Subir archivos al control operativo recién creado
-      if (documentos.length > 0) {
-        console.log(`📎 Subiendo ${documentos.length} archivos al control ${response.data.id}`)
+      if (documentos.length > 0 && response.data.control) {
+        console.log(`📎 Subiendo ${documentos.length} archivos al control ${response.data.control.id}`)
         
-        const formDataFiles = new FormData()
-        documentos.forEach(doc => {
-          formDataFiles.append('files', doc.file)
-        })
-        
-        try {
-          await axios.post(`/api/control-operativo/${response.data.id}/documentos/upload`, formDataFiles, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          })
-          console.log('✅ Archivos subidos exitosamente')
-        } catch (fileError) {
-          console.error('❌ Error subiendo archivos:', fileError)
-          // Continuar sin fallar, solo mostrar advertencia
+        for (const doc of documentos) {
+          try {
+            const formDataFiles = new FormData()
+            formDataFiles.append('file', doc.file)
+            
+            await axios.post(`/api/control-operativo/${response.data.control.id}/archivo`, formDataFiles, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            })
+          } catch (fileError) {
+            console.error('❌ Error subiendo archivo:', doc.filename, fileError)
+          }
         }
+        console.log('✅ Archivos subidos exitosamente')
       }
       
       setInfoModalData({
@@ -398,7 +463,7 @@ const ControlOperativoEstudiante = () => {
       fecha_mes: new Date().getMonth() + 1,
       fecha_ano: new Date().getFullYear(),
       nombre_docente_responsable: '',
-      nombre_estudiante: (user?.nombre && user?.apellidos) ? `${user.nombre} ${user.apellidos}` : '',
+      nombre_estudiante: (user?.nombres && user?.apellidos) ? `${user.nombres} ${user.apellidos}` : '',
       area_consulta: '',
       remitido_por: '',
       correo_electronico: '',
@@ -422,7 +487,6 @@ const ControlOperativoEstudiante = () => {
       profesion_oficio: '',
       descripcion_caso: '',
       concepto_estudiante: '',
-      concepto_asesor: '',
     })
     setDocumentos([])
   }
@@ -509,7 +573,7 @@ const ControlOperativoEstudiante = () => {
           size: file.size,
           type: file.type,
           file: file, // Almacenar el objeto File real
-          uploaded_by: user?.nombre || 'Usuario',
+          uploaded_by: (user?.nombres && user?.apellidos) ? `${user.nombres} ${user.apellidos}` : 'Usuario',
           uploaded_at: new Date().toISOString()
         }))
         
@@ -648,13 +712,20 @@ const ControlOperativoEstudiante = () => {
                       <label className={`block text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-1`}>
                         Nombre del Docente Responsable
                       </label>
-                      <input
-                        type="text"
+                      <select
                         name="nombre_docente_responsable"
                         value={formData.nombre_docente_responsable}
                         onChange={handleInputChange}
                         className={`${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-blue focus:border-transparent border`}
-                      />
+                        required
+                      >
+                        <option value="">Seleccione un profesor</option>
+                        {profesores.map((profesor) => (
+                          <option key={profesor.id} value={profesor.nombre}>
+                            {profesor.nombre}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>
@@ -1032,22 +1103,6 @@ const ControlOperativoEstudiante = () => {
                   </div>
                 </div>
 
-                <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
-                  <h2 className={`text-xl font-bold ${isDark ? 'text-purple-400' : 'text-university-purple'} mb-4`}>
-                    V. CONCEPTO DEL ASESOR JURÍDICO
-                  </h2>
-                  
-                  <div>
-                    <textarea
-                      name="concepto_asesor"
-                      value={formData.concepto_asesor}
-                      onChange={handleInputChange}
-                      rows={6}
-                      placeholder="Espacio reservado para el concepto del asesor jurídico..."
-                      className={`${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-blue focus:border-transparent border`}
-                    />
-                  </div>
-                </div>
 
                 {/* VII. ARCHIVO OBLIGATORIO */}
                 <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
@@ -1088,7 +1143,7 @@ const ControlOperativoEstudiante = () => {
                             <div className="flex-1">
                               <p className={`text-sm font-medium ${isDark ? 'text-purple-400' : 'text-university-purple'}`}>{doc.filename || doc.nombre_original}</p>
                               <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                Subido por {doc.uploaded_by || user?.nombre} • {new Date(doc.uploaded_at || Date.now()).toLocaleDateString()}
+                                Subido por {doc.uploaded_by || (user?.nombres && user?.apellidos ? `${user.nombres} ${user.apellidos}` : 'Usuario')} • {new Date(doc.uploaded_at || Date.now()).toLocaleDateString()}
                                 • {((doc.tamaño || doc.size) / 1024 / 1024).toFixed(2)} MB
                               </p>
                             </div>
@@ -1226,7 +1281,7 @@ const ControlOperativoEstudiante = () => {
                 Filtros y Búsqueda
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* Barra de Búsqueda */}
                 <div>
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -1238,7 +1293,7 @@ const ControlOperativoEstudiante = () => {
                       placeholder="Nombre, área, documento..."
                       value={filtros.busqueda}
                       onChange={(e) => setFiltros({...filtros, busqueda: e.target.value})}
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
+                      className={`w-full pl-10 pr-4 py-2 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
                     />
                     <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1256,7 +1311,7 @@ const ControlOperativoEstudiante = () => {
                   <select
                     value={filtros.mes}
                     onChange={(e) => setFiltros({...filtros, mes: e.target.value})}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`w-full px-3 py-2 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   >
                     <option value="">Todos los meses</option>
                     {meses.map(mes => (
@@ -1273,7 +1328,7 @@ const ControlOperativoEstudiante = () => {
                   <select
                     value={filtros.ano}
                     onChange={(e) => setFiltros({...filtros, ano: e.target.value})}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`w-full px-3 py-2 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   >
                     <option value="">Todos los años</option>
                     {anosDisponibles.map(ano => (
@@ -1283,16 +1338,16 @@ const ControlOperativoEstudiante = () => {
                 </div>
 
                 {/* Botón Limpiar Filtros */}
-                <div className="flex items-end">
+                <div className="flex items-end sm:col-span-2 lg:col-span-1">
                   <button
                     onClick={limpiarFiltros}
                     disabled={!filtros.busqueda && !filtros.mes && !filtros.ano}
-                    className="w-full px-4 py-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+                    className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    <span>Limpiar</span>
+                    <span className="hidden sm:inline">Limpiar</span>
                   </button>
                 </div>
               </div>
@@ -1383,13 +1438,14 @@ const ControlOperativoEstudiante = () => {
           {controlesFiltrados.length > 0 && (
             <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border overflow-hidden`}>
               <div className={`px-6 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                <h2 className={`text-lg font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'}`}>Mis Controles Operativos</h2>
+                <h2 className={`text-lg font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'}`}>Mis Controles Operativos ({controlesFiltrados.length})</h2>
                 <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm mt-1`}>
                   Consulta y gestiona tus controles operativos
                 </p>
               </div>
               
-              <div className="overflow-x-auto">
+              {/* Vista Desktop - Tabla */}
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full table-auto">
                   <thead>
                     <tr className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
@@ -1403,7 +1459,10 @@ const ControlOperativoEstudiante = () => {
                         Consultante
                       </th>
                       <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                        Área
+                        Profesor
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+                        Área de Consulta
                       </th>
                       <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                         Estado
@@ -1414,56 +1473,185 @@ const ControlOperativoEstudiante = () => {
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {controlesFiltrados.map((control) => (
-                      <tr key={control.id} className={`${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'hover:bg-purple-50/50'} transition-colors`}>
-                        <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                          #{control.id}
-                        </td>
-                        <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                          {control.fecha_dia && control.fecha_mes && control.fecha_ano
-                            ? `${String(control.fecha_dia).padStart(2, '0')}/${String(control.fecha_mes).padStart(2, '0')}/${control.fecha_ano}`
-                            : control.created_at 
-                              ? new Date(control.created_at).toLocaleDateString('es-CO', { 
-                                  day: '2-digit', 
-                                  month: '2-digit', 
-                                  year: 'numeric'
-                                })
-                              : <span className={`${isDark ? 'text-gray-500' : 'text-gray-400'} italic`}>No definida</span>
-                          }
-                        </td>
-                        <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                          {control.nombre_consultante || 'Sin nombre'}
-                        </td>
-                        <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                          {control.area_consulta || 'Sin área'}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full ${
-                            control.activo 
-                              ? `${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}`
-                              : `${isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800'}`
-                          }`}>
-                            {control.activo ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm">
-                          <div className="flex gap-3 justify-center">
-                            <button
-                              onClick={() => handleGeneratePDF(control.id)}
-                              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-university-blue hover:bg-gray-700 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                              title="Generar PDF"
-                            >
-                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                              Descargar PDF
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {controlesFiltrados.map((control) => {
+                      const estado = getEstadoDinamico(control)
+                      return (
+                        <tr key={control.id} className={`${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'hover:bg-purple-50/50'} transition-colors`}>
+                          <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            #{control.id}
+                          </td>
+                          <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {control.fecha_dia && control.fecha_mes && control.fecha_ano
+                              ? `${String(control.fecha_dia).padStart(2, '0')}/${String(control.fecha_mes).padStart(2, '0')}/${control.fecha_ano}`
+                              : control.created_at 
+                                ? new Date(control.created_at).toLocaleDateString('es-CO', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric'
+                                  })
+                                : <span className={`${isDark ? 'text-gray-500' : 'text-gray-400'} italic`}>No definida</span>
+                            }
+                          </td>
+                          <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            <div>
+                              <div className="font-medium">
+                                {control.nombre_consultante 
+                                  ? control.nombre_consultante.split(' ').length >= 2 
+                                    ? `${control.nombre_consultante.split(' ')[0]} ${control.nombre_consultante.split(' ')[1]}`
+                                    : control.nombre_consultante
+                                  : 'Sin nombre'
+                                }
+                              </div>
+                              <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {control.numero_documento ? `Doc: ${control.numero_documento}` : 'Sin documento'}
+                              </div>
+                            </div>
+                          </td>
+                          <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            <div>
+                              <div className="font-medium">
+                                {control.nombre_docente_responsable 
+                                  ? control.nombre_docente_responsable.split(' ').length >= 2 
+                                    ? `${control.nombre_docente_responsable.split(' ')[0]} ${control.nombre_docente_responsable.split(' ')[1]}`
+                                    : control.nombre_docente_responsable
+                                  : 'Sin asignar'
+                                }
+                              </div>
+                              <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                Profesor
+                              </div>
+                            </div>
+                          </td>
+                          <td className={`px-4 py-3 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {control.area_consulta || 'Sin área'}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full ${
+                              isDark ? estado.darkColor : estado.color
+                            }`}>
+                              {estado.text}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="flex gap-3 justify-center">
+                              <button
+                                onClick={() => handleGeneratePDF(control.id)}
+                                disabled={control.estado_flujo === 'pendiente_profesor'}
+                                className={`inline-flex items-center px-4 py-2 text-sm font-medium border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
+                                  control.estado_flujo === 'pendiente_profesor'
+                                    ? 'text-gray-400 bg-gray-200 cursor-not-allowed'
+                                    : 'text-white bg-university-blue hover:bg-gray-700 focus:ring-blue-500'
+                                }`}
+                                title={control.estado_flujo === 'pendiente_profesor' ? 'PDF disponible cuando el profesor complete su parte' : 'Generar PDF'}
+                              >
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                {control.estado_flujo === 'pendiente_profesor' ? 'Pendiente' : 'Descargar PDF'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Vista Mobile - Cards */}
+              <div className="lg:hidden space-y-4 p-4">
+                {controlesFiltrados.map((control) => {
+                  const estado = getEstadoDinamico(control)
+                  return (
+                    <div key={control.id} className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-4 border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                      {/* Header del Card */}
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <span className={`text-lg font-bold ${isDark ? 'text-purple-400' : 'text-university-purple'}`}>
+                            #{control.id}
+                          </span>
+                          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {control.fecha_dia && control.fecha_mes && control.fecha_ano
+                              ? `${String(control.fecha_dia).padStart(2, '0')}/${String(control.fecha_mes).padStart(2, '0')}/${control.fecha_ano}`
+                              : control.created_at 
+                                ? new Date(control.created_at).toLocaleDateString('es-CO', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric'
+                                  })
+                                : 'No definida'
+                            }
+                          </div>
+                        </div>
+                        <div>
+                          <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                            isDark ? estado.darkColor : estado.color
+                          }`}>
+                            {estado.text}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Información Principal */}
+                      <div className="space-y-2 mb-4">
+                        <div>
+                          <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} uppercase`}>Consultante</span>
+                          <div className={`font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {control.nombre_consultante 
+                              ? control.nombre_consultante.split(' ').length >= 2 
+                                ? `${control.nombre_consultante.split(' ')[0]} ${control.nombre_consultante.split(' ')[1]}`
+                                : control.nombre_consultante
+                              : 'Sin nombre'
+                            }
+                          </div>
+                          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {control.numero_documento ? `Doc: ${control.numero_documento}` : 'Sin documento'}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} uppercase`}>Profesor</span>
+                            <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>
+                              {control.nombre_docente_responsable 
+                                ? control.nombre_docente_responsable.split(' ').length >= 2 
+                                  ? `${control.nombre_docente_responsable.split(' ')[0]} ${control.nombre_docente_responsable.split(' ')[1]}`
+                                  : control.nombre_docente_responsable
+                                : 'Sin asignar'
+                              }
+                            </div>
+                          </div>
+
+                          <div>
+                            <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} uppercase`}>Área de Consulta</span>
+                            <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>
+                              {control.area_consulta || 'Sin área'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botón de Acción */}
+                      <div className="pt-3 border-t border-gray-200">
+                        <button
+                          onClick={() => handleGeneratePDF(control.id)}
+                          disabled={control.estado_flujo === 'pendiente_profesor'}
+                          className={`w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
+                            control.estado_flujo === 'pendiente_profesor'
+                              ? 'text-gray-400 bg-gray-200 cursor-not-allowed'
+                              : 'text-white bg-university-blue hover:bg-gray-700 focus:ring-blue-500'
+                          }`}
+                          title={control.estado_flujo === 'pendiente_profesor' ? 'PDF disponible cuando el profesor complete su parte' : 'Generar PDF'}
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          {control.estado_flujo === 'pendiente_profesor' ? 'Pendiente' : 'Descargar PDF'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

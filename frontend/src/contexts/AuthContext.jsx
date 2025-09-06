@@ -84,7 +84,7 @@ const initialState = {
   loading: true,
   error: null,
   lastActivity: null,
-  sessionTimeout: 7 * 60 * 1000 // 7 minutos en milisegundos
+  sessionTimeout: 8 * 60 * 1000 // 8 minutos en milisegundos
 }
 
 export const AuthProvider = ({ children }) => {
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }) => {
     const checkSessionTimeout = () => {
       const now = Date.now()
       const timeSinceLastActivity = now - state.lastActivity
-      const sessionTimeout = 7 * 60 * 1000 // 7 minutos en milisegundos
+      const sessionTimeout = 8 * 60 * 1000 // 8 minutos en milisegundos
       
       if (timeSinceLastActivity >= sessionTimeout) {
         console.log('⏰ Sesión expirada por inactividad')
@@ -168,7 +168,7 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       console.log('🔍 initializeAuth ejecutándose...')
       
-      const savedToken = localStorage.getItem('token')
+      const savedToken = localStorage.getItem('auth_token') || localStorage.getItem('token')
       const savedRefreshToken = localStorage.getItem('refreshToken')
       const savedLastActivity = localStorage.getItem('lastActivity')
       
@@ -180,21 +180,24 @@ export const AuthProvider = ({ children }) => {
         if (savedLastActivity) {
           const lastActivity = parseInt(savedLastActivity)
           const timeSinceLastActivity = now - lastActivity
-          const sessionTimeout = 7 * 60 * 1000 // 7 minutos en milisegundos
+          const sessionTimeout = 8 * 60 * 1000 // 8 minutos en milisegundos
           
           console.log('⏱️ Verificando timeout:', {
             lastActivityTime: new Date(lastActivity).toLocaleTimeString(),
             timeSinceLastActivity: Math.floor(timeSinceLastActivity / 1000 / 60),
-            timeoutMinutes: 7,
+            timeoutMinutes: 8,
             isExpired: timeSinceLastActivity >= sessionTimeout
           })
           
-          // Si han pasado más de 7 minutos, cerrar sesión
+          // Si han pasado más de 8 minutos, cerrar sesión
           if (timeSinceLastActivity >= sessionTimeout) {
             console.log('⏰ Sesión expirada al cargar la aplicación')
             localStorage.removeItem('token')
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('auth_user')
             localStorage.removeItem('refreshToken')
             localStorage.removeItem('lastActivity')
+            delete axios.defaults.headers.common['Authorization']
             dispatch({ type: 'LOGOUT' })
             return
           }
@@ -242,7 +245,11 @@ export const AuthProvider = ({ children }) => {
             url: error.config?.url,
             message: error.message
           })
+          
+          // Limpiar todos los tokens relacionados
           localStorage.removeItem('token')
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_user')
           localStorage.removeItem('refreshToken')
           localStorage.removeItem('lastActivity')
           delete axios.defaults.headers.common['Authorization']
@@ -354,12 +361,16 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const logout = useCallback(() => {
-    // Limpiar inmediatamente los datos de localStorage
+    // Limpiar inmediatamente todos los datos de localStorage
     localStorage.removeItem('token')
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('lastActivity')
     delete axios.defaults.headers.common['Authorization']
     dispatch({ type: 'LOGOUT' })
+    
+    console.log('🚪 Logout completado - localStorage limpio')
   }, [])
 
   const register = useCallback(async (userData) => {
@@ -670,6 +681,91 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
+  // Funciones de registro manual
+  const registrarEstudianteManual = useCallback(async (datos) => {
+    dispatch({ type: 'LOGIN_START' })
+    
+    try {
+      const response = await axios.post('/api/auth/registro/estudiante', datos)
+      
+      // Si el registro incluye token, hacer auto-login
+      if (response.data.access_token) {
+        const { access_token, user } = response.data
+        
+        // Guardar token en localStorage con clave consistente
+        localStorage.setItem('token', access_token)
+        localStorage.setItem('auth_user', JSON.stringify(user))
+        
+        // Configurar header de axios
+        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
+        
+        // Actualizar estado con login exitoso
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: {
+            user: user,
+            access_token: access_token
+          }
+        })
+        
+        console.log('✅ Registro exitoso con auto-login')
+      }
+      
+      return { success: true, data: response.data }
+    } catch (error) {
+      dispatch({ 
+        type: 'LOGIN_FAILURE', 
+        payload: error.response?.data?.error || '❌ Error en el registro de estudiante' 
+      })
+      return { 
+        success: false, 
+        error: error.response?.data?.error || '❌ Error en el registro de estudiante' 
+      }
+    }
+  }, [dispatch])
+
+  const registrarProfesorManual = useCallback(async (datos) => {
+    dispatch({ type: 'LOGIN_START' })
+    
+    try {
+      const response = await axios.post('/api/auth/registro/profesor', datos)
+      
+      // Si el registro incluye token, hacer auto-login
+      if (response.data.access_token) {
+        const { access_token, user } = response.data
+        
+        // Guardar token en localStorage con clave consistente
+        localStorage.setItem('token', access_token)
+        localStorage.setItem('auth_user', JSON.stringify(user))
+        
+        // Configurar header de axios
+        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
+        
+        // Actualizar estado con login exitoso
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: {
+            user: user,
+            access_token: access_token
+          }
+        })
+        
+        console.log('✅ Registro de profesor exitoso con auto-login')
+      }
+      
+      return { success: true, data: response.data }
+    } catch (error) {
+      dispatch({ 
+        type: 'LOGIN_FAILURE', 
+        payload: error.response?.data?.error || '❌ Error en el registro de profesor' 
+      })
+      return { 
+        success: false, 
+        error: error.response?.data?.error || '❌ Error en el registro de profesor' 
+      }
+    }
+  }, [dispatch])
+
   const value = useMemo(() => ({
     ...state,
     login,
@@ -686,8 +782,11 @@ export const AuthProvider = ({ children }) => {
     listarEstudiantes,
     registrarEstudiante,
     actualizarEstudiante,
-    eliminarEstudiante
-  }), [state, login, logout, register, updateProfile, clearError, forgotPassword, resetPassword, validarCodigo, validarDatosPersonales, registroEstudiante, listarEstudiantes, registrarEstudiante, actualizarEstudiante, eliminarEstudiante])
+    eliminarEstudiante,
+    // Funciones de registro manual
+    registrarEstudianteManual,
+    registrarProfesorManual
+  }), [state, login, logout, register, updateProfile, clearError, forgotPassword, resetPassword, validarCodigo, validarDatosPersonales, registroEstudiante, listarEstudiantes, registrarEstudiante, actualizarEstudiante, eliminarEstudiante, registrarEstudianteManual, registrarProfesorManual])
 
   return (
     <AuthContext.Provider value={value}>

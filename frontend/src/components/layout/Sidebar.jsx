@@ -24,9 +24,9 @@ const getNavigationByRole = (role) => {
         icon: HomeIcon 
       },
       { 
-        name: 'Gestión de Estudiantes', 
-        shortName: 'Estudiantes',
-        href: '/gestion-estudiantes', 
+        name: 'Gestión de Usuarios', 
+        shortName: 'Usuarios',
+        href: '/gestion-usuarios', 
         icon: UserGroupIcon 
       },
       { 
@@ -60,6 +60,27 @@ const getNavigationByRole = (role) => {
         name: 'Mi Perfil', 
         shortName: 'Perfil',
         href: '/perfil-estudiante', 
+        icon: AcademicCapIcon 
+      },
+    ]
+  } else if (role === 'profesor') {
+    return [
+      { 
+        name: 'Dashboard Profesor', 
+        shortName: 'Inicio',
+        href: '/dashboard', 
+        icon: HomeIcon 
+      },
+      { 
+        name: 'Controles Asignados', 
+        shortName: 'Asignados',
+        href: '/controles-asignados', 
+        icon: ClipboardDocumentListIcon 
+      },
+      { 
+        name: 'Mi Perfil', 
+        shortName: 'Perfil',
+        href: '/perfil', 
         icon: AcademicCapIcon 
       },
     ]
@@ -117,7 +138,7 @@ const Sidebar = ({ onClose }) => {
           <div className="flex-shrink-0">
             <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-full bg-university-gold flex items-center justify-center">
               <span className="text-xs lg:text-sm font-medium text-white">
-                {user?.nombre?.charAt(0)}{user?.apellidos?.charAt(0)}
+                {user?.nombres?.split(' ')[0]?.charAt(0) || user?.nombre?.charAt(0)}{user?.apellidos?.split(' ')[0]?.charAt(0)}
               </span>
             </div>
           </div>
@@ -125,12 +146,12 @@ const Sidebar = ({ onClose }) => {
             <p className={`text-xs lg:text-sm font-medium truncate ${
               isDark ? 'text-theme-primary' : 'text-white'
             }`}>
-              {/* Mostrar solo nombre en móvil, nombre completo en desktop */}
+              {/* Mostrar solo primer nombre en móvil, primer nombre y primer apellido en desktop */}
               <span className="lg:hidden">
-                {user?.nombre}
+                {user?.nombres?.split(' ')[0] || user?.nombre}
               </span>
               <span className="hidden lg:inline">
-                {user?.nombre} {user?.apellidos}
+                {user?.nombres?.split(' ')[0] || user?.nombre} {user?.apellidos?.split(' ')[0]}
               </span>
             </p>
             <p className={`text-xs capitalize ${

@@ -53,7 +53,7 @@ const Header = ({ onMenuClick }) => {
   const cargarNotificaciones = async () => {
     try {
       const response = await axios.get('/api/control-operativo/list')
-      const controles = response.data || []
+      const controles = response.data.controles || []
       
       // Generar notificaciones basadas en actividad reciente
       const notificacionesGeneradas = []
@@ -298,7 +298,7 @@ const Header = ({ onMenuClick }) => {
           {/* Información del usuario */}
           <div className="flex items-center text-sm">
             <span className="hidden md:block text-theme-primary mr-3">
-              {user?.nombre} {user?.apellidos}
+              {user?.nombres} {user?.apellidos}
             </span>
             <span className="hidden md:block text-xs text-purple-800 mr-3 px-2 py-1 bg-purple-100 rounded-full">
               {user?.role}
@@ -320,9 +320,9 @@ const Header = ({ onMenuClick }) => {
                 <div className="py-1">
                   <div className="px-4 py-3 border-b border-theme">
                     <p className="text-sm font-medium text-theme-primary">
-                      {user?.nombre} {user?.apellidos}
+                      {user?.nombres} {user?.apellidos}
                     </p>
-                    <p className="text-sm text-theme-secondary">{user?.email}</p>
+                    <p className="text-sm text-theme-secondary truncate max-w-48">{user?.email}</p>
                     <p className="text-xs text-theme-muted mt-1 capitalize">
                       Rol: {user?.role}
                     </p>

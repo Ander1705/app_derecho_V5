@@ -8,15 +8,11 @@ const Login = () => {
   
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    nombre: '',
-    apellidos: '',
-    documento_numero: ''
+    password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
-  const [isStudentMode, setIsStudentMode] = useState(false)
   
   // No limpiar errores automáticamente para debugging
   
@@ -85,33 +81,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (isStudentMode) {
-      // Validar campos de estudiante
-      const fieldsToValidate = ['nombre', 'apellidos', 'documento_numero']
-      
-      let allErrors = {}
-      fieldsToValidate.forEach(field => {
-        if (!formData[field]) {
-          allErrors[field] = 'Este campo es obligatorio'
-        }
-      })
-      
-      if (Object.keys(allErrors).length > 0) {
-        setValidationErrors(allErrors)
-        return
-      }
-      
-      // Redireccionar a validación con los datos
-      const searchParams = new URLSearchParams({
-        nombre: formData.nombre,
-        apellidos: formData.apellidos,
-        documento_numero: formData.documento_numero
-      })
-      window.location.href = `/validacion-estudiante?${searchParams.toString()}`
-      return
-    }
-    
-    // Validar campos de coordinador
+    // Validar campos
     const fieldsToValidate = ['email', 'password']
     
     let allErrors = {}
@@ -137,19 +107,6 @@ const Login = () => {
     }
   }
 
-  const handleStudentModeToggle = () => {
-    setIsStudentMode(!isStudentMode)
-    // Limpiar formulario al cambiar modo
-    setFormData({
-      email: '',
-      password: '',
-      nombre: '',
-      apellidos: '',
-      documento_numero: ''
-    })
-    setValidationErrors({})
-    clearError()
-  }
 
   if (loading) {
     return (
@@ -186,7 +143,7 @@ const Login = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             
             {/* Lado izquierdo - Información institucional */}
-            <div className={`transition-all duration-700 ease-in-out transform ${isStudentMode ? 'order-2 lg:translate-x-8' : 'order-1 lg:translate-x-0'}`}>
+            <div className="order-1 lg:translate-x-0">
               <div className="text-center space-y-10">
                   {/* Logo/Escudo con efectos modernos */}
                   <div className="flex justify-center">
@@ -237,10 +194,7 @@ const Login = () => {
                     
                     <div className="flex justify-center">
                       <p className="text-lg text-blue-200/80 max-w-lg leading-relaxed text-center">
-                        {isStudentMode 
-                          ? "Portal de acceso para estudiantes. Si necesitas crear una cuenta, primero debes ser registrado por el coordinador del programa."
-                          : "Plataforma integral para la gestión profesional de casos legales, administración de clientes y generación de documentos jurídicos especializados."
-                        }
+                        Plataforma integral para la gestión profesional de casos legales, administración de clientes y generación de documentos jurídicos especializados.
                       </p>
                     </div>
                     
@@ -249,17 +203,13 @@ const Login = () => {
             </div>
 
             {/* Lado derecho - Formulario de login */}
-            <div className={`transition-all duration-700 ease-in-out transform ${isStudentMode ? 'order-1 lg:-translate-x-8' : 'order-2 lg:translate-x-0'}`}>
+            <div className="order-2 lg:translate-x-0">
               <div className="flex justify-center lg:justify-end">
                   <div className="w-full max-w-lg">
                     {/* Container principal con efectos glassmorphism */}
                     <div className="relative group">
                       {/* Efectos de fondo */}
-                      <div className={`absolute -inset-1 rounded-3xl blur-lg transition-all duration-700 ${
-                        isStudentMode 
-                          ? 'bg-gradient-to-r from-green-500 via-purple-500 to-violet-600 opacity-30 group-hover:opacity-50' 
-                          : 'bg-gradient-to-r from-university-gold via-purple-500 to-purple-600 opacity-25 group-hover:opacity-40'
-                      }`}></div>
+                      <div className="absolute -inset-1 rounded-3xl blur-lg transition-all duration-700 bg-gradient-to-r from-university-gold via-purple-500 to-purple-600 opacity-25 group-hover:opacity-40"></div>
                       
                       {/* Formulario principal */}
                       <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
@@ -270,13 +220,10 @@ const Login = () => {
                           </div>
                           
                           <h2 className="text-3xl font-bold text-white mb-2">
-                            {isStudentMode ? 'Registro de Estudiante' : 'Acceso Seguro'}
+                            Acceso Seguro
                           </h2>
                           <p className="text-blue-200">
-                            {isStudentMode 
-                              ? 'Completa los datos para crear tu cuenta'
-                              : 'Ingresa tus credenciales institucionales'
-                            }
+                            Ingresa tus credenciales institucionales
                           </p>
                         </div>
 
@@ -309,114 +256,11 @@ const Login = () => {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-6">
-                          {/* Campos específicos para estudiantes */}
-                          {isStudentMode && (
-                            <div className="space-y-4">
-                              {/* Nombres */}
-                              <div className="relative group">
-                                <label className="block text-sm font-medium text-blue-200 mb-2 group-focus-within:text-white transition-colors">
-                                  Nombres *
-                                </label>
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
-                                  <input
-                                    name="nombre"
-                                    type="text"
-                                    required
-                                    value={formData.nombre || ''}
-                                    onChange={handleChange}
-                                    className={`relative w-full px-4 py-4 bg-white/5 border-2 rounded-xl text-white placeholder-blue-300 backdrop-blur-sm focus:outline-none transition-all duration-300 ${
-                                      validationErrors.nombre
-                                        ? 'border-red-400 focus:border-red-300'
-                                        : 'border-white/20 focus:border-university-gold hover:border-white/40'
-                                    }`}
-                                    placeholder="Juan Carlos"
-                                    disabled={isSubmitting}
-                                  />
-                                </div>
-                                {validationErrors.nombre && (
-                                  <p className="mt-2 text-sm text-red-300 flex items-center">
-                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
-                                    {validationErrors.nombre}
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* Apellidos */}
-                              <div className="relative group">
-                                <label className="block text-sm font-medium text-blue-200 mb-2 group-focus-within:text-white transition-colors">
-                                  Apellidos *
-                                </label>
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
-                                  <input
-                                    name="apellidos"
-                                    type="text"
-                                    required
-                                    value={formData.apellidos || ''}
-                                    onChange={handleChange}
-                                    className={`relative w-full px-4 py-4 bg-white/5 border-2 rounded-xl text-white placeholder-blue-300 backdrop-blur-sm focus:outline-none transition-all duration-300 ${
-                                      validationErrors.apellidos
-                                        ? 'border-red-400 focus:border-red-300'
-                                        : 'border-white/20 focus:border-university-gold hover:border-white/40'
-                                    }`}
-                                    placeholder="Pérez López"
-                                    disabled={isSubmitting}
-                                  />
-                                </div>
-                                {validationErrors.apellidos && (
-                                  <p className="mt-2 text-sm text-red-300 flex items-center">
-                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
-                                    {validationErrors.apellidos}
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* Documento */}
-                              <div className="relative group">
-                                <label className="block text-sm font-medium text-blue-200 mb-2 group-focus-within:text-white transition-colors">
-                                  Número de Documento *
-                                </label>
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
-                                  <input
-                                    name="documento_numero"
-                                    type="text"
-                                    required
-                                    value={formData.documento_numero || ''}
-                                    onChange={handleChange}
-                                    className={`relative w-full px-4 py-4 bg-white/5 border-2 rounded-xl text-white placeholder-blue-300 backdrop-blur-sm focus:outline-none transition-all duration-300 ${
-                                      validationErrors.documento_numero
-                                        ? 'border-red-400 focus:border-red-300'
-                                        : 'border-white/20 focus:border-university-gold hover:border-white/40'
-                                    }`}
-                                    placeholder="1234567890"
-                                    disabled={isSubmitting}
-                                  />
-                                </div>
-                                {validationErrors.documento_numero && (
-                                  <p className="mt-2 text-sm text-red-300 flex items-center">
-                                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
-                                    {validationErrors.documento_numero}
-                                  </p>
-                                )}
-                              </div>
-
-                            </div>
-                          )}
-
-                          {/* Campo Email para coordinador */}
-                          {!isStudentMode && (
-                            <div className="relative group">
-                              <label className="block text-sm font-medium text-blue-200 mb-2 group-focus-within:text-white transition-colors">
-                                Correo Electrónico
-                              </label>
+                          {/* Campo Email */}
+                          <div className="relative group">
+                            <label className="block text-sm font-medium text-blue-200 mb-2 group-focus-within:text-white transition-colors">
+                              Correo Electrónico
+                            </label>
                               <div className="relative">
                                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
                                 <input
@@ -446,10 +290,8 @@ const Login = () => {
                                 </p>
                               )}
                             </div>
-                          )}
 
-                          {/* Campo Password - solo para coordinador */}
-                          {!isStudentMode && (
+                          {/* Campo Password */}
                             <div className="relative group">
                               <label className="block text-sm font-medium text-blue-200 mb-2 group-focus-within:text-white transition-colors">
                                 Contraseña
@@ -495,10 +337,8 @@ const Login = () => {
                                 </p>
                               )}
                             </div>
-                          )}
 
-                          {/* Opciones adicionales - solo para coordinador */}
-                          {!isStudentMode && (
+                          {/* Opciones adicionales */}
                             <div className="flex items-center justify-between">
                               <label className="flex items-center">
                                 <input
@@ -515,7 +355,6 @@ const Login = () => {
                                 ¿Olvidaste tu contraseña?
                               </Link>
                             </div>
-                          )}
 
                           {/* Botón de envío futurista */}
                           <button
@@ -523,7 +362,7 @@ const Login = () => {
                             disabled={isSubmitting}
                             className="relative w-full group overflow-hidden"
                           >
-                            <div className={`absolute inset-0 rounded-xl ${isStudentMode ? 'bg-gradient-to-r from-green-600 to-purple-600' : 'bg-gradient-to-r from-purple-600 to-purple-700'}`}></div>
+                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700"></div>
                             <div className="absolute inset-0 bg-gradient-to-r from-university-gold to-yellow-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <div className="absolute inset-0 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             
@@ -531,11 +370,11 @@ const Login = () => {
                               {isSubmitting ? (
                                 <>
                                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                  <span>{isStudentMode ? 'Validando...' : 'Iniciando sesión...'}</span>
+                                  <span>Iniciando sesión...</span>
                                 </>
                               ) : (
                                 <>
-                                  <span>{isStudentMode ? 'Continuar a Registro' : 'Iniciar Sesión'}</span>
+                                  <span>Iniciar Sesión</span>
                                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                   </svg>
@@ -546,41 +385,22 @@ const Login = () => {
 
                           {/* Enlaces de navegación */}
                           <div className="text-center pt-4 space-y-3">
-                            {!isStudentMode ? (
-                              <p className="text-sm text-blue-300">
-                                ¿Eres estudiante?{' '}
-                                <button
-                                  type="button"
-                                  onClick={handleStudentModeToggle}
-                                  className="text-green-300 hover:text-white font-medium transition-colors underline"
-                                >
-                                  Regístrate como estudiante
-                                </button>
-                              </p>
-                            ) : (
-                              <div className="space-y-2">
-                                <p className="text-sm text-blue-300">
-                                  <button
-                                    type="button"
-                                    onClick={handleStudentModeToggle}
-                                    className="text-green-300 hover:text-white font-medium transition-colors underline"
-                                  >
-                                    ← Volver a inicio de sesión
-                                  </button>
-                                </p>
-                                <p className="text-sm text-green-200 bg-green-500/20 border border-green-500/30 rounded-lg p-3">
-                                  <strong>¿No apareces en el sistema?</strong><br />
-                                  Solicita al coordinador que te pre-registre en el sistema primero. Una vez pre-registrado, podrás crear tu cuenta con tus datos personales (nombre, apellidos y número de documento).
-                                </p>
-                              </div>
-                            )}
                             <p className="text-sm text-blue-300">
-                              ¿Necesitas acceso?{' '}
+                              ¿No tienes una cuenta?{' '}
+                              <Link 
+                                to="/registro" 
+                                className="text-university-gold hover:text-yellow-300 font-medium transition-colors underline"
+                              >
+                                Regístrate aquí
+                              </Link>
+                            </p>
+                            <p className="text-sm text-blue-300">
+                              ¿Necesitas ayuda?{' '}
                               <a 
-                                href="mailto:sistemas@unicolmayor.edu.co" 
+                                href="mailto:consultoriojuridico.kennedy@universidadmayor.edu.co" 
                                 className="text-university-gold hover:text-yellow-300 font-medium transition-colors"
                               >
-                                Contactar administrador
+                                Contactar coordinador
                               </a>
                             </p>
                           </div>
