@@ -10,6 +10,7 @@ import (
 
 	"consultorio-juridico/internal/config"
 	"consultorio-juridico/internal/models"
+	"consultorio-juridico/pkg/auth"
 )
 
 func InitializeDatabase(cfg *config.Config) (*gorm.DB, error) {
@@ -46,6 +47,12 @@ func InitializeDatabase(cfg *config.Config) (*gorm.DB, error) {
 	}
 
 	log.Println("✅ Migraciones completadas")
+	
+	log.Println("🌱 Ejecutando seeds de base de datos...")
+	if err := seedInitialData(db); err != nil {
+		log.Printf("⚠️  Warning al ejecutar seeds: %v", err)
+	}
+	
 	return db, nil
 }
 
@@ -82,5 +89,38 @@ func CreateIndexes(db *gorm.DB) error {
 		}
 	}
 
+	return nil
+}
+
+func seedInitialData(db *gorm.DB) error {
+	var count int64
+	db.Model(&models.User{}).Where("role = ?", "coordinador").Count(&count)
+	
+	if count > 0 {
+		log.Println("ℹ️  Usuario coordinador ya existe, omitiendo seed")
+		return nil
+	}
+
+	log.Println("📝 Creando usuario coordinador inicial...")
+
+	hashedPassword, err := auth.HashPassword("Umayor2025**")
+	if err != nil {
+		return fmt.Errorf("error generando hash de password: %w", err)
+	}
+
+	user := models.User{
+		NombreUsuario: "Luz Mary Rincon",
+		Email:         "consultoriojuridico.kennedy@universidadmayor.edu.co",
+		PasswordHash:  hashedPassword,
+		Role:          "coordinador",
+		Activo:        true,
+		EmailVerified: true,
+	}
+
+	if err := db.Create(&user).Error; err != nil {
+		return fmt.Errorf("error creando usuario coordinador: %w", err)
+	}
+
+	log.Printf("✅ Usuario coordinador creado: %s", user.Email)
 	return nil
 }
