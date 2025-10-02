@@ -7,7 +7,7 @@
 # ========================================
 # Stage 1: Builder Optimizado
 # ========================================
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Instalar dependencias del sistema + herramientas de optimización
 RUN apk add --no-cache \
@@ -17,7 +17,6 @@ RUN apk add --no-cache \
     gcc \
     musl-dev \
     ghostscript \
-    pdftk-java \
     upx \
     curl
 
@@ -72,8 +71,6 @@ RUN apk add --no-cache \
     ca-certificates \
     tzdata \
     ghostscript \
-    pdftk-java \
-    openjdk17-jre-headless \
     curl \
     && rm -rf /var/cache/apk/* \
     && rm -rf /tmp/*
@@ -102,7 +99,7 @@ RUN mkdir -p \
 COPY --from=builder --chown=appuser:appgroup /build/app /app/app
 
 # Copiar archivos de configuración si existen
-COPY --from=builder --chown=appuser:appgroup /build/assets/ /app/assets/ 2>/dev/null || true
+RUN mkdir -p /app/assets
 
 # Dar permisos de ejecución
 RUN chmod +x /app/app

@@ -72,15 +72,6 @@ export default defineConfig({
       '@': '/src'
     }
   },
-  // Optimizar CSS
-  css: {
-    devSourcemap: false,
-    postcss: {
-      plugins: [
-        // CSS optimization será agregado automáticamente por Tailwind
-      ]
-    }
-  },
   // Optimizaciones para desarrollo
   optimizeDeps: {
     include: [

@@ -1,6 +1,6 @@
 # ============================================================================
 # DOCKERFILE OPTIMIZADO - Frontend React Consultorio Jurídico UCMC
-# Desarrollador: Anderson Felipe Montaña Castelblanco  
+# Desarrollador: Anderson Felipe Montaña Castelblanco
 # Optimizado para máximo rendimiento y mínimo tamaño
 # ============================================================================
 
@@ -31,7 +31,7 @@ COPY package*.json ./
 
 # Instalar dependencias con cache optimizado
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production --no-audit --no-fund && \
+    npm ci --no-audit --no-fund && \
     npm cache clean --force
 
 # Copiar código fuente
@@ -111,8 +111,7 @@ RUN chown -R appuser:appgroup /var/cache/nginx && \
 # Configurar nginx para ejecutar sin root con optimizaciones
 RUN sed -i '/user  nginx;/d' /etc/nginx/nginx.conf && \
     sed -i 's,/var/run/nginx.pid,/tmp/nginx.pid,' /etc/nginx/nginx.conf && \
-    sed -i "/^http {/a \    proxy_temp_path /tmp/nginx/proxy_temp;\n    client_body_temp_path /tmp/nginx/client_temp;\n    fastcgi_temp_path /tmp/nginx/fastcgi_temp;\n    uwsgi_temp_path /tmp/nginx/uwsgi_temp;\n    scgi_temp_path /tmp/nginx/scgi_temp;\n" /etc/nginx/nginx.conf
-
+    sed -i "/^http {/a \    proxy_temp_path /tmp/nginx/proxy_temp;\n    client_body_temp_path /tmp/nginx/client_temp;\n    fastcgi_temp_path /tmp/nginx/fastcgi_temp;\n    uwsgi_temp_path /tmp/nginx/uwsgi_temp;\n    scgi_temp_path /tmp/nginx/scgi_temp;" /etc/nginx/nginx.conf
 # Cambiar a usuario no-root
 USER appuser
 
