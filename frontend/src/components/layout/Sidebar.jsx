@@ -166,7 +166,7 @@ const Sidebar = ({ onClose }) => {
           <div className="flex-shrink-0">
             <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-full bg-university-gold flex items-center justify-center">
               <span className="text-xs lg:text-sm font-medium text-white">
-                {user?.nombres?.split(' ')[0]?.charAt(0) || user?.nombre?.charAt(0)}{user?.apellidos?.split(' ')[0]?.charAt(0)}
+                {user?.role === 'coordinador' ? 'LR' : `${user?.nombres?.split(' ')[0]?.charAt(0) || user?.nombre?.charAt(0)}${user?.apellidos?.split(' ')[0]?.charAt(0)}`}
               </span>
             </div>
           </div>
@@ -176,10 +176,10 @@ const Sidebar = ({ onClose }) => {
             }`}>
               {/* Mostrar solo primer nombre en móvil, primer nombre y primer apellido en desktop */}
               <span className="lg:hidden">
-                {user?.nombres?.split(' ')[0] || user?.nombre}
+                {user?.role === 'coordinador' ? 'Luz Mary' : (user?.nombres?.split(' ')[0] || user?.nombre)}
               </span>
               <span className="hidden lg:inline">
-                {user?.nombres?.split(' ')[0] || user?.nombre} {user?.apellidos?.split(' ')[0]}
+                {user?.role === 'coordinador' ? 'Luz Mary Rincon' : `${user?.nombres?.split(' ')[0] || user?.nombre} ${user?.apellidos?.split(' ')[0]}`}
               </span>
             </p>
             <p className={`text-xs capitalize ${
