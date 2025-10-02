@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"consultorio-juridico/internal/config"
 	"consultorio-juridico/internal/database"
@@ -14,6 +16,7 @@ import (
 	"consultorio-juridico/internal/middleware"
 	"consultorio-juridico/internal/models"
 	"consultorio-juridico/internal/services"
+	"consultorio-juridico/pkg/auth"
 	"consultorio-juridico/pkg/pdf"
 )
 
@@ -30,6 +33,11 @@ func main() {
 	db, err := database.InitializeDatabase(cfg)
 	if err != nil {
 		log.Fatal("Error inicializando base de datos:", err)
+	}
+
+	log.Println("🌱 Ejecutando seeds de base de datos...")
+	if err := seedInitialData(db); err != nil {
+		log.Printf("⚠️  Warning al ejecutar seeds: %v", err)
 	}
 
 	// Crear índices adicionales
@@ -264,4 +272,37 @@ func main() {
 	if err := router.Run(serverAddress); err != nil {
 		log.Fatal("Error iniciando servidor:", err)
 	}
+}
+
+func seedInitialData(db *gorm.DB) error {
+	var count int64
+	db.Model(&models.User{}).Where("role = ?", "coordinador").Count(&count)
+	
+	if count > 0 {
+		log.Println("ℹ️  Usuario coordinador ya existe, omitiendo seed")
+		return nil
+	}
+
+	log.Println("📝 Creando usuario coordinador inicial...")
+
+	hashedPassword, err := auth.HashPassword("Umayor2025**")
+	if err != nil {
+		return fmt.Errorf("error generando hash de password: %w", err)
+	}
+
+	user := models.User{
+		NombreUsuario: "Luz Mary Rincon",
+		Email:         "consultoriojuridico.kennedy@universidadmayor.edu.co",
+		PasswordHash:  hashedPassword,
+		Role:          "coordinador",
+		Activo:        true,
+		EmailVerified: true,
+	}
+
+	if err := db.Create(&user).Error; err != nil {
+		return fmt.Errorf("error creando usuario coordinador: %w", err)
+	}
+
+	log.Printf("✅ Usuario coordinador creado: %s", user.Email)
+	return nil
 }
