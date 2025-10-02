@@ -14,8 +14,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   TagIcon,
-  ArrowRightIcon,
-  SparklesIcon
+  ArrowRightIcon
 } from '@heroicons/react/24/outline'
 
 const DashboardCoordinador = () => {
@@ -211,31 +210,11 @@ const DashboardCoordinador = () => {
     <div className={`min-h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         
-        {/* Banner de Nuevas Funcionalidades */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg p-6 mb-6 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-white bg-opacity-20' : 'bg-purple-100'}`}>
-                <SparklesIcon className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold">🎉 ¡Nuevas Funcionalidades Disponibles!</h2>
-                <p className="text-purple-100">Sistema de calificaciones, evaluaciones y más herramientas para coordinadores</p>
-              </div>
-            </div>
-            <Link
-              to="/calificaciones-intro"
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${isDark ? 'bg-gray-100 text-purple-700 hover:bg-gray-200' : 'bg-white text-purple-600 hover:bg-purple-50'}`}
-            >
-              Ver Detalles
-            </Link>
-          </div>
-        </div>
 
         {/* Bienvenida */}
         <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6 mb-6`}>
           <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-2`}>
-            Bienvenido, {user?.nombres} {user?.apellidos}
+            Bienvenido, Luz Mary Rincon
           </h1>
           <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             Panel de control - Consultorio Jurídico
