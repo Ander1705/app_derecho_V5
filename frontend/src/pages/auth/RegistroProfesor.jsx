@@ -87,7 +87,10 @@ const RegistroProfesor = () => {
 
     const result = await registrarProfesorManual(registroData)
     
-    if (result.success) {
+    if (result.success && result.requiresVerification) {
+      navigate(`/verificar-email?email=${encodeURIComponent(result.email)}`)
+    } else if (result.success) {
+      // Fallback para registros que no requieren verificación
       navigate('/login', {
         state: { 
           message: '✅ Registro exitoso. Inicia sesión con tu nueva cuenta.',

@@ -1,6 +1,7 @@
 import { useAuth } from '../contexts/AuthContext'
 import PerfilEstudiante from './estudiante/PerfilEstudiante'
 import PerfilCoordinador from './coordinador/PerfilCoordinador'
+import PerfilProfesor from './profesor/PerfilProfesor'
 
 const Perfil = () => {
   const { user } = useAuth()
@@ -12,6 +13,10 @@ const Perfil = () => {
   
   if (user?.role === 'estudiante') {
     return <PerfilEstudiante />
+  }
+
+  if (user?.role === 'profesor') {
+    return <PerfilProfesor />
   }
 
   // Fallback para roles no definidos

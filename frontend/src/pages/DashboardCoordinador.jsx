@@ -13,21 +13,39 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   TagIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline'
 
 const DashboardCoordinador = () => {
   const { user } = useAuth()
   const { isDark } = useTheme()
+  
+  // ✅ Estado inicializado con datos por defecto para evitar pantalla en blanco
   const [metricas, setMetricas] = useState({
-    estudiantesRegistrados: 3, // ⭐ FORZANDO VALOR CORRECTO
-    profesoresRegistrados: 3,  // ⭐ FORZANDO VALOR CORRECTO  
-    controlesPendientes: 0,    // ⭐ CAMBIADO: Controles sin resultado
-    totalReportes: 30 // ⭐ FORZANDO VALOR CORRECTO
+    estudiantesRegistrados: 0,
+    profesoresRegistrados: 0,
+    controlesPendientes: 0,
+    totalReportes: 0
   })
-  const [actividadReciente, setActividadReciente] = useState([])
-  const [areasConsulta, setAreasConsulta] = useState([])
   const [loading, setLoading] = useState(true)
+  
+  const [actividadReciente, setActividadReciente] = useState([
+    {
+      id: 'default_1',
+      tipo: 'completado',
+      mensaje: 'Sistema inicializado correctamente',
+      tiempo: new Date().toLocaleDateString('es-ES')
+    }
+  ])
+  
+  const [areasConsulta, setAreasConsulta] = useState([
+    { area: 'Laboral', cantidad: 7, color: 'blue' },
+    { area: 'Civil', cantidad: 5, color: 'green' },
+    { area: 'Penal', cantidad: 6, color: 'red' },
+    { area: 'Comercial', cantidad: 4, color: 'purple' },
+    { area: 'Familia', cantidad: 4, color: 'orange' }
+  ])
 
   useEffect(() => {
     cargarDatos()
@@ -36,206 +54,100 @@ const DashboardCoordinador = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true)
-      console.log('🔄 Cargando datos del dashboard coordinador...')
+      console.log('🔄 Cargando datos REALES del dashboard coordinador...')
       
-      // Intentar cargar controles reales del backend
-      try {
-        const token = localStorage.getItem('token')
-        console.log('🔄 Intentando cargar datos desde backend...')
-        
-        // Cargar estadísticas reales del coordinador
-        const [estadisticasRes, controlesRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/coordinador/estadisticas', {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get('http://localhost:8000/api/coordinador/controles-completos', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ])
-        
-        const controles = controlesRes.data || []
-        const estadisticas = estadisticasRes.data || {}
-        console.log('✅ Estadísticas cargadas desde backend:', estadisticas)
-        console.log('✅ Controles cargados desde backend:', controles.length)
-        
-        if (estadisticas) {
-          // Usar estadísticas reales del backend
-          const metricasReales = {
-            estudiantesRegistrados: estadisticas.estudiantes_registrados || 0,
-            profesoresRegistrados: estadisticas.profesores_registrados || 0,
-            controlesPendientes: estadisticas.controles_pendientes || 0, // ⭐ CONTROLES SIN RESULTADO
-            totalReportes: estadisticas.total_controles || 0
-          }
-          
-          setMetricas(metricasReales)
-          console.log('📊 Métricas establecidas desde backend:', metricasReales)
-          
-          // Generar áreas de consulta desde datos reales
-          const areasMap = new Map()
-          controles.forEach(control => {
-            if (control.area_consulta) {
-              // Normalizar nombres de áreas para consistency
-              let area = control.area_consulta.trim()
-              if (area === 'Derecho Civil') area = 'Civil'
-              if (area === 'Derecho Laboral') area = 'Laboral'
-              if (area === 'Derecho Penal') area = 'Penal'
-              if (area === 'Derecho Comercial') area = 'Comercial'
-              if (area === 'Derecho Familia' || area === 'Derecho Familiar') area = 'Familia'
-              if (area === 'Derecho Administrativo') area = 'Administrativo'
-              if (area === 'Derecho Constitucional') area = 'Constitucional'
-              areasMap.set(area, (areasMap.get(area) || 0) + 1)
-            }
-          })
-          
-          const coloresDisponibles = ['blue', 'green', 'red', 'purple', 'orange', 'indigo', 'pink']
-          const areasReales = Array.from(areasMap.entries())
-            .sort((a, b) => b[1] - a[1])
-            .map(([area, cantidad], index) => ({
-              area,
-              cantidad,
-              color: coloresDisponibles[index % coloresDisponibles.length]
-            }))
-          
-          setAreasConsulta(areasReales)
-          console.log('✅ Áreas de consulta generadas desde datos reales:', areasReales)
-          
-          // Generar actividad reciente desde controles reales
-          const actividadReal = controles
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .slice(0, 5)
-            .map((control) => ({
-              id: `control_${control.id}`,
-              tipo: control.estado_resultado ? 'completado' : 'reporte',
-              mensaje: `${control.nombre_consultante || 'Consultante'} - ${control.area_consulta || 'Sin área'}`,
-              tiempo: control.created_at ? new Date(control.created_at).toLocaleDateString('es-ES') : 'Sin fecha'
-            }))
-          
-          setActividadReciente(actividadReal)
-          console.log('📈 Actividad reciente generada desde datos reales:', actividadReal)
-          
-          return // Salir si todo fue exitoso
-        }
-        
-      } catch (backendError) {
-        console.log('🔧 Backend no disponible, usando datos reales de controles:', backendError.message)
-        console.log('⚠️ FORZANDO DATOS CORRECTOS - Estudiantes: 3, Profesores: 3')
-        
-        // 🎯 DATOS REALES BASADOS EN BASE DE DATOS - Sincronizados exactamente con controles existentes
-        const areasSimuladas = [
-          { area: 'Laboral', cantidad: 7, color: 'blue' },
-          { area: 'Penal', cantidad: 6, color: 'green' },
-          { area: 'Civil', cantidad: 5, color: 'red' },
-          { area: 'Comercial', cantidad: 4, color: 'purple' },
-          { area: 'Familia', cantidad: 4, color: 'orange' },
-          { area: 'Administrativo', cantidad: 2, color: 'indigo' },
-          { area: 'Constitucional', cantidad: 2, color: 'pink' }
-        ]
-        
-        const totalCalculado = areasSimuladas.reduce((sum, area) => sum + area.cantidad, 0)
-        
-        const mockData = {
-          metricas: {
-            estudiantesRegistrados: 3, // Estudiantes únicos reales: IDs 6,10,13 
-            profesoresRegistrados: 3, // Profesores registrados en el sistema
-            controlesPendientes: 8, // ⭐ CONTROLES COMPLETOS SIN RESULTADO 
-            totalReportes: totalCalculado // Total: 30 controles (basado en áreas reales)
-          },
-          actividadReciente: [
-            {
-              id: 'actividad_1',
-              tipo: 'completado',
-              mensaje: 'María González - Derecho Laboral',
-              tiempo: new Date(Date.now() - 2 * 60 * 60 * 1000).toLocaleDateString('es-ES')
-            },
-            {
-              id: 'actividad_2',
-              tipo: 'reporte',
-              mensaje: 'Carlos Rodríguez - Derecho Civil',
-              tiempo: new Date(Date.now() - 5 * 60 * 60 * 1000).toLocaleDateString('es-ES')
-            },
-            {
-              id: 'actividad_3',
-              tipo: 'completado',
-              mensaje: 'Ana Martínez - Derecho Penal',
-              tiempo: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString('es-ES')
-            },
-            {
-              id: 'actividad_4',
-              tipo: 'reporte',
-              mensaje: 'Luis Castro - Derecho Comercial',
-              tiempo: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString('es-ES')
-            },
-            {
-              id: 'actividad_5',
-              tipo: 'completado',
-              mensaje: 'Elena Pérez - Derecho Familiar',
-              tiempo: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleDateString('es-ES')
-            }
-          ],
-          areasConsulta: areasSimuladas
-        }
-        
-        console.log('📊 Datos mock coherentes generados:', {
-          totalControles: totalCalculado,
-          areas: areasSimuladas.length,
-          actividades: mockData.actividadReciente.length
-        })
-        
-        setMetricas(mockData.metricas)
-        setActividadReciente(mockData.actividadReciente)
-        setAreasConsulta(mockData.areasConsulta)
-        console.log('📊 Datos mock coherentes establecidos correctamente')
-      }
+      const token = localStorage.getItem('token')
+      
+      // 🎯 CARGAR ESTADÍSTICAS REALES DEL ENDPOINT ESPECÍFICO
+      
+      // 1. Obtener estadísticas del coordinador (incluye todas las métricas)
+      const estadisticasResponse = await axios.get('http://localhost:8000/api/coordinador/estadisticas', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const estadisticas = estadisticasResponse.data || {}
+      console.log('📊 Estadísticas recibidas del backend:', estadisticas)
+      
+      // 2. Obtener controles para actividad reciente y áreas de consulta
+      const controlesResponse = await axios.get('http://localhost:8000/api/coordinador/controles-completos', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const controles = controlesResponse.data || []
+      console.log('📋 Controles recibidos del backend:', controles.length, 'controles')
+      
+      // 3. Usar estadísticas reales del backend
+      const estudiantesRegistrados = estadisticas.estudiantes_registrados || 0
+      const profesoresRegistrados = estadisticas.profesores_registrados || 0
+      const controlesPendientes = estadisticas.controles_pendientes || 0
+      const totalReportes = estadisticas.total_controles || 0
+      
+      // 4. Calcular áreas de consulta reales
+      const areasCount = {}
+      controles.forEach(control => {
+        const area = control.area_consulta || 'Sin especificar'
+        areasCount[area] = (areasCount[area] || 0) + 1
+      })
+      
+      const colores = ['blue', 'green', 'red', 'purple', 'orange', 'indigo', 'pink']
+      const areasConsultaReales = Object.entries(areasCount)
+        .map(([area, cantidad], index) => ({
+          area,
+          cantidad,
+          color: colores[index % colores.length]
+        }))
+        .sort((a, b) => b.cantidad - a.cantidad)
+      
+      // 5. Generar actividad reciente real
+      const actividadReal = controles
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 3)
+        .map(control => ({
+          id: `control_${control.id}`,
+          tipo: control.estado_flujo === 'con_resultado' ? 'completado' : 'reporte',
+          mensaje: `${control.nombre_consultante || 'Consultante'} - ${control.area_consulta || 'Sin área'}`,
+          tiempo: new Date(control.created_at).toLocaleDateString('es-ES')
+        }))
+      
+      // 6. Actualizar estados
+      setMetricas({
+        estudiantesRegistrados,
+        profesoresRegistrados,
+        controlesPendientes,
+        totalReportes
+      })
+      
+      setAreasConsulta(areasConsultaReales)
+      setActividadReciente(actividadReal.length > 0 ? actividadReal : [{
+        id: 'empty_1',
+        tipo: 'completado',
+        mensaje: 'Sistema funcionando correctamente',
+        tiempo: new Date().toLocaleDateString('es-ES')
+      }])
+      
+      console.log('✅ Datos REALES cargados:', {
+        estudiantes: estudiantesRegistrados,
+        profesores: profesoresRegistrados, 
+        pendientes: controlesPendientes,
+        total: totalReportes,
+        areas: areasConsultaReales.length
+      })
+      
     } catch (error) {
-      console.error('❌ Error general al cargar datos del coordinador:', error)
+      console.error('❌ Error al cargar datos reales:', error)
       
-      // Fallback final con datos exactos de la base de datos
-      const areasFallback = [
-        { area: 'Laboral', cantidad: 7, color: 'blue' },
-        { area: 'Penal', cantidad: 6, color: 'green' },
-        { area: 'Civil', cantidad: 5, color: 'red' },
-        { area: 'Comercial', cantidad: 4, color: 'purple' },
-        { area: 'Familia', cantidad: 4, color: 'orange' },
-        { area: 'Administrativo', cantidad: 2, color: 'indigo' },
-        { area: 'Constitucional', cantidad: 2, color: 'pink' }
-      ]
-      
-      const totalFallback = areasFallback.reduce((sum, area) => sum + area.cantidad, 0)
-      
-      const fallbackData = {
-        metricas: {
-          estudiantesRegistrados: 3,
-          profesoresRegistrados: 3,
-          controlesPendientes: 5, // ⭐ CONTROLES SIN RESULTADO
-          totalReportes: totalFallback
-        },
-        actividadReciente: [
-          {
-            id: 'fallback_1',
-            tipo: 'completado',
-            mensaje: 'Control completado - Derecho Laboral',
-            tiempo: new Date().toLocaleDateString('es-ES')
-          },
-          {
-            id: 'fallback_2',
-            tipo: 'reporte',
-            mensaje: 'Nuevo control - Derecho Civil',
-            tiempo: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString('es-ES')
-          },
-          {
-            id: 'fallback_3',
-            tipo: 'completado',
-            mensaje: 'Control completado - Derecho Penal',
-            tiempo: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString('es-ES')
-          }
-        ]
-      }
-      
-      setMetricas(fallbackData.metricas)
-      setActividadReciente(fallbackData.actividadReciente)
-      setAreasConsulta(areasFallback)
-      
-      console.log('🚀 Fallback completo activado - Dashboard 100% funcional en modo demo')
+      // Fallback con datos básicos
+      setMetricas({
+        estudiantesRegistrados: 0,
+        profesoresRegistrados: 0,
+        controlesPendientes: 0,
+        totalReportes: 0
+      })
+      setActividadReciente([{
+        id: 'error_1',
+        tipo: 'completado',
+        mensaje: 'Error cargando datos - Verificar conexión',
+        tiempo: new Date().toLocaleDateString('es-ES')
+      }])
+      setAreasConsulta([])
     } finally {
       setLoading(false)
     }
@@ -260,6 +172,8 @@ const DashboardCoordinador = () => {
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />
       case 'reporte':
         return <ClipboardDocumentListIcon className="h-5 w-5 text-blue-500" />
+      case 'completado':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500" />
       case 'pendiente':
         return <ExclamationTriangleIcon className="h-5 w-5 text-orange-500" />
       default:
@@ -267,12 +181,26 @@ const DashboardCoordinador = () => {
     }
   }
 
+
+  // ✅ Verificación de seguridad: no renderizar sin usuario
+  if (!user) {
+    return (
+      <div className={`min-h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className={`mt-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Cargando perfil...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ✅ Estado de carga de datos
   if (loading) {
     return (
       <div className={`min-h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-university-purple mx-auto"></div>
-          <p className={`mt-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Cargando dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className={`mt-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Cargando datos del dashboard...</p>
         </div>
       </div>
     )
@@ -282,6 +210,27 @@ const DashboardCoordinador = () => {
     <div className={`min-h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         
+        {/* Banner de Nuevas Funcionalidades */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg p-6 mb-6 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className={`p-2 rounded-lg ${isDark ? 'bg-white bg-opacity-20' : 'bg-purple-100'}`}>
+                <SparklesIcon className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">🎉 ¡Nuevas Funcionalidades Disponibles!</h2>
+                <p className="text-purple-100">Sistema de calificaciones, evaluaciones y más herramientas para coordinadores</p>
+              </div>
+            </div>
+            <Link
+              to="/calificaciones-intro"
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${isDark ? 'bg-gray-100 text-purple-700 hover:bg-gray-200' : 'bg-white text-purple-600 hover:bg-purple-50'}`}
+            >
+              Ver Detalles
+            </Link>
+          </div>
+        </div>
+
         {/* Bienvenida */}
         <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6 mb-6`}>
           <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-2`}>
@@ -387,9 +336,9 @@ const DashboardCoordinador = () => {
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Acción: Registrar Estudiante */}
+                {/* Acción: Crear Respaldo */}
                 <Link
-                  to="/gestion-estudiantes"
+                  to="/backup-sistema"
                   className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
                 >
                   <div className="flex items-center space-x-4">
@@ -397,15 +346,15 @@ const DashboardCoordinador = () => {
                       <PlusIcon className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                     </div>
                     <div className="flex-1">
-                      <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-blue-600`}>Registrar Estudiante</h3>
-                      <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Agregar nuevos estudiantes al sistema</p>
+                      <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-blue-600`}>Crear Respaldo</h3>
+                      <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Respaldar datos del sistema</p>
                     </div>
                   </div>
                 </Link>
 
                 {/* Acción: Estadísticas */}
                 <Link
-                  to="/control-operativo"
+                  to="/estadisticas"
                   className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
                 >
                   <div className="flex items-center space-x-4">
@@ -419,9 +368,9 @@ const DashboardCoordinador = () => {
                   </div>
                 </Link>
 
-                {/* Acción: Gestionar Estudiantes */}
+                {/* Acción: Gestión de Usuarios */}
                 <Link
-                  to="/gestion-estudiantes"
+                  to="/gestion-usuarios"
                   className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
                 >
                   <div className="flex items-center space-x-4">
@@ -429,8 +378,8 @@ const DashboardCoordinador = () => {
                       <UserGroupIcon className={`h-6 w-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
                     </div>
                     <div className="flex-1">
-                      <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-purple-600`}>Gestionar Estudiantes</h3>
-                      <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Administrar y editar estudiantes</p>
+                      <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-purple-600`}>Gestión de Usuarios</h3>
+                      <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Administrar estudiantes y profesores</p>
                     </div>
                   </div>
                 </Link>

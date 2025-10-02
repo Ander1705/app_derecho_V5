@@ -57,6 +57,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.ControlOperativo{},
 		&models.DocumentoAdjunto{},
 		&models.Notificacion{},
+		&models.Calificacion{},
 	)
 }
 
@@ -69,6 +70,10 @@ func CreateIndexes(db *gorm.DB) error {
 		"CREATE INDEX IF NOT EXISTS idx_notificaciones_user_id ON notificaciones(user_id)",
 		"CREATE INDEX IF NOT EXISTS idx_notificaciones_leida ON notificaciones(leida)",
 		"CREATE INDEX IF NOT EXISTS idx_documentos_adjuntos_control ON documento_adjuntos(control_operativo_id)",
+		"CREATE INDEX IF NOT EXISTS idx_calificaciones_control_operativo ON calificaciones(control_operativo_id)",
+		"CREATE INDEX IF NOT EXISTS idx_calificaciones_estudiante ON calificaciones(estudiante_id)",
+		"CREATE INDEX IF NOT EXISTS idx_calificaciones_profesor_evaluador ON calificaciones(profesor_evaluador_id)",
+		"CREATE INDEX IF NOT EXISTS idx_calificaciones_coordinador_evaluador ON calificaciones(coordinador_evaluador_id)",
 	}
 
 	for _, query := range queries {

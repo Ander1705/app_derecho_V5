@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,18 +27,18 @@ func NewProfesorHandler(db *gorm.DB, notificationService *services.NotificationS
 }
 
 func (h *ProfesorHandler) ListarProfesores(c *gin.Context) {
-	var profesores []models.Profesor
-	result := h.db.Preload("User").Where("activo = true").Find(&profesores)
+	var usuarios []models.User
+	result := h.db.Where("role = ? AND activo = true", "profesor").Find(&usuarios)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener profesores"})
 		return
 	}
 
 	var profesoresDropdown []models.ProfesorDropdown
-	for _, prof := range profesores {
+	for _, usuario := range usuarios {
 		profesoresDropdown = append(profesoresDropdown, models.ProfesorDropdown{
-			ID:     prof.ID,
-			Nombre: fmt.Sprintf("%s %s", prof.Nombres, prof.Apellidos),
+			ID:     usuario.ID,
+			Nombre: fmt.Sprintf("%s %s", strings.TrimSpace(usuario.Nombres), strings.TrimSpace(usuario.Apellidos)),
 		})
 	}
 
@@ -56,26 +57,77 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 		return
 	}
 
-	var profesor models.Profesor
-	if err := h.db.Where("user_id = ?", user.ID).First(&profesor).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Profesor no encontrado"})
-		return
-	}
-
-	nombreCompleto := fmt.Sprintf("%s %s", profesor.Nombres, profesor.Apellidos)
+	// Usar directamente los datos del usuario autenticado
+	nombreCompleto := fmt.Sprintf("%s %s", strings.TrimSpace(user.Nombres), strings.TrimSpace(user.Apellidos))
 
 	var controles []models.ControlOperativo
-	result := h.db.Preload("CreatedBy").
-		Where("nombre_docente_responsable = ? AND activo = true", nombreCompleto).
+	// Buscar con nombre exacto y también con variaciones de espacios
+	dbResult := h.db.Preload("CreatedBy").
+		Where("(TRIM(nombre_docente_responsable) = TRIM(?) OR nombre_docente_responsable = ?) AND activo = true", nombreCompleto, nombreCompleto).
 		Order("created_at DESC").
 		Find(&controles)
 
-	if result.Error != nil {
+	if dbResult.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener controles"})
 		return
 	}
 
-	c.JSON(http.StatusOK, controles)
+	// Crear respuesta con información de calificaciones usando mapas
+	var response []map[string]interface{}
+	for _, control := range controles {
+		// Verificar si ya existe una calificación para este control
+		var count int64
+		h.db.Model(&models.Calificacion{}).
+			Where("control_operativo_id = ? AND estudiante_id = ?", control.ID, control.CreatedByID).
+			Count(&count)
+
+		// Convertir el control a mapa y agregar el campo ya_calificado
+		controlMap := map[string]interface{}{
+			"id":                          control.ID,
+			"ciudad":                      control.Ciudad,
+			"fecha_dia":                   control.FechaDia,
+			"fecha_mes":                   control.FechaMes,
+			"fecha_ano":                   control.FechaAno,
+			"nombre_docente_responsable":  control.NombreDocenteResponsable,
+			"nombre_estudiante":           control.NombreEstudiante,
+			"area_consulta":              control.AreaConsulta,
+			"remitido_por":               control.RemitidoPor,
+			"correo_electronico":         control.CorreoElectronico,
+			"nombre_consultante":         control.NombreConsultante,
+			"edad":                       control.Edad,
+			"fecha_nacimiento_dia":       control.FechaNacimientoDia,
+			"fecha_nacimiento_mes":       control.FechaNacimientoMes,
+			"fecha_nacimiento_ano":       control.FechaNacimientoAno,
+			"lugar_nacimiento":           control.LugarNacimiento,
+			"sexo":                       control.Sexo,
+			"tipo_documento":             control.TipoDocumento,
+			"numero_documento":           control.NumeroDocumento,
+			"lugar_expedicion":           control.LugarExpedicion,
+			"direccion":                  control.Direccion,
+			"barrio":                     control.Barrio,
+			"estrato":                    control.Estrato,
+			"numero_telefonico":          control.NumeroTelefonico,
+			"numero_celular":             control.NumeroCelular,
+			"estado_civil":               control.EstadoCivil,
+			"escolaridad":                control.Escolaridad,
+			"profesion_oficio":           control.ProfesionOficio,
+			"descripcion_caso":           control.DescripcionCaso,
+			"concepto_estudiante":        control.ConceptoEstudiante,
+			"concepto_asesor":            control.ConceptoAsesor,
+			"estado_flujo":               control.EstadoFlujo,
+			"estado_resultado":           control.EstadoResultado,
+			"activo":                     control.Activo,
+			"created_at":                 control.CreatedAt,
+			"updated_at":                 control.UpdatedAt,
+			"created_by":                 control.CreatedByID,
+			"created_by_user":            control.CreatedBy,
+			"ya_calificado":              count > 0,
+		}
+
+		response = append(response, controlMap)
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *ProfesorHandler) CompletarConcepto(c *gin.Context) {
@@ -104,16 +156,11 @@ func (h *ProfesorHandler) CompletarConcepto(c *gin.Context) {
 		return
 	}
 
-	// Verificar que este profesor esté asignado a este control
-	var profesor models.Profesor
-	if err := h.db.Where("user_id = ?", user.ID).First(&profesor).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Profesor no encontrado"})
-		return
-	}
-
-	nombreCompleto := fmt.Sprintf("%s %s", profesor.Nombres, profesor.Apellidos)
+	// Usar directamente los datos del usuario autenticado
+	nombreCompleto := fmt.Sprintf("%s %s", strings.TrimSpace(user.Nombres), strings.TrimSpace(user.Apellidos))
 	
-	if control.NombreDocenteResponsable != nombreCompleto {
+	// Verificar con nombres flexibles (ignorando espacios extra)
+	if strings.TrimSpace(control.NombreDocenteResponsable) != strings.TrimSpace(nombreCompleto) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "No está autorizado para editar este control"})
 		return
 	}

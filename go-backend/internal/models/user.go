@@ -5,20 +5,23 @@ import (
 )
 
 type User struct {
-	ID              uint      `gorm:"primaryKey" json:"id"`
-	NombreUsuario   string    `gorm:"uniqueIndex" json:"nombre_usuario"`
-	Email           string    `gorm:"uniqueIndex" json:"email"`
-	PasswordHash    string    `json:"-"`
-	Role            string    `gorm:"default:'estudiante'" json:"role"`
-	Activo          bool      `gorm:"default:true" json:"activo"`
-	TipoDocumento   string    `gorm:"type:varchar(50)" json:"tipo_documento"`
-	NumeroDocumento string    `gorm:"type:varchar(50)" json:"numero_documento"`
-	Nombres         string    `gorm:"type:varchar(100)" json:"nombres"`
-	Apellidos       string    `gorm:"type:varchar(100)" json:"apellidos"`
-	NumeroCelular   string    `gorm:"type:varchar(20)" json:"numero_celular"`
-	Sede            string    `gorm:"type:varchar(100)" json:"sede"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID                 uint       `gorm:"primaryKey" json:"id"`
+	NombreUsuario      string     `gorm:"uniqueIndex" json:"nombre_usuario"`
+	Email              string     `gorm:"uniqueIndex" json:"email"`
+	PasswordHash       string     `json:"-"`
+	Role               string     `gorm:"default:'estudiante'" json:"role"`
+	Activo             bool       `gorm:"default:true" json:"activo"`
+	EmailVerified      bool       `gorm:"default:false" json:"email_verified"`
+	VerificationCode   *string    `gorm:"type:varchar(6)" json:"-"`
+	VerificationExpiry *time.Time `json:"-"`
+	TipoDocumento      string     `gorm:"type:varchar(50)" json:"tipo_documento"`
+	NumeroDocumento    string     `gorm:"type:varchar(50)" json:"numero_documento"`
+	Nombres            string     `gorm:"type:varchar(100)" json:"nombres"`
+	Apellidos          string     `gorm:"type:varchar(100)" json:"apellidos"`
+	NumeroCelular      string     `gorm:"type:varchar(20)" json:"numero_celular"`
+	Sede               string     `gorm:"type:varchar(100)" json:"sede"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 type Estudiante struct {
@@ -65,5 +68,6 @@ type UserResponse struct {
 	Sede              string    `json:"sede"`
 	CodigoEstudiantil *string   `json:"codigo_estudiantil,omitempty"`
 	Activo            bool      `json:"activo"`
+	EmailVerified     bool      `json:"email_verified"`
 	CreatedAt         time.Time `json:"created_at"`
 }

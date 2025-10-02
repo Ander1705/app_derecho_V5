@@ -1,0 +1,161 @@
+# ============================================================================
+# .dockerignore - Consultorio Jurídico UCMC
+# Excluir archivos innecesarios de los contextos de Docker
+# ============================================================================
+
+# ========================================
+# Control de Versiones
+# ========================================
+.git
+.gitignore
+.gitattributes
+.github/
+
+# ========================================
+# Documentación y README
+# ========================================
+README.md
+*.md
+docs/
+referencias/
+
+# ========================================
+# Archivos de Configuración de Desarrollo
+# ========================================
+.env*
+.claude
+CLAUDE.md
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile*
+.dockerignore
+
+# ========================================
+# Archivos Temporales y Logs
+# ========================================
+*.log
+logs/
+temp/
+tmp/
+*.tmp
+*.temp
+test_*
+debug_*
+
+# ========================================
+# Archivos de Testing
+# ========================================
+*_test.go
+*_test.js
+*_test.jsx
+test/
+tests/
+testing/
+coverage/
+.coverage
+*.test
+*.spec.js
+*.spec.jsx
+
+# ========================================
+# Node.js (para contexto backend)
+# ========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ========================================
+# Go (para contexto frontend)
+# ========================================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+go.mod
+go.sum
+vendor/
+
+# ========================================
+# Build y Compilación
+# ========================================
+build/
+dist/
+out/
+target/
+bin/
+pkg/
+
+# ========================================
+# Editores e IDEs
+# ========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ========================================
+# Archivos de Base de Datos
+# ========================================
+*.db
+*.sqlite
+*.sqlite3
+data/
+backups/
+
+# ========================================
+# Archivos de Media y Uploads
+# ========================================
+uploads/
+media/
+storage/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+
+# ========================================
+# Archivos de Configuración Específicos
+# ========================================
+nginx.conf
+nginx/
+k8s/
+kubernetes/
+deployment/
+
+# ========================================
+# Archivos de Scripts
+# ========================================
+scripts/
+setup_*.sh
+install_*.sh
+deploy_*.sh
+
+# ========================================
+# Archivos de Backup
+# ========================================
+*.backup
+*.bak
+*.old
+*_backup
+backup_*
+
+# ========================================
+# Certificados y Claves
+# ========================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+certificates/

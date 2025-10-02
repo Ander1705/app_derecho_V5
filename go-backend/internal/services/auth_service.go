@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"gorm.io/gorm"
@@ -11,16 +12,18 @@ import (
 )
 
 type AuthService struct {
-	db        *gorm.DB
-	jwtSecret string
-	jwtExp    int
+	db           *gorm.DB
+	jwtSecret    string
+	jwtExp       int
+	emailService *EmailService
 }
 
-func NewAuthService(db *gorm.DB, jwtSecret string, jwtExp int) *AuthService {
+func NewAuthService(db *gorm.DB, jwtSecret string, jwtExp int, emailService *EmailService) *AuthService {
 	return &AuthService{
-		db:        db,
-		jwtSecret: jwtSecret,
-		jwtExp:    jwtExp,
+		db:           db,
+		jwtSecret:    jwtSecret,
+		jwtExp:       jwtExp,
+		emailService: emailService,
 	}
 }
 
@@ -37,12 +40,18 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 		return nil, errors.New("credenciales inválidas")
 	}
 
+	// Verificar si el email está verificado
+	if !user.EmailVerified {
+		return nil, errors.New("debes verificar tu correo electrónico antes de iniciar sesión")
+	}
+
 	userResponse := models.UserResponse{
 		ID:            user.ID,
 		NombreUsuario: user.NombreUsuario,
 		Email:         user.Email,
 		Role:          user.Role,
 		Activo:        user.Activo,
+		EmailVerified: user.EmailVerified,
 		CreatedAt:     user.CreatedAt,
 	}
 
@@ -111,13 +120,14 @@ func (s *AuthService) RegistrarEstudiante(req models.RegistroEstudianteRequest) 
 		return nil, errors.New("código estudiantil inválido")
 	}
 
-	// Crear usuario
+	// Crear usuario (no verificado inicialmente)
 	user := models.User{
 		NombreUsuario:   req.NombreUsuario,
 		Email:           req.Email,
 		PasswordHash:    hashedPassword,
 		Role:            "estudiante",
 		Activo:          true,
+		EmailVerified:   false,
 		TipoDocumento:   req.TipoDocumento,
 		NumeroDocumento: req.NumeroDocumento,
 		Nombres:         req.Nombres,
@@ -148,34 +158,20 @@ func (s *AuthService) RegistrarEstudiante(req models.RegistroEstudianteRequest) 
 		return nil, errors.New("error creando registro de estudiante")
 	}
 
-	// Generar token
-	token, err := auth.GenerateToken(&user, s.jwtSecret, s.jwtExp)
-	if err != nil {
-		return nil, errors.New("error generando token")
+	// Generar y enviar código de verificación
+	code := s.emailService.GenerateVerificationCode()
+	if err := s.emailService.SetVerificationCode(user.ID, code); err != nil {
+		return nil, errors.New("error configurando verificación")
 	}
 
-	userResponse := models.UserResponse{
-		ID:                user.ID,
-		TipoDocumento:     estudiante.TipoDocumento,
-		NumeroDocumento:   estudiante.NumeroDocumento,
-		Nombres:           estudiante.Nombres,
-		Apellidos:         estudiante.Apellidos,
-		NumeroCelular:     estudiante.NumeroCelular,
-		NombreUsuario:     user.NombreUsuario,
-		Email:             user.Email,
-		Role:              user.Role,
-		Sede:              estudiante.Sede,
-		Activo:            user.Activo,
-		CreatedAt:         user.CreatedAt,
+	// Enviar email de verificación
+	name := fmt.Sprintf("%s %s", user.Nombres, user.Apellidos)
+	if err := s.emailService.SendVerificationEmail(user.Email, name, code); err != nil {
+		return nil, fmt.Errorf("error enviando email de verificación: %v", err)
 	}
-	codigo := strconv.Itoa(estudiante.CodigoEstudiantil)
-	userResponse.CodigoEstudiantil = &codigo
 
 	return &models.LoginResponse{
-		AccessToken: token,
-		TokenType:   "Bearer",
-		User:        userResponse,
-		Message:     "Estudiante registrado exitosamente",
+		Message: "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta.",
 	}, nil
 }
 
@@ -192,13 +188,14 @@ func (s *AuthService) RegistrarProfesor(req models.RegistroProfesorRequest) (*mo
 		return nil, errors.New("error procesando contraseña")
 	}
 
-	// Crear usuario
+	// Crear usuario (no verificado inicialmente)
 	user := models.User{
 		NombreUsuario:   req.NombreUsuario,
 		Email:           req.Email,
 		PasswordHash:    hashedPassword,
 		Role:            "profesor",
 		Activo:          true,
+		EmailVerified:   false,
 		TipoDocumento:   req.TipoDocumento,
 		NumeroDocumento: req.NumeroDocumento,
 		Nombres:         req.Nombres,
@@ -228,32 +225,20 @@ func (s *AuthService) RegistrarProfesor(req models.RegistroProfesorRequest) (*mo
 		return nil, errors.New("error creando registro de profesor")
 	}
 
-	// Generar token
-	token, err := auth.GenerateToken(&user, s.jwtSecret, s.jwtExp)
-	if err != nil {
-		return nil, errors.New("error generando token")
+	// Generar y enviar código de verificación
+	code := s.emailService.GenerateVerificationCode()
+	if err := s.emailService.SetVerificationCode(user.ID, code); err != nil {
+		return nil, errors.New("error configurando verificación")
 	}
 
-	userResponse := models.UserResponse{
-		ID:              user.ID,
-		TipoDocumento:   profesor.TipoDocumento,
-		NumeroDocumento: profesor.NumeroDocumento,
-		Nombres:         profesor.Nombres,
-		Apellidos:       profesor.Apellidos,
-		NumeroCelular:   profesor.NumeroCelular,
-		NombreUsuario:   user.NombreUsuario,
-		Email:           user.Email,
-		Role:            user.Role,
-		Sede:            profesor.Sede,
-		Activo:          user.Activo,
-		CreatedAt:       user.CreatedAt,
+	// Enviar email de verificación
+	name := fmt.Sprintf("%s %s", user.Nombres, user.Apellidos)
+	if err := s.emailService.SendVerificationEmail(user.Email, name, code); err != nil {
+		return nil, fmt.Errorf("error enviando email de verificación: %v", err)
 	}
 
 	return &models.LoginResponse{
-		AccessToken: token,
-		TokenType:   "Bearer",
-		User:        userResponse,
-		Message:     "Profesor registrado exitosamente",
+		Message: "Registro exitoso. Por favor verifica tu correo electrónico para activar tu cuenta.",
 	}, nil
 }
 
@@ -272,6 +257,7 @@ func (s *AuthService) ObtenerPerfil(userID uint) (*models.UserResponse, error) {
 		Email:         user.Email,
 		Role:          user.Role,
 		Activo:        user.Activo,
+		EmailVerified: user.EmailVerified,
 		CreatedAt:     user.CreatedAt,
 	}
 
@@ -299,4 +285,60 @@ func (s *AuthService) ObtenerPerfil(userID uint) (*models.UserResponse, error) {
 	}
 
 	return &userResponse, nil
+}
+
+// VerificarEmail verifica el código de email del usuario
+func (s *AuthService) VerificarEmail(req models.VerifyEmailRequest) error {
+	return s.emailService.VerifyEmailCode(req.Email, req.Code)
+}
+
+// ReenviarCodigoVerificacion reenvía el código de verificación
+func (s *AuthService) ReenviarCodigoVerificacion(req models.ResendVerificationRequest) error {
+	return s.emailService.ResendVerificationCode(req.Email)
+}
+
+// ForgotPassword envía código de recuperación de contraseña por email
+func (s *AuthService) ForgotPassword(req models.ForgotPasswordRequest) error {
+	// Verificar que el usuario existe
+	var user models.User
+	if err := s.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		// Por seguridad, no revelar si el email existe o no
+		return nil
+	}
+
+	// Enviar código de recuperación usando el servicio de email
+	return s.emailService.SendPasswordResetCode(req.Email)
+}
+
+// ResetPassword cambia la contraseña usando el código de verificación
+func (s *AuthService) ResetPassword(req models.ResetPasswordRequest) error {
+	// Verificar el código de recuperación
+	var user models.User
+	if err := s.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		return errors.New("usuario no encontrado")
+	}
+
+	// Verificar código usando el servicio de email
+	if err := s.emailService.VerifyPasswordResetCode(req.Email, req.Code); err != nil {
+		return err
+	}
+
+	// Hashear nueva contraseña
+	hashedPassword, err := auth.HashPassword(req.NewPassword)
+	if err != nil {
+		return errors.New("error procesando nueva contraseña")
+	}
+
+	// Actualizar contraseña en la base de datos
+	if err := s.db.Model(&user).Update("password_hash", hashedPassword).Error; err != nil {
+		return errors.New("error actualizando contraseña")
+	}
+
+	// Limpiar código de verificación
+	s.db.Model(&user).Updates(models.User{
+		VerificationCode:   nil,
+		VerificationExpiry: nil,
+	})
+
+	return nil
 }

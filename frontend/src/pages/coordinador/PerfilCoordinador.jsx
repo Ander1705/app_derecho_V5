@@ -53,8 +53,26 @@ const PerfilCoordinador = () => {
 
   const cargarEstadisticas = async () => {
     try {
-      const response = await axios.get('/api/auth/coordinador/estadisticas-perfil')
-      setEstadisticas(response.data)
+      // Obtener estadísticas reales del coordinador
+      const token = localStorage.getItem('token')
+      const response = await axios.get('/api/coordinador/estadisticas-completas', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      const stats = response.data
+      
+      setEstadisticas({
+        estudiantes_gestionados: stats.totalEstudiantes || 0,
+        reportes_supervisados: stats.totalControles || 0,
+        ultimo_acceso: new Date().toISOString(),
+        fecha_ingreso: user?.created_at || new Date().toISOString()
+      })
+      
+      console.log('✅ Estadísticas del perfil coordinador calculadas:', {
+        estudiantes_gestionados: stats.totalEstudiantes,
+        reportes_supervisados: stats.totalControles
+      })
+      
     } catch (error) {
       console.error('Error cargando estadísticas:', error)
       // Datos de ejemplo en caso de error

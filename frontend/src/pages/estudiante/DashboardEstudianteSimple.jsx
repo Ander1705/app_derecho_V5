@@ -22,7 +22,7 @@ const DashboardEstudianteSimple = () => {
         <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           Email: {user?.email}
         </p>
-        <div className="mt-8 p-4 bg-green-100 text-green-800 rounded">
+        <div className={`mt-8 p-4 rounded ${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}`}>
           ✅ El componente está funcionando correctamente
         </div>
       </div>

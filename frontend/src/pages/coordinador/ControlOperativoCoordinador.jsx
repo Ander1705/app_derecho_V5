@@ -1,19 +1,33 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import axios from 'axios'
+import { 
+  PencilSquareIcon, 
+  ArrowDownTrayIcon,
+  CheckCircleIcon,
+  XMarkIcon 
+} from '@heroicons/react/24/outline'
 
 const ControlOperativoCoordinador = () => {
+  // console.log('🔄 ControlOperativoCoordinador se está renderizando...')
+  
   const { user } = useAuth()
   const { isDark } = useTheme()
   const [searchParams] = useSearchParams()
   const [controles, setControles] = useState([])
+  const [controlesOriginales, setControlesOriginales] = useState([]) // Mantener copia de controles originales
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedControl, setSelectedControl] = useState(null)
   const [estadoResultado, setEstadoResultado] = useState('')
   const [asignandoResultado, setAsignandoResultado] = useState(false)
+  const [searchMode, setSearchMode] = useState(false) // Para saber si estamos en modo búsqueda
+  
+  // Estados para modal de confirmación
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const [controlesFiltrados, setControlesFiltrados] = useState([])
   const [filtros, setFiltros] = useState({
     busqueda: '',
@@ -29,37 +43,31 @@ const ControlOperativoCoordinador = () => {
     'solicitud_conciliacion': 'Solicitud de Conciliación'
   }
 
+  // Solo cargar controles una vez cuando el usuario es coordinador
   useEffect(() => {
     if (user?.role === 'coordinador') {
       const estadoParam = searchParams.get('estado')
       cargarControlesCompletos(estadoParam)
     }
-  }, [user, searchParams])
+  }, [user?.role]) // Solo depende del rol, NO de searchParams
 
-  // Efecto para aplicar filtros desde URL
+  // Aplicar filtro de área una sola vez al montar
   useEffect(() => {
     const areaParam = searchParams.get('area')
-    const estadoParam = searchParams.get('estado')
     
     if (areaParam) {
       console.log('🎯 Filtrando por área desde URL:', areaParam)
       setFiltros(prev => ({
         ...prev,
-        area: areaParam,
-        busqueda: ''
+        area: areaParam
       }))
     }
-    
-    if (estadoParam === 'pendiente') {
-      console.log('🎯 Mostrando controles pendientes desde URL')
-      // No necesitamos cambiar filtros, ya se carga directamente desde backend
-    }
-  }, [searchParams])
+  }, []) // Solo ejecutar una vez al montar
 
-  // Efecto para filtrar controles cuando cambian los filtros o los controles
-  useEffect(() => {
-    aplicarFiltros()
-  }, [controles, filtros])
+  // Ya no necesitamos useEffect para búsqueda - se maneja directamente en onChange
+
+  // Los filtros locales se aplicarán solo cuando no haya búsqueda activa
+  // No necesitamos useEffect para esto
 
   const meses = [
     { value: '1', label: 'Enero' },
@@ -86,39 +94,9 @@ const ControlOperativoCoordinador = () => {
   })()
 
   const aplicarFiltros = () => {
+    // Esta función solo aplica filtros locales (mes, año, área)
+    // NO maneja búsqueda por texto - eso se hace via API
     let controlesParaFiltrar = [...controles]
-
-    // Filtro por búsqueda (ID, cédula, nombre, área)
-    if (filtros.busqueda.trim()) {
-      const busqueda = filtros.busqueda.toLowerCase().trim()
-      controlesParaFiltrar = controlesParaFiltrar.filter(control => {
-        const nombreConsultante = control.nombre_consultante?.toLowerCase().trim() || ''
-        const nombreEstudiante = control.nombre_estudiante?.toLowerCase().trim() || ''
-        const nombreProfesor = control.nombre_docente_responsable?.toLowerCase().trim() || ''
-        const areaConsulta = control.area_consulta?.toLowerCase().trim() || ''
-        const numeroDocumento = control.numero_documento?.toString().toLowerCase() || ''
-        const numeroDocumentoEstudiante = control.created_by_user?.numero_documento?.toString().toLowerCase() || ''
-        const id = control.id?.toString().toLowerCase() || ''
-        
-        // Búsqueda exacta por ID (prioridad)
-        if (busqueda === id) {
-          return true
-        }
-        
-        // Búsqueda parcial por ID (si parece un número)
-        if (/^\d+$/.test(filtros.busqueda.trim()) && id.includes(busqueda)) {
-          return true
-        }
-        
-        // Búsqueda en otros campos
-        return nombreConsultante.includes(busqueda) ||
-               nombreEstudiante.includes(busqueda) ||
-               nombreProfesor.includes(busqueda) ||
-               areaConsulta.includes(busqueda) ||
-               numeroDocumento.includes(busqueda) ||
-               numeroDocumentoEstudiante.includes(busqueda)
-      })
-    }
 
     // Filtro específico por área de consulta
     if (filtros.area.trim()) {
@@ -176,11 +154,16 @@ const ControlOperativoCoordinador = () => {
   }
 
   const limpiarFiltros = () => {
+    console.log('🧹 Limpiando filtros...')
     setFiltros({
       busqueda: '',
       mes: '',
-      ano: ''
+      ano: '',
+      area: ''
     })
+    
+    // Restaurar datos originales
+    restaurarDatos()
   }
 
   const cargarControlesCompletos = async (estadoFiltro = null) => {
@@ -198,18 +181,125 @@ const ControlOperativoCoordinador = () => {
         headers: { Authorization: `Bearer ${token}` }
       })
       
-      // Ordenar por fecha de creación descendente (más recientes primero) y limitar a 50
+      // Ordenar por fecha de creación descendente (más recientes primero) y limitar a 100
       const controlesOrdenados = (response.data || [])
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 50)
+        .slice(0, 100)
       
       console.log('📋 Controles cargados y ordenados:', controlesOrdenados.length)
       setControles(controlesOrdenados)
+      setControlesOriginales(controlesOrdenados) // Guardar copia original
+      setControlesFiltrados(controlesOrdenados) // También inicializar filtrados
     } catch (error) {
       console.error('Error cargando controles:', error)
       setError('Error al cargar controles completos')
     } finally {
       setLoading(false)
+    }
+  }
+
+
+  // ⭐ BÚSQUEDA EN TIEMPO REAL - SIN DELAYS
+  const [searchTerm, setSearchTerm] = useState('')
+  
+  // Buscar inmediatamente mientras escribe
+  const handleInputChange = async (e) => {
+    const valor = e.target.value
+    setSearchTerm(valor)
+    console.log('📝 Buscando en tiempo real:', valor)
+    
+    // Si está vacío, restaurar datos inmediatamente
+    if (!valor.trim()) {
+      console.log('🔄 Restaurando datos originales')
+      setSearchMode(false)
+      setControles(controlesOriginales)
+      setControlesFiltrados(controlesOriginales)
+      return
+    }
+    
+    // Si tiene al menos 1 caracter, buscar inmediatamente
+    if (valor.trim().length >= 1) {
+      await ejecutarBusquedaTiempoReal(valor.trim())
+    }
+  }
+  
+  // Función para buscar en tiempo real
+  const ejecutarBusquedaTiempoReal = async (busqueda) => {
+    try {
+      const token = localStorage.getItem('token')
+      console.log('🔑 Token:', token ? 'Presente' : 'NO encontrado')
+      
+      let url = 'http://localhost:8000/api/control-operativo/search?'
+      const params = new URLSearchParams()
+      
+      if (/^\d+$/.test(busqueda)) {
+        // Solo buscar por ID cuando sea un número
+        params.append('id', busqueda)
+        console.log('🔢 Búsqueda SOLO por ID:', busqueda)
+      } else {
+        params.append('consultante', busqueda)
+        params.append('nombre', busqueda)
+        console.log('📝 Búsqueda por texto (nombres/consultante):', busqueda)
+      }
+      
+      url += params.toString()
+      console.log('🔍 URL de búsqueda completa:', url)
+      
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      console.log('📡 Respuesta completa:', response.data)
+      const resultados = response.data.controles || []
+      console.log('🎯 Controles encontrados:', resultados.length, 'resultados')
+      
+      // Logear algunos de los resultados para debug
+      if (resultados.length > 0) {
+        console.log('✅ ÉXITO: Encontrados', resultados.length, 'resultados')
+        console.log('📋 Primeros 2 resultados:', resultados.slice(0, 2).map(r => ({ id: r.id, nombre_consultante: r.nombre_consultante, numero_documento: r.numero_documento })))
+        
+        if (resultados.length === 1) {
+          console.log('🎯 RESULTADO ÚNICO - Control ID:', resultados[0].id, 'Consultante:', resultados[0].nombre_consultante)
+        }
+      } else {
+        console.log('❌ NO se encontraron resultados para la búsqueda:', busqueda)
+      }
+      
+      console.log('🔄 Actualizando estados...')
+      console.log('🔄 Antes - controles:', controles.length, 'controlesFiltrados:', controlesFiltrados.length)
+      
+      setControles(resultados)
+      setControlesFiltrados(resultados)
+      setSearchMode(true)
+      
+      console.log('🔄 Después de setear - resultados:', resultados.length)
+      
+      // Forzar re-render después de un pequeño delay para verificar
+      setTimeout(() => {
+        console.log('✅ Estados después de timeout - controles.length:', controles.length, 'controlesFiltrados.length:', controlesFiltrados.length)
+        console.log('🎨 searchMode:', searchMode)
+        console.log('🔄 FORZANDO RE-RENDER...')
+      }, 100)
+      
+    } catch (error) {
+      console.error('❌ Error completo en búsqueda:', error)
+      console.error('❌ Status:', error.response?.status)
+      console.error('❌ Data:', error.response?.data)
+      setControles([])
+      setControlesFiltrados([])
+      setSearchMode(true)
+    }
+  }
+  
+  const restaurarDatos = () => {
+    console.log('🔄 Restaurando datos...')
+    setSearchMode(false)
+    setSearchTerm('')
+    if (controlesOriginales.length > 0) {
+      setControles(controlesOriginales)
+      setControlesFiltrados(controlesOriginales)
+    } else {
+      cargarControlesCompletos()
     }
   }
 
@@ -224,28 +314,57 @@ const ControlOperativoCoordinador = () => {
       return
     }
 
+    const esActualizacion = selectedControl.estado_resultado
+    const accion = esActualizacion ? 'actualizado' : 'asignado'
+
+
     try {
       setAsignandoResultado(true)
       const token = localStorage.getItem('token')
       
-      await axios.put(
+      const response = await axios.put(
         `http://localhost:8000/api/coordinador/control-operativo/${selectedControl.id}/resultado`,
         { estado_resultado: estadoResultado },
         { headers: { Authorization: `Bearer ${token}` } }
       )
 
+
       // Actualizar el estado local inmediatamente
       setControles(prev => prev.map(control => 
         control.id === selectedControl.id 
-          ? { ...control, estado_resultado: estadoResultado }
+          ? { ...control, estado_resultado: estadoResultado, estado_flujo: 'con_resultado' }
           : control
       ))
       
-      alert('Resultado asignado exitosamente')
-      setSelectedControl(null)
+      // Actualizar el control seleccionado para reflejar el cambio
+      setSelectedControl(prev => ({
+        ...prev,
+        estado_resultado: estadoResultado,
+        estado_flujo: 'con_resultado'
+      }))
+      
+      // Mostrar modal de éxito
+      setSuccessMessage(`Resultado ${accion} exitosamente`)
+      setShowSuccessModal(true)
+      
+      // Auto-cerrar modal de éxito después de 3 segundos
+      setTimeout(() => {
+        setShowSuccessModal(false)
+      }, 3000)
+      
+      // Cerrar el modal principal después de 2 segundos
+      setTimeout(() => {
+        setSelectedControl(null)
+      }, 2000)
     } catch (error) {
       console.error('Error asignando resultado:', error)
-      alert('Error al asignar resultado')
+      
+      let mensajeError = `Error al ${esActualizacion ? 'actualizar' : 'asignar'} resultado`
+      if (error.response?.data?.error) {
+        mensajeError += `: ${error.response.data.error}`
+      }
+      
+      alert(mensajeError)
     } finally {
       setAsignandoResultado(false)
     }
@@ -278,7 +397,7 @@ const ControlOperativoCoordinador = () => {
   const getEstadoBadge = (estadoFlujo, estadoResultado) => {
     if (estadoResultado) {
       return (
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${isDark ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}`}>
           {estadosResultado[estadoResultado]}
         </span>
       )
@@ -286,14 +405,14 @@ const ControlOperativoCoordinador = () => {
     
     if (estadoFlujo === 'completo') {
       return (
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}`}>
           Listo para resultado
         </span>
       )
     }
 
     return (
-      <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>
         {estadoFlujo}
       </span>
     )
@@ -364,8 +483,8 @@ const ControlOperativoCoordinador = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg`}>
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                <svg className={`w-6 h-6 ${isDark ? 'text-green-400' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -374,7 +493,7 @@ const ControlOperativoCoordinador = () => {
                   Controles Completos
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {controles.length}
+                  {searchMode ? controles.length : controlesOriginales.length}
                 </p>
               </div>
             </div>
@@ -382,8 +501,8 @@ const ControlOperativoCoordinador = () => {
 
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg`}>
             <div className="flex items-center">
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-yellow-900/30' : 'bg-yellow-100'}`}>
+                <svg className={`w-6 h-6 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -400,8 +519,8 @@ const ControlOperativoCoordinador = () => {
 
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg`}>
             <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+                <svg className={`w-6 h-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -418,8 +537,8 @@ const ControlOperativoCoordinador = () => {
 
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg`}>
             <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                <svg className={`w-6 h-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -436,7 +555,7 @@ const ControlOperativoCoordinador = () => {
         </div>
 
         {/* Filtros de Búsqueda */}
-        {controles.length > 0 && (
+        {(controlesOriginales.length > 0 || searchMode) && (
           <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6 mb-6`}>
             <h3 className={`text-lg font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'} mb-4 flex items-center`}>
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -454,9 +573,10 @@ const ControlOperativoCoordinador = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="ID, nombre, cédula, área..."
-                    value={filtros.busqueda}
-                    onChange={(e) => setFiltros({...filtros, busqueda: e.target.value})}
+                    placeholder="ID, cédula o nombre - busca en tiempo real..."
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    autoComplete="off"
                     className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
                   />
                   <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -505,7 +625,7 @@ const ControlOperativoCoordinador = () => {
               <div className="flex items-end">
                 <button
                   onClick={limpiarFiltros}
-                  disabled={!filtros.busqueda && !filtros.mes && !filtros.ano}
+                  disabled={!searchTerm && !searchMode && !filtros.mes && !filtros.ano && !filtros.area}
                   className="w-full px-4 py-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -529,7 +649,10 @@ const ControlOperativoCoordinador = () => {
             </p>
           </div>
 
-          {controles.length === 0 ? (
+          {(() => {
+            console.log('🎨 RENDERIZADO - controlesOriginales.length:', controlesOriginales.length, 'searchMode:', searchMode, 'controlesFiltrados.length:', controlesFiltrados.length)
+            return controlesOriginales.length === 0 && !searchMode
+          })() ? (
             <div className="p-8 text-center">
               <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -541,7 +664,10 @@ const ControlOperativoCoordinador = () => {
                 Los controles aparecerán aquí cuando estudiantes y profesores los hayan completado
               </p>
             </div>
-          ) : controlesFiltrados.length === 0 ? (
+          ) : (() => {
+            console.log('🎨 CHECKING controlesFiltrados.length:', controlesFiltrados.length, '=== 0?', controlesFiltrados.length === 0)
+            return controlesFiltrados.length === 0
+          })() ? (
             <div className="p-8 text-center">
               <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -584,7 +710,7 @@ const ControlOperativoCoordinador = () => {
                       <th className={`w-28 px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                         Estado
                       </th>
-                      <th className={`w-36 px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                      <th className={`w-24 px-6 py-3 text-center text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                         Acciones
                       </th>
                     </tr>
@@ -650,18 +776,22 @@ const ControlOperativoCoordinador = () => {
                           {getEstadoBadge(control.estado_flujo, control.estado_resultado)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleVerDetalle(control)}
-                            className="text-university-blue hover:text-blue-700 mr-3"
-                          >
-                            {control.estado_resultado ? 'Ver detalle' : 'Asignar resultado'}
-                          </button>
-                          <button
-                            onClick={() => descargarPDF(control)}
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            Descargar PDF
-                          </button>
+                          <div className="flex items-center justify-center space-x-2">
+                            <button
+                              onClick={() => handleVerDetalle(control)}
+                              className={`p-2 rounded-lg transition-colors duration-200 ${isDark ? 'text-blue-400 hover:bg-blue-900/20 hover:text-blue-300' : 'text-university-blue hover:bg-blue-50 hover:text-blue-700'}`}
+                              title={control.estado_resultado ? 'Editar estado' : 'Asignar resultado'}
+                            >
+                              <PencilSquareIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => descargarPDF(control)}
+                              className={`p-2 rounded-lg transition-colors duration-200 ${isDark ? 'text-green-400 hover:bg-green-900/20 hover:text-green-300' : 'text-green-600 hover:bg-green-50 hover:text-green-700'}`}
+                              title="Descargar PDF"
+                            >
+                              <ArrowDownTrayIcon className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -741,18 +871,22 @@ const ControlOperativoCoordinador = () => {
                     </div>
 
                     {/* Botones de Acción */}
-                    <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-gray-200">
+                    <div className={`flex justify-center gap-4 pt-3 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                       <button
                         onClick={() => handleVerDetalle(control)}
-                        className="flex-1 px-4 py-2 bg-university-blue text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                        className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${isDark ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50' : 'bg-university-blue text-white hover:bg-blue-700'}`}
+                        title={control.estado_resultado ? 'Editar estado' : 'Asignar resultado'}
                       >
-                        {control.estado_resultado ? 'Ver detalle' : 'Asignar resultado'}
+                        <PencilSquareIcon className="w-4 h-4" />
+                        <span className="text-sm">{control.estado_resultado ? 'Editar' : 'Asignar'}</span>
                       </button>
                       <button
                         onClick={() => descargarPDF(control)}
-                        className="flex-1 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                        className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${isDark ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                        title="Descargar PDF"
                       >
-                        Descargar PDF
+                        <ArrowDownTrayIcon className="w-4 h-4" />
+                        <span className="text-sm">PDF</span>
                       </button>
                     </div>
                   </div>
@@ -851,38 +985,30 @@ const ControlOperativoCoordinador = () => {
                 </p>
               </div>
 
-              {!selectedControl.estado_resultado && (
-                <div className="mb-6">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Asignar Resultado Final *
-                  </label>
-                  <select
-                    value={estadoResultado}
-                    onChange={(e) => setEstadoResultado(e.target.value)}
-                    className={`${isDark ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-blue focus:border-transparent border`}
-                  >
-                    <option value="">Seleccione un resultado</option>
-                    {Object.entries(estadosResultado).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {selectedControl.estado_resultado && (
-                <div className="mb-6">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                    Resultado Asignado
-                  </label>
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <span className="text-blue-800 font-medium">
-                      {estadosResultado[selectedControl.estado_resultado]}
+              <div className="mb-6">
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                  {selectedControl.estado_resultado ? 'Editar Resultado Final' : 'Asignar Resultado Final'} *
+                </label>
+                <select
+                  value={estadoResultado}
+                  onChange={(e) => setEstadoResultado(e.target.value)}
+                  className={`${isDark ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-blue focus:border-transparent border`}
+                >
+                  <option value="">Seleccione un resultado</option>
+                  {Object.entries(estadosResultado).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                {selectedControl.estado_resultado && (
+                  <div className={`mt-2 p-2 rounded-lg ${isDark ? 'bg-blue-900/20 border border-blue-500/30' : 'bg-blue-50 border border-blue-200'}`}>
+                    <span className={`text-sm ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
+                      Estado actual: <span className="font-medium">{estadosResultado[selectedControl.estado_resultado]}</span>
                     </span>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               <div className="flex justify-end space-x-3">
                 <button
@@ -897,19 +1023,50 @@ const ControlOperativoCoordinador = () => {
                 >
                   Descargar PDF
                 </button>
-                {!selectedControl.estado_resultado && (
-                  <button
-                    onClick={handleAsignarResultado}
-                    disabled={asignandoResultado || !estadoResultado}
-                    className={`px-4 py-2 rounded-lg text-white ${
-                      asignandoResultado || !estadoResultado
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-university-blue hover:bg-blue-700'
-                    }`}
-                  >
-                    {asignandoResultado ? 'Asignando...' : 'Asignar Resultado'}
-                  </button>
-                )}
+                <button
+                  onClick={handleAsignarResultado}
+                  disabled={asignandoResultado || !estadoResultado}
+                  className={`px-4 py-2 rounded-lg text-white ${
+                    asignandoResultado || !estadoResultado
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-university-blue hover:bg-blue-700'
+                  }`}
+                >
+                  {asignandoResultado 
+                    ? 'Guardando...' 
+                    : selectedControl.estado_resultado 
+                      ? 'Actualizar Resultado' 
+                      : 'Asignar Resultado'
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de confirmación de éxito */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-md w-full mx-4 transform transition-all duration-300 scale-100`}>
+              <div className="flex items-center justify-center mb-4">
+                <div className={`flex items-center justify-center w-16 h-16 rounded-full ${isDark ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                  <CheckCircleIcon className={`w-8 h-8 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  ¡Éxito!
+                </h3>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
+                  {successMessage}
+                </p>
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors duration-200 ${isDark ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                >
+                  Entendido
+                </button>
               </div>
             </div>
           </div>

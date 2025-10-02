@@ -10,7 +10,11 @@ import {
   ScaleIcon,
   BuildingOfficeIcon,
   AcademicCapIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  StarIcon,
+  ChartBarIcon,
+  TrophyIcon,
+  UserIcon
 } from '@heroicons/react/24/outline'
 
 // Navegación específica por rol
@@ -36,10 +40,16 @@ const getNavigationByRole = (role) => {
         icon: ClipboardDocumentListIcon 
       },
       { 
-        name: 'Solicitudes de Conciliación', 
-        shortName: 'Conciliaciones',
-        href: '/solicitudes-conciliacion', 
-        icon: DocumentTextIcon 
+        name: 'Estadísticas', 
+        shortName: 'Estadísticas',
+        href: '/estadisticas', 
+        icon: ChartBarIcon 
+      },
+      { 
+        name: 'Calificaciones', 
+        shortName: 'Calificaciones',
+        href: '/calificaciones-coordinador', 
+        icon: TrophyIcon 
       },
     ]
   } else if (role === 'estudiante') {
@@ -51,10 +61,16 @@ const getNavigationByRole = (role) => {
         icon: HomeIcon 
       },
       { 
-        name: 'Control Operativo', 
+        name: 'Mis Controles', 
         shortName: 'Controles',
-        href: '/control-operativo-estudiante', 
+        href: '/mis-controles', 
         icon: ClipboardDocumentListIcon 
+      },
+      { 
+        name: 'Mis Calificaciones', 
+        shortName: 'Calificaciones',
+        href: '/mis-calificaciones', 
+        icon: TrophyIcon 
       },
       { 
         name: 'Mi Perfil', 
@@ -76,6 +92,18 @@ const getNavigationByRole = (role) => {
         shortName: 'Asignados',
         href: '/controles-asignados', 
         icon: ClipboardDocumentListIcon 
+      },
+      { 
+        name: 'Mis Estudiantes', 
+        shortName: 'Estudiantes',
+        href: '/mis-estudiantes', 
+        icon: UserGroupIcon 
+      },
+      { 
+        name: 'Calificar', 
+        shortName: 'Calificar',
+        href: '/calificaciones', 
+        icon: StarIcon 
       },
       { 
         name: 'Mi Perfil', 
@@ -192,6 +220,41 @@ const Sidebar = ({ onClose }) => {
             </span>
           </NavLink>
         ))}
+        
+        {/* Sección para Nuevas Funciones */}
+        {(user?.role === 'profesor' || user?.role === 'coordinador' || user?.role === 'estudiante') && (
+          <>
+            <div className={`px-3 py-2 mt-4 mb-2 ${isDark ? 'text-theme-muted' : 'text-purple-300'}`}>
+              <span className="text-xs font-semibold uppercase tracking-wider flex items-center">
+                <StarIcon className="h-4 w-4 mr-2" />
+                Nuevas Funciones
+              </span>
+            </div>
+            
+            {/* Enlace a la página de introducción */}
+            <NavLink
+              to="/calificaciones-intro"
+              className={({ isActive }) =>
+                `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 mb-3 ${
+                  isActive
+                    ? 'bg-university-gold text-white shadow-lg'
+                    : isDark
+                      ? 'text-theme-secondary hover:bg-theme-tertiary hover:text-theme-primary'
+                      : 'text-purple-100 hover:bg-purple-700 hover:text-white'
+                }`
+              }
+            >
+              <TrophyIcon className="flex-shrink-0 h-5 w-5 mr-3" />
+              <span className="flex-1">Información</span>
+            </NavLink>
+            
+            <div className={`px-3 py-2 rounded-lg ${isDark ? 'bg-theme-tertiary' : 'bg-purple-800 bg-opacity-50'}`}>
+              <p className={`text-xs text-center ${isDark ? 'text-theme-secondary' : 'text-purple-200'}`}>
+                Más adelante se darán a conocer las nuevas funciones
+              </p>
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Cerrar Sesión */}

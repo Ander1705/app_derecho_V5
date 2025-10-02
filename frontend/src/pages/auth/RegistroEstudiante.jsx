@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { 
   UserIcon, 
   EyeIcon, 
@@ -15,6 +16,7 @@ import {
 const RegistroEstudiante = () => {
   const navigate = useNavigate()
   const { registrarEstudianteManual, loading } = useAuth()
+  const { isDark } = useTheme()
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -88,7 +90,10 @@ const RegistroEstudiante = () => {
 
     const result = await registrarEstudianteManual(registroData)
     
-    if (result.success) {
+    if (result.success && result.requiresVerification) {
+      navigate(`/verificar-email?email=${encodeURIComponent(result.email)}`)
+    } else if (result.success) {
+      // Fallback para registros que no requieren verificación
       navigate('/login', {
         state: { 
           message: '✅ Registro exitoso. Inicia sesión con tu nueva cuenta.',

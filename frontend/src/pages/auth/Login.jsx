@@ -243,9 +243,17 @@ const Login = () => {
                                 </div>
                                 <div className="flex-1">
                                   <p className="text-red-200 text-sm font-medium">{error}</p>
+                                  {error && error.includes('verificar') && (
+                                    <Link 
+                                      to={`/verificar-email?email=${encodeURIComponent(formData.email)}`}
+                                      className="mt-2 inline-block text-xs text-blue-300 hover:text-blue-100 transition-colors underline"
+                                    >
+                                      Ir a verificación de email
+                                    </Link>
+                                  )}
                                   <button 
                                     onClick={clearError}
-                                    className="mt-2 text-xs text-red-300 hover:text-red-100 transition-colors"
+                                    className="mt-2 ml-4 text-xs text-red-300 hover:text-red-100 transition-colors"
                                   >
                                     Cerrar mensaje
                                   </button>

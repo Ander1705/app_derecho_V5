@@ -3,7 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 
 	"consultorio-juridico/internal/config"
@@ -36,7 +38,8 @@ func main() {
 	}
 
 	// Inicializar servicios
-	authService := services.NewAuthService(db, cfg.JWT.SecretKey, cfg.JWT.ExpirationTime)
+	emailService := services.NewEmailService(db, cfg.SMTP)
+	authService := services.NewAuthService(db, cfg.JWT.SecretKey, cfg.JWT.ExpirationTime, emailService)
 	notificationService := services.NewNotificationService(db)
 	pdfGenerator := pdf.NewPDFGenerator()
 
@@ -46,14 +49,46 @@ func main() {
 	profesorHandler := handlers.NewProfesorHandler(db, notificationService)
 	coordinadorHandler := handlers.NewCoordinadorHandler(db, notificationService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
+	calificacionHandler := handlers.NewCalificacionHandler(db, notificationService)
+
+	// Obtener configuraciones de optimización
+	optConfig := config.GetOptimizedConfig()
+
+	// Aplicar optimizaciones a la base de datos
+	if sqlDB, err := db.DB(); err == nil {
+		sqlDB.SetMaxIdleConns(optConfig.Database.MaxIdleConns)
+		sqlDB.SetMaxOpenConns(optConfig.Database.MaxOpenConns)
+		sqlDB.SetConnMaxLifetime(optConfig.Database.ConnMaxLifetime)
+		sqlDB.SetConnMaxIdleTime(optConfig.Database.ConnMaxIdleTime)
+		log.Printf("✅ Optimizaciones de DB aplicadas: MaxConns=%d, MaxIdle=%d", 
+			optConfig.Database.MaxOpenConns, optConfig.Database.MaxIdleConns)
+	}
 
 	// Crear router
 	router := gin.New()
 
-	// Middlewares globales
+	// Middlewares de optimización y seguridad
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+
+	// Compresión GZIP para todas las respuestas
+	router.Use(gzip.Gzip(gzip.DefaultCompression))
+
+	// CORS optimizado
 	router.Use(middleware.CORSMiddleware())
+
+	// Cache middleware para endpoints específicos (TTL de 15 minutos)
+	cacheExcludePaths := []string{
+		"/api/auth/login",
+		"/api/auth/registro/estudiante",
+		"/api/auth/registro/profesor",
+		"/api/control-operativo",
+		"/api/upload/temp",
+	}
+	router.Use(middleware.CacheMiddleware(15*time.Minute, cacheExcludePaths...))
+
+	// Iniciar limpieza automática de cache cada 5 minutos
+	middleware.StartCacheCleanup(5 * time.Minute)
 
 	// Rutas públicas
 	router.GET("/", func(c *gin.Context) {
@@ -61,8 +96,28 @@ func main() {
 	})
 
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "OK", "message": "Server is running"})
+		c.JSON(200, gin.H{
+			"status":     "OK",
+			"message":    "Server is running",
+			"timestamp":  time.Now().UTC(),
+			"cache":      middleware.GetCacheStats(),
+		})
 	})
+
+	// Endpoint para estadísticas de rendimiento (solo en desarrollo)
+	if cfg.Server.Env != "production" {
+		router.GET("/debug/cache", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"cache_stats": middleware.GetCacheStats(),
+				"config":      optConfig,
+			})
+		})
+
+		router.POST("/debug/cache/clear", func(c *gin.Context) {
+			middleware.ClearCache()
+			c.JSON(200, gin.H{"message": "Cache cleared successfully"})
+		})
+	}
 
 	// Rutas de autenticación (públicas)
 	authRoutes := router.Group("/api/auth")
@@ -70,6 +125,10 @@ func main() {
 		authRoutes.POST("/login", authHandler.Login)
 		authRoutes.POST("/registro/estudiante", authHandler.RegistrarEstudiante)
 		authRoutes.POST("/registro/profesor", authHandler.RegistrarProfesor)
+		authRoutes.POST("/verificar-email", authHandler.VerificarEmail)
+		authRoutes.POST("/reenviar-codigo", authHandler.ReenviarCodigoVerificacion)
+		authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
+		authRoutes.POST("/reset-password", authHandler.ResetPassword)
 	}
 
 	// Rutas protegidas
@@ -83,8 +142,11 @@ func main() {
 		// Rutas de control operativo
 		protected.POST("/control-operativo", controlOperativoHandler.CrearControl)
 		protected.GET("/control-operativo/list", controlOperativoHandler.ListarControles)
+		protected.GET("/control-operativo/search", controlOperativoHandler.BuscarControles)
 		protected.GET("/control-operativo/:id", controlOperativoHandler.ObtenerControl)
 		protected.GET("/control-operativo/:id/pdf", controlOperativoHandler.GenerarPDF)
+		protected.PUT("/control-operativo/:id/estado-resultado", controlOperativoHandler.EstablecerEstadoResultado)
+		protected.POST("/upload/temp", controlOperativoHandler.UploadTempFile)
 
 		// Rutas para profesores
 		profesorRoutes := protected.Group("/profesor")
@@ -92,6 +154,8 @@ func main() {
 		{
 			profesorRoutes.GET("/controles-asignados", profesorHandler.ObtenerControlesAsignados)
 			profesorRoutes.PUT("/control-operativo/:id/concepto", profesorHandler.CompletarConcepto)
+			profesorRoutes.POST("/calificaciones", calificacionHandler.CrearCalificacion)
+			profesorRoutes.PUT("/calificaciones/:id", calificacionHandler.ActualizarCalificacion)
 		}
 
 		// Rutas para coordinadores
@@ -102,7 +166,11 @@ func main() {
 			coordinadorRoutes.PUT("/usuario/:id/estado", coordinadorHandler.CambiarEstadoUsuario)
 			coordinadorRoutes.GET("/controles-completos", coordinadorHandler.ListarControlesCompletos)
 			coordinadorRoutes.PUT("/control-operativo/:id/resultado", coordinadorHandler.AsignarResultado)
+			coordinadorRoutes.PUT("/control-operativo/:id/editar-estado", coordinadorHandler.EditarEstadoResultado)
 			coordinadorRoutes.GET("/estadisticas", coordinadorHandler.ObtenerEstadisticas)
+			coordinadorRoutes.GET("/estadisticas-completas", coordinadorHandler.ObtenerEstadisticasCompletas)
+			coordinadorRoutes.POST("/calificaciones", calificacionHandler.CrearCalificacion)
+			coordinadorRoutes.PUT("/calificaciones/:id", calificacionHandler.ActualizarCalificacion)
 		}
 
 		// Rutas de profesores para dropdown (accesible por estudiantes)
@@ -114,6 +182,30 @@ func main() {
 		protected.PUT("/notificaciones/marcar-todas-leidas", notificationHandler.MarcarTodasComoLeidas)
 		protected.GET("/notificaciones/count", notificationHandler.ContarNoLeidas)
 
+		// Rutas de calificaciones (accesibles por todos los usuarios autenticados)
+		protected.GET("/calificaciones", calificacionHandler.ListarCalificaciones)
+		protected.GET("/calificaciones/estudiante", calificacionHandler.ListarCalificacionesEstudiante)
+		protected.GET("/calificaciones/estudiante/:estudiante_id/estadisticas", calificacionHandler.ObtenerEstadisticasEstudiante)
+		protected.GET("/calificaciones/:id", calificacionHandler.ObtenerCalificacion)
+
+		// Test endpoint for debugging (TEMPORARY)
+		protected.GET("/test/controles", func(c *gin.Context) {
+			var controles []models.ControlOperativo
+			query := db.Preload("CreatedBy").Where("activo = true AND estado_flujo IN ('completo', 'con_resultado')")
+			
+			result := query.Order("created_at DESC").Limit(100).Find(&controles)
+			
+			if result.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener controles", "details": result.Error.Error()})
+				return
+			}
+			
+			c.JSON(http.StatusOK, gin.H{
+				"total": len(controles),
+				"controles": controles,
+			})
+		})
+		
 		// Ruta de estadísticas para estudiantes
 		protected.GET("/auth/estudiante/estadisticas", func(c *gin.Context) {
 			user, exists := c.Get("user")

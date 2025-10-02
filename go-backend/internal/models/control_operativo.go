@@ -103,7 +103,8 @@ type ControlOperativoRequest struct {
 	Escolaridad              string `json:"escolaridad"`
 	ProfesionOficio          string `json:"profesion_oficio"`
 	DescripcionCaso          string `json:"descripcion_caso" binding:"required"`
-	ConceptoEstudiante       string `json:"concepto_estudiante" binding:"required"`
+	ConceptoEstudiante       string   `json:"concepto_estudiante" binding:"required"`
+	DocumentosAdjuntos       []string `json:"documentos_adjuntos,omitempty"`
 }
 
 type ConceptoAsesorRequest struct {

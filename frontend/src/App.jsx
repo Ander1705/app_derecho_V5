@@ -7,21 +7,28 @@ import ForgotPassword from './pages/auth/ForgotPassword'
 import ValidacionEstudiante from './pages/auth/ValidacionEstudiante'
 import RegistroEstudiante from './pages/auth/RegistroEstudiante'
 import RegistroProfesor from './pages/auth/RegistroProfesor'
+import VerificarEmail from './pages/auth/VerificarEmail'
 import RegisterSelector from './components/auth/RegisterSelector'
 import Dashboard from './pages/Dashboard'
+import DashboardCoordinador from './pages/DashboardCoordinador'
 import DashboardEstudiante from './pages/estudiante/DashboardEstudiante'
 import DashboardProfesor from './pages/profesor/DashboardProfesor'
 import ControlesAsignados from './pages/profesor/ControlesAsignados'
+import MisEstudiantes from './pages/profesor/MisEstudiantes'
+import Calificaciones from './pages/profesor/Calificaciones'
 import ClientsPage from './pages/clients/ClientsPage'
 import FormsPage from './pages/forms/FormsPage'
 import GestionUsuarios from './pages/coordinador/GestionUsuarios'
 import ControlOperativo from './pages/coordinador/ControlOperativo'
 import ControlOperativoCoordinador from './pages/coordinador/ControlOperativoCoordinador'
-import ControlOperativoEstudiante from './pages/estudiante/ControlOperativo'
+import Estadisticas from './pages/coordinador/Estadisticas'
+import CalificacionesCoordinador from './pages/coordinador/CalificacionesCoordinador'
+// import ControlOperativoEstudiante from './pages/estudiante/ControlOperativo' // Reemplazado por MisControles
 import MisControles from './pages/estudiante/MisControles'
+import MisCalificaciones from './pages/estudiante/MisCalificaciones'
 import Perfil from './pages/Perfil'
 import PerfilEstudiante from './pages/estudiante/PerfilEstudiante'
-import SolicitudesConciliacion from './pages/coordinador/SolicitudesConciliacion'
+import CalificacionesIntro from './pages/CalificacionesIntro'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Componente para mostrar el dashboard correcto según el rol
@@ -34,6 +41,10 @@ const DashboardRedirect = () => {
   
   if (user?.role === 'profesor') {
     return <DashboardProfesor />
+  }
+  
+  if (user?.role === 'coordinador') {
+    return <DashboardCoordinador />
   }
   
   return <Dashboard />
@@ -58,6 +69,7 @@ function App() {
             <Route path="/registro" element={<RegisterSelector />} />
             <Route path="/registro-estudiante" element={<RegistroEstudiante />} />
             <Route path="/registro-profesor" element={<RegistroProfesor />} />
+            <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/validacion-estudiante" element={<ValidacionEstudiante />} />
             
             {/* Rutas protegidas con layout para coordinadores y estudiantes */}
@@ -74,18 +86,21 @@ function App() {
               <Route path="forms/*" element={<FormsPage />} />
               <Route path="gestion-usuarios" element={<GestionUsuarios />} />
               <Route path="control-operativo" element={<ControlOperativoCoordinador />} />
-              <Route path="solicitudes-conciliacion" element={<SolicitudesConciliacion />} />
+              <Route path="estadisticas" element={<Estadisticas />} />
+              <Route path="calificaciones-coordinador" element={<CalificacionesCoordinador />} />
               
               {/* Rutas compartidas */}
               <Route path="perfil" element={<Perfil />} />
+              <Route path="calificaciones-intro" element={<CalificacionesIntro />} />
               
               {/* Rutas de estudiante */}
               <Route path="perfil-estudiante" element={<PerfilEstudiante />} />
-              <Route path="estudiante/control-operativo" element={<ControlOperativoEstudiante />} />
+              <Route path="estudiante/control-operativo" element={<MisControles />} />
               <Route path="mis-controles" element={<MisControles />} />
+              <Route path="mis-calificaciones" element={<MisCalificaciones />} />
               <Route path="estudiante/mis-reportes" element={<div className="p-6"><h1 className="text-2xl font-bold">Mis Reportes - En desarrollo</h1></div>} />
               <Route path="mis-casos" element={<div className="p-6"><h1 className="text-2xl font-bold">Mis Casos - En desarrollo</h1></div>} />
-              <Route path="control-operativo-estudiante" element={<ControlOperativoEstudiante />} />
+              <Route path="control-operativo-estudiante" element={<MisControles />} />
               <Route path="consultas" element={<div className="p-6"><h1 className="text-2xl font-bold">Consultas Jurídicas - En desarrollo</h1></div>} />
               <Route path="documentos-estudiante" element={<div className="p-6"><h1 className="text-2xl font-bold">Mis Documentos - En desarrollo</h1></div>} />
               <Route path="guias" element={<div className="p-6"><h1 className="text-2xl font-bold">Guías de Ayuda - En desarrollo</h1></div>} />
@@ -94,8 +109,10 @@ function App() {
               {/* Rutas de profesor */}
               <Route path="controles-asignados" element={<ControlesAsignados />} />
               <Route path="completar-secciones" element={<ControlesAsignados />} />
+              <Route path="mis-estudiantes" element={<MisEstudiantes />} />
+              <Route path="calificaciones" element={<Calificaciones />} />
               <Route path="historial-profesor" element={<div className="p-6"><h1 className="text-2xl font-bold">Historial Profesor - En desarrollo</h1></div>} />
-              <Route path="estudiantes-profesor" element={<div className="p-6"><h1 className="text-2xl font-bold">Estudiantes del Profesor - En desarrollo</h1></div>} />
+              <Route path="estudiantes-profesor" element={<MisEstudiantes />} />
               <Route path="actividad-profesor" element={<div className="p-6"><h1 className="text-2xl font-bold">Actividad del Profesor - En desarrollo</h1></div>} />
             </Route>
             

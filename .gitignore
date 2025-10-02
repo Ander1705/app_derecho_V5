@@ -316,6 +316,102 @@ fix_*.py
 test_*.py
 
 # ============================================================================
+# GO BACKEND ESPECÍFICO
+# ============================================================================
+
+# Archivos temporales de Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+go.work.sum
+
+# Vendor directory
+vendor/
+
+# Archivos de compilación de Go
+bin/
+pkg/
+
+# Archivos temporales de desarrollo
+test_*.go
+*_test_*.go
+debug_*.go
+temp_*.go
+
+# PDFs de prueba y desarrollo
+*.pdf
+!README.pdf
+test_*.pdf
+debug_*.pdf
+temp_*.pdf
+sample_*.pdf
+
+# Archivos de datos temporales
+data_sample.json
+test_data.json
+debug_data.json
+
+# Binarios compilados
+main
+app_derecho
+consultorio-juridico
+
+# ============================================================================
+# FRONTEND REACT ESPECÍFICO  
+# ============================================================================
+
+# Archivos de test del frontend
+src/**/*.test.jsx
+src/**/*.test.js
+src/**/*.spec.jsx
+src/**/*.spec.js
+
+# Archivos temporales de desarrollo
+src/**/test-*.jsx
+src/**/debug-*.jsx
+src/**/temp-*.jsx
+
+# Build específico de React
+build/
+dist/
+.next/
+.out/
+
+# ============================================================================
+# DEPLOYMENT Y PRODUCCIÓN
+# ============================================================================
+
+# Archivos de despliegue específicos
+deploy/
+deployment/
+k8s/
+kubernetes/
+
+# Datos persistentes de Docker
+storage/postgres_data/
+storage/redis_data/
+storage/nginx_cache/
+storage/prometheus_data/
+
+# Backups automáticos
+backups/
+*.sql.gz
+backup_*.sql
+
+# Logs de producción
+storage/logs/
+storage/nginx_logs/
+
+# Archivos de configuración específicos de servidor  
+apache.conf
+.htaccess
+
+# ============================================================================
 # NOTAS IMPORTANTES
 # ============================================================================
 

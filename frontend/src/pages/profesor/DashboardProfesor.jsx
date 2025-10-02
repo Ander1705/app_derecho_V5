@@ -63,7 +63,7 @@ const DashboardProfesor = () => {
         
         // Calcular métricas reales desde los controles
         const controlesAsignados = controles.length
-        const controlesCompletados = controles.filter(c => c.estado_flujo === 'completo').length
+        const controlesCompletados = controles.filter(c => c.estado_flujo === 'completo' || c.estado_flujo === 'con_resultado').length
         const controlesPendientes = controles.filter(c => c.estado_flujo === 'pendiente_profesor').length
         const estudiantesUnicos = [...new Set(controles.map(c => c.created_by_id || c.nombre_estudiante))].length
         
@@ -392,7 +392,7 @@ const DashboardProfesor = () => {
 
                 {/* Acción: Completar Secciones V */}
                 <Link
-                  to="controles-asignados"
+                  to="/controles-asignados?filtro=pendientes"
                   className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
                 >
                   <div className="flex items-center space-x-4">
@@ -424,7 +424,7 @@ const DashboardProfesor = () => {
 
                 {/* Acción: Estudiantes */}
                 <Link
-                  to="estudiantes-profesor"
+                  to="/mis-estudiantes"
                   className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
                 >
                   <div className="flex items-center space-x-4">

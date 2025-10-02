@@ -3,33 +3,176 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
+import InfoModal from '../../components/ui/InfoModal'
 
 const ControlesAsignados = () => {
   const { user } = useAuth()
   const { isDark } = useTheme()
   const [controles, setControles] = useState([])
+  const [controlesOriginales, setControlesOriginales] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedControl, setSelectedControl] = useState(null)
   const [conceptoAsesor, setConceptoAsesor] = useState('')
   const [saving, setSaving] = useState(false)
+  const [searchMode, setSearchMode] = useState(false)
   const [controlesFiltrados, setControlesFiltrados] = useState([])
   const [searchParams] = useSearchParams()
   const [filtros, setFiltros] = useState({
     busqueda: '',
     mes: '',
     ano: '',
-    estado: searchParams.get('estado') || 'todos'
+    estado: searchParams.get('estado') || searchParams.get('filtro') === 'pendientes' ? 'pendientes' : 'todos'
   })
+  
+  // Estados para calificaciones
+  const [showCalificacionModal, setShowCalificacionModal] = useState(false)
+  const [controlParaCalificar, setControlParaCalificar] = useState(null)
+  const [calificacionForm, setCalificacionForm] = useState({
+    cumplimiento_horario: 5,
+    presentacion_personal: 5,
+    conocimiento_juridico: 5,
+    trabajo_equipo: 5,
+    atencion_usuario: 5,
+    observaciones: ''
+  })
+  const [savingCalificacion, setSavingCalificacion] = useState(false)
+  
+  // Estados para modales de éxito y error
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     cargarControlesAsignados()
   }, [])
 
-  // Efecto para filtrar controles cuando cambian los filtros o los controles
+  // Efecto para actualizar filtros cuando cambian los parámetros de URL
   useEffect(() => {
-    aplicarFiltros()
-  }, [controles, filtros])
+    const estadoUrl = searchParams.get('estado') || (searchParams.get('filtro') === 'pendientes' ? 'pendientes' : 'todos')
+    console.log('🔄 Parámetro estado de URL cambió:', estadoUrl)
+    
+    // Limpiar búsqueda al cambiar filtros desde dashboard
+    setSearchTerm('')
+    setSearchMode(false)
+    
+    setFiltros(prevFiltros => ({
+      ...prevFiltros,
+      estado: estadoUrl,
+      busqueda: '' // También limpiar la búsqueda en filtros
+    }))
+    
+    // Restaurar datos originales
+    if (controlesOriginales.length > 0) {
+      setControles(controlesOriginales)
+      setControlesFiltrados(controlesOriginales)
+    }
+  }, [searchParams, controlesOriginales])
+
+  // ⭐ BÚSQUEDA EN TIEMPO REAL - BÚSQUEDA LOCAL EN CONTROLES DEL PROFESOR
+  // Diferente al coordinador: busca localmente en controlesOriginales en lugar de hacer llamadas al servidor
+  // Esto es más eficiente para profesores que tienen un conjunto limitado de controles asignados
+  const [searchTerm, setSearchTerm] = useState('')
+  
+  // Buscar inmediatamente mientras escribe (igual al coordinador)
+  const handleBusquedaChange = async (e) => {
+    const valor = e.target.value
+    setSearchTerm(valor)
+    setFiltros({...filtros, busqueda: valor}) // Mantener sincronizado
+    console.log('📝 Profesor buscando en tiempo real:', valor)
+    
+    // Si está vacío, restaurar datos inmediatamente
+    if (!valor.trim()) {
+      console.log('🔄 Restaurando datos originales del profesor')
+      console.log('📋 Controles originales a restaurar:', controlesOriginales.length)
+      console.log('📋 Primeros 2 controles originales:', controlesOriginales.slice(0, 2).map(c => ({ id: c.id, consultante: c.nombre_consultante })))
+      setSearchMode(false)
+      setControles(controlesOriginales)
+      setControlesFiltrados(controlesOriginales)
+      console.log('✅ Datos restaurados - searchMode: false')
+      return
+    }
+    
+    // Asegurarse de que hay controles originales antes de buscar
+    if (controlesOriginales.length === 0) {
+      console.log('⚠️ No hay controles originales cargados, recargando...')
+      await cargarControlesAsignados()
+      return
+    }
+    
+    // Si tiene al menos 1 caracter, buscar inmediatamente
+    if (valor.trim().length >= 1) {
+      await ejecutarBusquedaTiempoReal(valor.trim())
+    }
+  }
+  
+  // Función para buscar en tiempo real - BÚSQUEDA LOCAL EN CONTROLES DEL PROFESOR
+  const ejecutarBusquedaTiempoReal = async (busqueda) => {
+    try {
+      console.log('🔍 Profesor - Búsqueda local en controles asignados:', busqueda)
+      console.log('📋 Controles originales disponibles:', controlesOriginales.length)
+      
+      if (!controlesOriginales || controlesOriginales.length === 0) {
+        console.log('❌ No hay controles originales para buscar')
+        setControles([])
+        setControlesFiltrados([])
+        setSearchMode(true)
+        return
+      }
+      
+      // Buscar localmente en los controles ya asignados al profesor
+      const busquedaLower = busqueda.toLowerCase().trim()
+      const resultadosLocales = controlesOriginales.filter(control => {
+        const id = control.id?.toString().toLowerCase() || ''
+        const nombreConsultante = control.nombre_consultante?.toLowerCase().trim() || ''
+        const nombreEstudiante = control.nombre_estudiante?.toLowerCase().trim() || ''
+        const numeroDocumento = control.numero_documento?.toString().toLowerCase() || ''
+        const areaConsulta = control.area_consulta?.toLowerCase().trim() || ''
+        
+        // Si es búsqueda numérica, priorizar ID y documento
+        if (/^\d+$/.test(busqueda.trim())) {
+          console.log('🔢 Búsqueda numérica:', busqueda)
+          return id.includes(busquedaLower) || numeroDocumento.includes(busquedaLower)
+        } else {
+          console.log('📝 Búsqueda de texto:', busqueda)
+          return nombreConsultante.includes(busquedaLower) ||
+                 nombreEstudiante.includes(busquedaLower) ||
+                 areaConsulta.includes(busquedaLower) ||
+                 numeroDocumento.includes(busquedaLower)
+        }
+      })
+      
+      console.log('✅ Resultados encontrados localmente:', resultadosLocales.length)
+      
+      if (resultadosLocales.length > 0) {
+        console.log('📋 Controles encontrados:', resultadosLocales.map(r => ({ 
+          id: r.id, 
+          consultante: r.nombre_consultante,
+          estudiante: r.nombre_estudiante
+        })))
+      }
+      
+      // Actualizar estados
+      setControles(resultadosLocales)
+      setControlesFiltrados(resultadosLocales)
+      setSearchMode(true)
+      
+    } catch (error) {
+      console.error('❌ Error en búsqueda local del profesor:', error)
+      setControles([])
+      setControlesFiltrados([])
+      setSearchMode(true)
+    }
+  }
+
+  // Efecto para filtrar controles localmente solo por mes/año/estado cuando no hay búsqueda
+  useEffect(() => {
+    if (!searchTerm.trim() && !searchMode) {
+      console.log('🎛️ Aplicando filtros locales (mes/año/estado)')
+      aplicarFiltros()
+    }
+  }, [controles, filtros.mes, filtros.ano, filtros.estado, searchTerm, searchMode])
 
   const meses = [
     { value: '1', label: 'Enero' },
@@ -58,9 +201,9 @@ const ControlesAsignados = () => {
   const aplicarFiltros = () => {
     let controlesParaFiltrar = [...controles]
 
-    // Filtro por búsqueda (ID, cédula, nombre, área)
-    if (filtros.busqueda.trim()) {
-      const busqueda = filtros.busqueda.toLowerCase().trim()
+    // Filtro por búsqueda (ID, cédula, nombre, área) - NOTA: Ya no se usa porque tenemos búsqueda en tiempo real
+    if (searchTerm.trim()) {
+      const busqueda = searchTerm.toLowerCase().trim()
       controlesParaFiltrar = controlesParaFiltrar.filter(control => {
         const nombreConsultante = control.nombre_consultante?.toLowerCase().trim() || ''
         const nombreEstudiante = control.nombre_estudiante?.toLowerCase().trim() || ''
@@ -74,7 +217,7 @@ const ControlesAsignados = () => {
         }
         
         // Búsqueda parcial por ID (si parece un número)
-        if (/^\d+$/.test(filtros.busqueda.trim()) && id.includes(busqueda)) {
+        if (/^\d+$/.test(searchTerm.trim()) && id.includes(busqueda)) {
           return true
         }
         
@@ -107,7 +250,7 @@ const ControlesAsignados = () => {
             const fechaCreacion = new Date(control.created_at)
             
             if (filtros.mes && !isNaN(fechaCreacion.getTime())) {
-              cumpleMes = fechaCreacion.getMonth() === parseInt(filtros.mes) - 1
+              cumpleMes = (fechaCreacion.getMonth() + 1) === parseInt(filtros.mes)
             }
             
             if (filtros.ano && !isNaN(fechaCreacion.getTime())) {
@@ -130,18 +273,23 @@ const ControlesAsignados = () => {
 
     // Filtro por estado
     if (filtros.estado !== 'todos') {
+      console.log('🎛️ Aplicando filtro de estado:', filtros.estado)
       switch (filtros.estado) {
         case 'pendientes':
           controlesParaFiltrar = controlesParaFiltrar.filter(control => 
             control.estado_flujo === 'pendiente_profesor'
           )
+          console.log('📋 Controles pendientes encontrados:', controlesParaFiltrar.length)
           break
         case 'completados':
           controlesParaFiltrar = controlesParaFiltrar.filter(control => 
-            control.estado_flujo === 'completo'
+            control.estado_flujo === 'completo' || control.estado_flujo === 'con_resultado'
           )
+          console.log('📋 Controles completados encontrados:', controlesParaFiltrar.length)
           break
       }
+    } else {
+      console.log('📋 Mostrando todos los controles:', controlesParaFiltrar.length)
     }
 
     setControlesFiltrados(controlesParaFiltrar)
@@ -154,7 +302,12 @@ const ControlesAsignados = () => {
       ano: '',
       estado: 'todos'
     })
+    setSearchTerm('') // También limpiar el término de búsqueda
+    setSearchMode(false)
+    // Recargar controles normales cuando se limpian filtros
+    cargarControlesAsignados()
   }
+
 
   const cargarControlesAsignados = async () => {
     try {
@@ -165,8 +318,20 @@ const ControlesAsignados = () => {
         const response = await axios.get('http://localhost:8000/api/profesor/controles-asignados', {
           headers: { Authorization: `Bearer ${token}` }
         })
-        setControles(response.data)
-        console.log('✅ Controles cargados desde el backend:', response.data.length)
+        // Extraer solo el array de controles de la respuesta
+        const controlesArray = Array.isArray(response.data) ? response.data : (response.data?.data || [])
+        setControles(controlesArray)
+        setControlesOriginales(controlesArray)
+        console.log('✅ Controles cargados desde el backend:', controlesArray.length)
+        console.log('📋 Controles originales establecidos:', controlesArray.length)
+        
+        // MENSAJE ESPECÍFICO PARA BOTONES CALIFICAR
+        const controlesCompletos = controlesArray?.filter(c => c.estado_flujo === 'completo') || []
+        if (controlesCompletos.length > 0) {
+          console.log('🎯 SE DEBEN MOSTRAR BOTONES CALIFICAR PARA:', controlesCompletos.map(c => `Control ID ${c.id} - ${c.nombre_estudiante}`))
+        } else {
+          console.log('❌ NO HAY CONTROLES COMPLETOS - NO SE MOSTRARAN BOTONES CALIFICAR')
+        }
       } catch (backendError) {
         console.log('🔧 Backend no disponible, usando datos mock para demostración')
         
@@ -223,14 +388,16 @@ const ControlesAsignados = () => {
         ]
         
         setControles(mockControles)
+        setControlesOriginales(mockControles)
         console.log('📊 Usando datos mock - Total controles:', mockControles.length)
+        console.log('📋 Controles originales mock establecidos:', mockControles.length)
       }
     } catch (error) {
       console.error('❌ Error general cargando controles:', error)
       setError('Error al cargar los controles operativos')
       
       // Fallback con al menos un control de ejemplo
-      setControles([
+      const fallbackControles = [
         {
           id: 1,
           created_at: new Date().toISOString(),
@@ -243,7 +410,10 @@ const ControlesAsignados = () => {
           descripcion_caso: 'Caso de demostración del sistema',
           concepto_estudiante: 'Análisis de demostración'
         }
-      ])
+      ]
+      setControles(fallbackControles)
+      setControlesOriginales(fallbackControles)
+      console.log('🆘 Fallback controles establecidos:', fallbackControles.length)
     } finally {
       setLoading(false)
     }
@@ -256,7 +426,8 @@ const ControlesAsignados = () => {
 
   const handleGuardarConcepto = async () => {
     if (!conceptoAsesor.trim()) {
-      alert('Por favor ingrese el concepto del asesor')
+      setErrorMessage('Por favor ingrese el concepto del asesor')
+      setShowErrorModal(true)
       return
     }
 
@@ -270,15 +441,93 @@ const ControlesAsignados = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       )
 
-      alert('Concepto guardado exitosamente. El estudiante será notificado.')
+      // Mostrar modal de éxito
+      setSuccessMessage('Concepto de asesor jurídico guardado exitosamente. El estudiante será notificado.')
+      setShowSuccessModal(true)
       setSelectedControl(null)
       cargarControlesAsignados() // Recargar la lista
     } catch (error) {
       console.error('Error guardando concepto:', error)
-      alert('Error al guardar el concepto')
+      setErrorMessage('Error al guardar el concepto: ' + (error.response?.data?.error || error.message))
+      setShowErrorModal(true)
     } finally {
       setSaving(false)
     }
+  }
+
+  // Funciones para calificaciones
+  const handleCalificarEstudiante = (control) => {
+    setControlParaCalificar(control)
+    setCalificacionForm({
+      cumplimiento_horario: 5,
+      presentacion_personal: 5,
+      conocimiento_juridico: 5,
+      trabajo_equipo: 5,
+      atencion_usuario: 5,
+      observaciones: ''
+    })
+    setShowCalificacionModal(true)
+  }
+
+  const handleGuardarCalificacion = async () => {
+    try {
+      setSavingCalificacion(true)
+      const token = localStorage.getItem('token')
+      
+      // Obtener el ID del estudiante creador del control
+      const estudianteId = controlParaCalificar.created_by || controlParaCalificar.created_by_id
+      
+      if (!estudianteId) {
+        setErrorMessage('Error: No se pudo identificar al estudiante para calificar')
+        setShowErrorModal(true)
+        return
+      }
+
+      const calificacionData = {
+        control_operativo_id: controlParaCalificar.id,
+        estudiante_id: estudianteId,
+        cumplimiento_horario: calificacionForm.cumplimiento_horario,
+        presentacion_personal: calificacionForm.presentacion_personal,
+        conocimiento_juridico: calificacionForm.conocimiento_juridico,
+        trabajo_equipo: calificacionForm.trabajo_equipo,
+        atencion_usuario: calificacionForm.atencion_usuario,
+        observaciones: calificacionForm.observaciones
+      }
+
+      await axios.post(
+        'http://localhost:8000/api/profesor/calificaciones',
+        calificacionData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      // Mostrar modal de éxito
+      setSuccessMessage(`¡Calificación guardada exitosamente! El control #${controlParaCalificar.id} del estudiante ${controlParaCalificar.nombre_estudiante} ha sido calificado y ya no necesita calificación adicional.`)
+      setShowSuccessModal(true)
+      setShowCalificacionModal(false)
+      setControlParaCalificar(null)
+      
+      // Recargar controles para actualizar estados
+      cargarControlesAsignados()
+    } catch (error) {
+      console.error('Error guardando calificación:', error)
+      if (error.response?.status === 409) {
+        setErrorMessage('Error: Ya existe una calificación para este estudiante en este control operativo')
+      } else {
+        setErrorMessage('Error al guardar la calificación: ' + (error.response?.data?.error || error.message))
+      }
+      setShowErrorModal(true)
+    } finally {
+      setSavingCalificacion(false)
+    }
+  }
+
+  const calcularPromedio = () => {
+    const suma = calificacionForm.cumplimiento_horario + 
+                 calificacionForm.presentacion_personal + 
+                 calificacionForm.conocimiento_juridico + 
+                 calificacionForm.trabajo_equipo + 
+                 calificacionForm.atencion_usuario
+    return (suma / 5).toFixed(1)
   }
 
   const getEstadoBadge = (estadoFlujo) => {
@@ -436,9 +685,9 @@ const ControlesAsignados = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="ID, nombre, cédula, área..."
-                    value={filtros.busqueda}
-                    onChange={(e) => setFiltros({...filtros, busqueda: e.target.value})}
+                    placeholder="Buscar por ID, número documento, nombre consultante..."
+                    value={searchTerm}
+                    onChange={handleBusquedaChange}
                     className={`w-full pl-10 pr-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
                   />
                   <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -495,7 +744,7 @@ const ControlesAsignados = () => {
                 >
                   <option value="todos">Todos ({controlesFiltrados.length})</option>
                   <option value="pendientes">Pendientes ({controles.filter(c => c.estado_flujo === 'pendiente_profesor').length})</option>
-                  <option value="completados">Completados ({controles.filter(c => c.estado_flujo === 'completo').length})</option>
+                  <option value="completados">Completados ({controles.filter(c => c.estado_flujo === 'completo' || c.estado_flujo === 'con_resultado').length})</option>
                 </select>
               </div>
 
@@ -503,7 +752,7 @@ const ControlesAsignados = () => {
               <div className="flex items-end lg:col-span-1">
                 <button
                   onClick={limpiarFiltros}
-                  disabled={!filtros.busqueda && !filtros.mes && !filtros.ano && filtros.estado === 'todos'}
+                  disabled={!searchTerm && !filtros.mes && !filtros.ano && filtros.estado === 'todos'}
                   className="w-full px-3 py-2 text-sm bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -635,6 +884,23 @@ const ControlesAsignados = () => {
                         >
                           {control.estado_flujo === 'pendiente_profesor' ? 'Completar' : 'Ver detalle'}
                         </button>
+                        {control.estado_flujo === 'completo' && !control.ya_calificado && (
+                          <button
+                            onClick={() => {
+                              console.log('🎯 Botón Calificar clickeado para control:', control)
+                              handleCalificarEstudiante(control)
+                            }}
+                            className="text-green-600 hover:text-green-700 text-sm"
+                            title="Calificar estudiante"
+                          >
+                            Calificar
+                          </button>
+                        )}
+                        {control.estado_flujo === 'completo' && control.ya_calificado && (
+                          <span className={`text-sm font-medium ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                            ✅ Calificado
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -700,14 +966,34 @@ const ControlesAsignados = () => {
                     </div>
                   </div>
 
-                  {/* Botón de Acción */}
-                  <div className={`pt-3 border-t ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                  {/* Botones de Acción */}
+                  <div className={`pt-3 border-t ${isDark ? 'border-gray-600' : 'border-gray-200'} space-y-2`}>
                     <button
                       onClick={() => handleVerDetalle(control)}
                       className="w-full px-4 py-2 bg-university-purple text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
                     >
                       {control.estado_flujo === 'pendiente_profesor' ? 'Completar' : 'Ver detalle'}
                     </button>
+                    {control.estado_flujo === 'completo' && !control.ya_calificado && (
+                      <button
+                        onClick={() => {
+                          console.log('🎯 Botón Calificar (móvil) clickeado para control:', control)
+                          handleCalificarEstudiante(control)
+                        }}
+                        className="w-full px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Calificar Estudiante
+                      </button>
+                    )}
+                    {control.estado_flujo === 'completo' && control.ya_calificado && (
+                      <div className={`w-full px-4 py-2 text-sm rounded-lg text-center font-medium ${isDark ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-800'}`}>
+                        ✅ Ya Calificado
+                      </div>
+                    )}
+                    {/* DEBUG: Mostrar estado del control en móvil */}
+                    <div className="text-xs text-gray-500 mt-2">
+                      Estado: {control.estado_flujo} | ID: {control.id}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -823,6 +1109,261 @@ const ControlesAsignados = () => {
             </div>
           </div>
         )}
+
+        {/* Modal para calificar estudiante */}
+        {showCalificacionModal && controlParaCalificar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 w-full max-w-4xl max-h-screen overflow-y-auto`}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Calificar Estudiante - Control #{controlParaCalificar.id}
+                </h3>
+                <button
+                  onClick={() => setShowCalificacionModal(false)}
+                  className={`${isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'}`}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Información del estudiante */}
+              <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4 mb-6`}>
+                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  Información del Estudiante
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Estudiante:</span>
+                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {controlParaCalificar.nombre_estudiante || 'Sin nombre'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Área de Consulta:</span>
+                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {controlParaCalificar.area_consulta || 'Sin especificar'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Criterios de evaluación */}
+              <div className="space-y-6">
+                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  Criterios de Evaluación (1 = Muy deficiente, 5 = Excelente)
+                </h4>
+
+                {/* Cumplimiento del horario */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    CUMPLIMIENTO DEL HORARIO
+                  </label>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                    El/la estudiante llegó a tiempo al turno
+                  </p>
+                  <div className="flex space-x-4">
+                    {[1, 2, 3, 4, 5].map(valor => (
+                      <label key={valor} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="cumplimiento_horario"
+                          value={valor}
+                          checked={calificacionForm.cumplimiento_horario === valor}
+                          onChange={(e) => setCalificacionForm({
+                            ...calificacionForm,
+                            cumplimiento_horario: parseInt(e.target.value)
+                          })}
+                          className="mr-2"
+                        />
+                        <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>{valor}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Presentación personal */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    PRESENTACIÓN PERSONAL
+                  </label>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                    El/la estudiante se presenta a la actividad con ropa formal, NO JEANS, NO TENNIS, entre otros
+                  </p>
+                  <div className="flex space-x-4">
+                    {[1, 2, 3, 4, 5].map(valor => (
+                      <label key={valor} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="presentacion_personal"
+                          value={valor}
+                          checked={calificacionForm.presentacion_personal === valor}
+                          onChange={(e) => setCalificacionForm({
+                            ...calificacionForm,
+                            presentacion_personal: parseInt(e.target.value)
+                          })}
+                          className="mr-2"
+                        />
+                        <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>{valor}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Conocimiento jurídico */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    CONOCIMIENTO JURÍDICO
+                  </label>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                    El/la estudiante demuestra sus habilidades de conocimiento enmarcadas en el ámbito legal
+                  </p>
+                  <div className="flex space-x-4">
+                    {[1, 2, 3, 4, 5].map(valor => (
+                      <label key={valor} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="conocimiento_juridico"
+                          value={valor}
+                          checked={calificacionForm.conocimiento_juridico === valor}
+                          onChange={(e) => setCalificacionForm({
+                            ...calificacionForm,
+                            conocimiento_juridico: parseInt(e.target.value)
+                          })}
+                          className="mr-2"
+                        />
+                        <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>{valor}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Trabajo en equipo */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    TRABAJO EN EQUIPO
+                  </label>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                    El/la estudiante brindó apoyo a sus compañeros(as) durante la jornada, mostró actitud de apoyo en el desarrollo del turno
+                  </p>
+                  <div className="flex space-x-4">
+                    {[1, 2, 3, 4, 5].map(valor => (
+                      <label key={valor} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="trabajo_equipo"
+                          value={valor}
+                          checked={calificacionForm.trabajo_equipo === valor}
+                          onChange={(e) => setCalificacionForm({
+                            ...calificacionForm,
+                            trabajo_equipo: parseInt(e.target.value)
+                          })}
+                          className="mr-2"
+                        />
+                        <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>{valor}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Atención al usuario */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    ATENCIÓN AL USUARIO
+                  </label>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                    El/la estudiante brindó una atención cordial y respetuosa a los usuarios durante la jornada, mostrando disposición, empatía y actitud de servicio en todo momento
+                  </p>
+                  <div className="flex space-x-4">
+                    {[1, 2, 3, 4, 5].map(valor => (
+                      <label key={valor} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="atencion_usuario"
+                          value={valor}
+                          checked={calificacionForm.atencion_usuario === valor}
+                          onChange={(e) => setCalificacionForm({
+                            ...calificacionForm,
+                            atencion_usuario: parseInt(e.target.value)
+                          })}
+                          className="mr-2"
+                        />
+                        <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>{valor}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Observaciones */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Observaciones Adicionales (Opcional)
+                  </label>
+                  <textarea
+                    value={calificacionForm.observaciones}
+                    onChange={(e) => setCalificacionForm({
+                      ...calificacionForm,
+                      observaciones: e.target.value
+                    })}
+                    rows={3}
+                    placeholder="Comentarios adicionales sobre el desempeño del estudiante..."
+                    className={`${isDark ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-purple focus:border-transparent border`}
+                  />
+                </div>
+
+                {/* Promedio calculado */}
+                <div className={`${isDark ? 'bg-purple-900/30 border-purple-800' : 'bg-purple-50 border-purple-200'} rounded-lg p-4 border`}>
+                  <div className="text-center">
+                    <span className={`text-sm ${isDark ? 'text-purple-300' : 'text-purple-700'}`}>Promedio General</span>
+                    <div className={`text-3xl font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                      {calcularPromedio()}/5.0
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowCalificacionModal(false)}
+                  className={`px-4 py-2 rounded-lg border ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleGuardarCalificacion}
+                  disabled={savingCalificacion}
+                  className={`px-4 py-2 rounded-lg text-white ${
+                    savingCalificacion
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
+                >
+                  {savingCalificacion ? 'Guardando...' : 'Guardar Calificación'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Éxito */}
+        <InfoModal
+          isOpen={showSuccessModal}
+          title="¡Operación Exitosa!"
+          message={successMessage}
+          type="success"
+          onClose={() => setShowSuccessModal(false)}
+        />
+
+        {/* Modal de Error */}
+        <InfoModal
+          isOpen={showErrorModal}
+          title="Error"
+          message={errorMessage}
+          type="error"
+          onClose={() => setShowErrorModal(false)}
+        />
       </div>
     </div>
   )

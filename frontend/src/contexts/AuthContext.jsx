@@ -683,35 +683,20 @@ export const AuthProvider = ({ children }) => {
 
   // Funciones de registro manual
   const registrarEstudianteManual = useCallback(async (datos) => {
-    dispatch({ type: 'LOGIN_START' })
+    dispatch({ type: 'SET_LOADING', payload: true })
     
     try {
       const response = await axios.post('/api/auth/registro/estudiante', datos)
       
-      // Si el registro incluye token, hacer auto-login
-      if (response.data.access_token) {
-        const { access_token, user } = response.data
-        
-        // Guardar token en localStorage con clave consistente
-        localStorage.setItem('token', access_token)
-        localStorage.setItem('auth_user', JSON.stringify(user))
-        
-        // Configurar header de axios
-        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
-        
-        // Actualizar estado con login exitoso
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: {
-            user: user,
-            access_token: access_token
-          }
-        })
-        
-        console.log('✅ Registro exitoso con auto-login')
-      }
+      dispatch({ type: 'SET_LOADING', payload: false })
       
-      return { success: true, data: response.data }
+      // El registro exitoso requiere verificación de email
+      return { 
+        success: true, 
+        data: response.data,
+        requiresVerification: true,
+        email: datos.email 
+      }
     } catch (error) {
       dispatch({ 
         type: 'LOGIN_FAILURE', 
@@ -725,35 +710,20 @@ export const AuthProvider = ({ children }) => {
   }, [dispatch])
 
   const registrarProfesorManual = useCallback(async (datos) => {
-    dispatch({ type: 'LOGIN_START' })
+    dispatch({ type: 'SET_LOADING', payload: true })
     
     try {
       const response = await axios.post('/api/auth/registro/profesor', datos)
       
-      // Si el registro incluye token, hacer auto-login
-      if (response.data.access_token) {
-        const { access_token, user } = response.data
-        
-        // Guardar token en localStorage con clave consistente
-        localStorage.setItem('token', access_token)
-        localStorage.setItem('auth_user', JSON.stringify(user))
-        
-        // Configurar header de axios
-        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
-        
-        // Actualizar estado con login exitoso
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: {
-            user: user,
-            access_token: access_token
-          }
-        })
-        
-        console.log('✅ Registro de profesor exitoso con auto-login')
-      }
+      dispatch({ type: 'SET_LOADING', payload: false })
       
-      return { success: true, data: response.data }
+      // El registro exitoso requiere verificación de email
+      return { 
+        success: true, 
+        data: response.data,
+        requiresVerification: true,
+        email: datos.email 
+      }
     } catch (error) {
       dispatch({ 
         type: 'LOGIN_FAILURE', 

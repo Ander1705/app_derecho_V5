@@ -48,7 +48,7 @@ const DashboardEstudiante = () => {
         const token = localStorage.getItem('token')
         console.log('🌐 Llamando al endpoint de estadísticas...')
         
-        const estadisticasRes = await axios.get('/api/auth/estudiante/estadisticas', {
+        const estadisticasRes = await axios.get('http://localhost:8000/api/auth/estudiante/estadisticas', {
           headers: { Authorization: `Bearer ${token}` }
         })
         
@@ -304,7 +304,7 @@ const DashboardEstudiante = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link
-                  to="/control-operativo"
+                  to="/estudiante/control-operativo"
                   className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
                 >
                   <div className="flex items-center space-x-4">
@@ -334,7 +334,7 @@ const DashboardEstudiante = () => {
                 </Link>
 
                 <Link
-                  to="/estudiante/perfil"
+                  to="/perfil"
                   className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
                 >
                   <div className="flex items-center space-x-4">

@@ -134,3 +134,48 @@ func (s *NotificationService) ContarNoLeidas(userID uint) (int64, error) {
 		Count(&count).Error
 	return count, err
 }
+
+// CrearNotificacion - método general para crear notificaciones
+func (s *NotificationService) CrearNotificacion(userID uint, controlOperativoID uint, tipo string, mensaje string, rolDestino string) error {
+	// Si userID es 0, enviar a todos los usuarios del rol especificado
+	if userID == 0 && rolDestino != "" {
+		var usuarios []models.User
+		if err := s.db.Where("role = ? AND activo = true", rolDestino).Find(&usuarios).Error; err != nil {
+			log.Printf("Error encontrando usuarios del rol %s: %v", rolDestino, err)
+			return err
+		}
+
+		// Crear notificación para cada usuario del rol
+		for _, usuario := range usuarios {
+			notificacion := models.Notificacion{
+				ControlOperativoID: controlOperativoID,
+				UserID:             usuario.ID,
+				TipoNotificacion:   tipo,
+				Mensaje:            mensaje,
+				Leida:              false,
+			}
+
+			if err := s.db.Create(&notificacion).Error; err != nil {
+				log.Printf("Error creando notificación para usuario %d: %v", usuario.ID, err)
+			}
+		}
+		return nil
+	}
+
+	// Crear notificación para usuario específico
+	notificacion := models.Notificacion{
+		ControlOperativoID: controlOperativoID,
+		UserID:             userID,
+		TipoNotificacion:   tipo,
+		Mensaje:            mensaje,
+		Leida:              false,
+	}
+
+	if err := s.db.Create(&notificacion).Error; err != nil {
+		log.Printf("Error creando notificación: %v", err)
+		return err
+	}
+
+	log.Printf("✉️ Notificación creada para usuario %d", userID)
+	return nil
+}

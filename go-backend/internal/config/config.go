@@ -9,6 +9,7 @@ type Config struct {
 	Database DatabaseConfig
 	JWT      JWTConfig
 	Server   ServerConfig
+	SMTP     SMTPConfig
 }
 
 type DatabaseConfig struct {
@@ -30,9 +31,18 @@ type ServerConfig struct {
 	Env  string
 }
 
+type SMTPConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	From     string
+}
+
 func LoadConfig() *Config {
 	port, _ := strconv.Atoi(getEnv("DB_PORT", "5432"))
 	jwtExpiration, _ := strconv.Atoi(getEnv("JWT_EXPIRATION_HOURS", "24"))
+	smtpPort, _ := strconv.Atoi(getEnv("SMTP_PORT", "587"))
 
 	return &Config{
 		Database: DatabaseConfig{
@@ -50,6 +60,13 @@ func LoadConfig() *Config {
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8000"),
 			Env:  getEnv("ENV", "development"),
+		},
+		SMTP: SMTPConfig{
+			Host:     getEnv("SMTP_HOST", "smtp.gmail.com"),
+			Port:     smtpPort,
+			Username: getEnv("SMTP_USERNAME", "upkucmc@gmail.com"),
+			Password: getEnv("SMTP_PASSWORD", "yjdqecthmqqtihhs"),
+			From:     getEnv("SMTP_FROM", "upkucmc@gmail.com"),
 		},
 	}
 }

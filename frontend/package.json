@@ -5,13 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "NODE_ENV=production vite build",
+    "build:analyze": "NODE_ENV=production vite build --mode analyze",
+    "build:preview": "NODE_ENV=production vite build && vite preview",
+    "preview": "vite preview",
     "test": "vitest",
-    "preview": "vite preview"
+    "clean": "rm -rf dist",
+    "optimize": "npm run clean && npm run build"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
-    "@heroicons/react": "^2.1.1",
+    "@heroicons/react": "^2.2.0",
     "axios": "^1.6.7",
     "lucide-react": "^0.323.0",
     "react": "^18.2.0",
