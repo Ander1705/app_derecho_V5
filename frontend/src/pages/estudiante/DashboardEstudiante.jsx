@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import { 
   ClipboardDocumentListIcon,
   PlusIcon,
@@ -48,7 +49,7 @@ const DashboardEstudiante = () => {
         const token = localStorage.getItem('token')
         console.log('🌐 Llamando al endpoint de estadísticas...')
         
-        const estadisticasRes = await axios.get('http://localhost:8000/api/auth/estudiante/estadisticas', {
+        const estadisticasRes = await axios.get(`${API_BASE_URL}/auth/estudiante/estadisticas`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         

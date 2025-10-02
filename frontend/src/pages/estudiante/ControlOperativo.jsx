@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import axios from 'axios'
 import InfoModal from '../../components/ui/InfoModal'
+import API_BASE_URL from '../../config/api'
 
 const ControlOperativoEstudiante = () => {
   const { user } = useAuth()
@@ -64,7 +65,7 @@ const ControlOperativoEstudiante = () => {
   const cargarProfesores = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:8000/api/profesores', {
+      const response = await axios.get(`${API_BASE_URL}/profesores`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setProfesores(response.data)

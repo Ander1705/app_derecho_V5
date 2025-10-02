@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../contexts/AuthContext'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import {
   ChartBarIcon,
   UserGroupIcon,
@@ -57,7 +58,7 @@ const Estadisticas = () => {
       const token = localStorage.getItem('token')
       
       // Construir parámetros para el nuevo endpoint
-      let url = 'http://localhost:8000/api/coordinador/estadisticas-completas'
+      let url = `${API_BASE_URL}/coordinador/estadisticas-completas`
       const params = new URLSearchParams()
       
       if (filtroAno) {

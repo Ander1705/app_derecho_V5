@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import InfoModal from '../../components/ui/InfoModal'
 import { 
   UserIcon, 
@@ -78,7 +79,7 @@ const PerfilEstudiante = () => {
     try {
       setLoadingCalificaciones(true)
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:8000/api/calificaciones/estudiante', {
+      const response = await axios.get(`${API_BASE_URL}/calificaciones/estudiante`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setCalificaciones(response.data || [])

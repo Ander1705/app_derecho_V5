@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import axios from 'axios'
 import InfoModal from '../../components/ui/InfoModal'
+import API_BASE_URL from '../../config/api'
 import { 
   StarIcon,
   AcademicCapIcon,
@@ -46,7 +47,7 @@ const Calificaciones = () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:8000/api/profesor/controles-asignados', {
+      const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -161,7 +162,7 @@ const Calificaciones = () => {
       }
 
       await axios.post(
-        'http://localhost:8000/api/profesor/calificaciones',
+        `${API_BASE_URL}/profesor/calificaciones`,
         calificacionData,
         { headers: { Authorization: `Bearer ${token}` } }
       )

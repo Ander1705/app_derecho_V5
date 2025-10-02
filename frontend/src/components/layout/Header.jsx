@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '@/config/api'
 import { 
   Bars3Icon, 
   BellIcon, 
@@ -58,7 +59,7 @@ const Header = ({ onMenuClick }) => {
       
       // Intentar cargar notificaciones reales del backend
       try {
-        const response = await axios.get('http://localhost:8000/api/notificaciones', {
+        const response = await axios.get(`${API_BASE_URL}/notificaciones`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         
@@ -179,7 +180,7 @@ const Header = ({ onMenuClick }) => {
   const marcarComoLeida = async (notificationId) => {
     try {
       const token = localStorage.getItem('token')
-      await axios.put(`http://localhost:8000/api/notificaciones/${notificationId}/leida`, {}, {
+      await axios.put(`${API_BASE_URL}/notificaciones/${notificationId}/leida`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
     } catch (error) {
@@ -198,7 +199,7 @@ const Header = ({ onMenuClick }) => {
   const marcarTodasComoLeidas = async () => {
     try {
       const token = localStorage.getItem('token')
-      await axios.put('http://localhost:8000/api/notificaciones/marcar-todas-leidas', {}, {
+      await axios.put(`${API_BASE_URL}/notificaciones/marcar-todas-leidas`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
     } catch (error) {

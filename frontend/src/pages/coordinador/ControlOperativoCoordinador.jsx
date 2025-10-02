@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import { 
   PencilSquareIcon, 
   ArrowDownTrayIcon,
@@ -172,7 +173,7 @@ const ControlOperativoCoordinador = () => {
       const token = localStorage.getItem('token')
       
       // Construir URL con parámetros de filtro
-      let url = 'http://localhost:8000/api/coordinador/controles-completos'
+      let url = `${API_BASE_URL}/coordinador/controles-completos`
       if (estadoFiltro === 'pendiente') {
         url += '?estado=pendiente'
       }
@@ -229,7 +230,7 @@ const ControlOperativoCoordinador = () => {
       const token = localStorage.getItem('token')
       console.log('🔑 Token:', token ? 'Presente' : 'NO encontrado')
       
-      let url = 'http://localhost:8000/api/control-operativo/search?'
+      let url = `${API_BASE_URL}/control-operativo/search?`
       const params = new URLSearchParams()
       
       if (/^\d+$/.test(busqueda)) {
@@ -323,7 +324,7 @@ const ControlOperativoCoordinador = () => {
       const token = localStorage.getItem('token')
       
       const response = await axios.put(
-        `http://localhost:8000/api/coordinador/control-operativo/${selectedControl.id}/resultado`,
+        `${API_BASE_URL}/coordinador/control-operativo/${selectedControl.id}/resultado`,
         { estado_resultado: estadoResultado },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -374,7 +375,7 @@ const ControlOperativoCoordinador = () => {
     try {
       const token = localStorage.getItem('token')
       const response = await axios.get(
-        `http://localhost:8000/api/control-operativo/${control.id}/pdf`,
+        `${API_BASE_URL}/control-operativo/${control.id}/pdf`,
         { 
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'

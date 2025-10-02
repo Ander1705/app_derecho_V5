@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../contexts/AuthContext'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import {
   UserGroupIcon,
   AcademicCapIcon,
@@ -44,7 +45,7 @@ const MisEstudiantes = () => {
       const token = localStorage.getItem('token')
       
       // Obtener controles asignados al profesor
-      const response = await axios.get('http://localhost:8000/api/profesor/controles-asignados', {
+      const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 

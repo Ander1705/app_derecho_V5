@@ -4,6 +4,7 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import InfoModal from '../../components/ui/InfoModal'
+import API_BASE_URL from '../../config/api'
 
 const ControlesAsignados = () => {
   const { user } = useAuth()
@@ -315,7 +316,7 @@ const ControlesAsignados = () => {
       const token = localStorage.getItem('token')
       
       try {
-        const response = await axios.get('http://localhost:8000/api/profesor/controles-asignados', {
+        const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         // Extraer solo el array de controles de la respuesta
@@ -436,7 +437,7 @@ const ControlesAsignados = () => {
       const token = localStorage.getItem('token')
       
       await axios.put(
-        `http://localhost:8000/api/profesor/control-operativo/${selectedControl.id}/concepto`,
+        `${API_BASE_URL}/profesor/control-operativo/${selectedControl.id}/concepto`,
         { concepto_asesor: conceptoAsesor },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -495,7 +496,7 @@ const ControlesAsignados = () => {
       }
 
       await axios.post(
-        'http://localhost:8000/api/profesor/calificaciones',
+        `${API_BASE_URL}/profesor/calificaciones`,
         calificacionData,
         { headers: { Authorization: `Bearer ${token}` } }
       )

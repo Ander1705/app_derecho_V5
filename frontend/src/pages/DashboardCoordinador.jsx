@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 import { 
   UserGroupIcon,
   ClipboardDocumentListIcon,
@@ -61,14 +62,14 @@ const DashboardCoordinador = () => {
       // 🎯 CARGAR ESTADÍSTICAS REALES DEL ENDPOINT ESPECÍFICO
       
       // 1. Obtener estadísticas del coordinador (incluye todas las métricas)
-      const estadisticasResponse = await axios.get('http://localhost:8000/api/coordinador/estadisticas', {
+      const estadisticasResponse = await axios.get(`${API_BASE_URL}/coordinador/estadisticas`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const estadisticas = estadisticasResponse.data || {}
       console.log('📊 Estadísticas recibidas del backend:', estadisticas)
       
       // 2. Obtener controles para actividad reciente y áreas de consulta
-      const controlesResponse = await axios.get('http://localhost:8000/api/coordinador/controles-completos', {
+      const controlesResponse = await axios.get(`${API_BASE_URL}/coordinador/controles-completos`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const controles = controlesResponse.data || []

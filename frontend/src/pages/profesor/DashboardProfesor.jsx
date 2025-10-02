@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import { 
   ClipboardDocumentListIcon,
   UserGroupIcon,
@@ -54,7 +55,7 @@ const DashboardProfesor = () => {
       // Intentar cargar controles reales del backend
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get('http://localhost:8000/api/profesor/controles-asignados', {
+        const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         

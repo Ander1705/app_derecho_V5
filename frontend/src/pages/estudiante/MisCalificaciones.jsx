@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import {
   TrophyIcon,
   ChartBarIcon,
@@ -33,7 +34,7 @@ const MisCalificaciones = () => {
       const token = localStorage.getItem('token')
       
       console.log('🔄 Cargando calificaciones del estudiante...')
-      const response = await axios.get('http://localhost:8000/api/calificaciones/estudiante', {
+      const response = await axios.get(`${API_BASE_URL}/calificaciones/estudiante`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       

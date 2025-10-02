@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import { 
   FunnelIcon, 
   MagnifyingGlassIcon, 
@@ -111,7 +112,7 @@ const MisControles = () => {
       setLoading(true)
       const token = localStorage.getItem('token')
       
-      const response = await axios.get('http://localhost:8000/api/control-operativo/list', {
+      const response = await axios.get(`${API_BASE_URL}/control-operativo/list`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -186,7 +187,7 @@ const MisControles = () => {
       const token = localStorage.getItem('token')
       console.log('🔑 Token:', token ? 'Presente' : 'NO encontrado')
       
-      let url = 'http://localhost:8000/api/control-operativo/search?'
+      let url = `${API_BASE_URL}/control-operativo/search?`
       const params = new URLSearchParams()
       
       if (/^\d+$/.test(busqueda)) {
@@ -270,7 +271,7 @@ const MisControles = () => {
   const descargarPDF = async (controlId, nombreConsultante) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get(`http://localhost:8000/api/control-operativo/${controlId}/pdf`, {
+      const response = await axios.get(`${API_BASE_URL}/control-operativo/${controlId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       })
@@ -354,7 +355,7 @@ const MisControles = () => {
       const token = localStorage.getItem('token')
       
       await axios.put(
-        `http://localhost:8000/api/control-operativo/${estadoConfirmData.control.id}/estado-resultado`,
+        `${API_BASE_URL}/control-operativo/${estadoConfirmData.control.id}/estado-resultado`,
         { estado_resultado: estadoConfirmData.estadoSeleccionado },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -411,7 +412,7 @@ const MisControles = () => {
   const cargarProfesores = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:8000/api/profesores', {
+      const response = await axios.get(`${API_BASE_URL}/profesores`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setProfesores(response.data)
@@ -503,7 +504,7 @@ const MisControles = () => {
       console.log('🔍 DEBUG: Datos que se envían al backend:', dataToSend)
       
       // Enviar directamente al backend
-      const response = await axios.post('http://localhost:8000/api/control-operativo', dataToSend, {
+      const response = await axios.post(`${API_BASE_URL}/control-operativo`, dataToSend, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 30000
       })
@@ -629,7 +630,7 @@ const MisControles = () => {
         const formData = new FormData()
         formData.append('file', file)
         
-        const response = await axios.post('http://localhost:8000/api/upload/temp', formData, {
+        const response = await axios.post(`${API_BASE_URL}/upload/temp`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${localStorage.getItem('token')}`

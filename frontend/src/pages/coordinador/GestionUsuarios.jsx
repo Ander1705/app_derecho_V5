@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import axios from 'axios'
+import API_BASE_URL from '../../config/api'
 import { 
   ChartBarIcon,
   StarIcon,
@@ -59,7 +60,7 @@ const GestionUsuarios = () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:8000/api/coordinador/usuarios', {
+      const response = await axios.get(`${API_BASE_URL}/coordinador/usuarios`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setUsuarios(response.data)
@@ -83,7 +84,7 @@ const GestionUsuarios = () => {
     try {
       const token = localStorage.getItem('token')
       await axios.put(
-        `http://localhost:8000/api/coordinador/usuario/${selectedUser.id}/estado`,
+        `${API_BASE_URL}/coordinador/usuario/${selectedUser.id}/estado`,
         { activo: pendingAction === 'activar' },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -111,7 +112,7 @@ const GestionUsuarios = () => {
     // Cargar controles operativos del estudiante
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get(`http://localhost:8000/api/control-operativo/list`, {
+      const response = await axios.get(`${API_BASE_URL}/control-operativo/list`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -151,7 +152,7 @@ const GestionUsuarios = () => {
       setSavingCalificacion(true)
       const token = localStorage.getItem('token')
       
-      await axios.post('http://localhost:8000/api/calificaciones', {
+      await axios.post(`${API_BASE_URL}/calificaciones`, {
         control_operativo_id: parseInt(calificacionForm.control_operativo_id),
         estudiante_id: selectedStudent.id,
         cumplimiento_horario: calificacionForm.cumplimiento_horario,
@@ -179,7 +180,7 @@ const GestionUsuarios = () => {
     
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get(`http://localhost:8000/api/calificaciones?estudiante_id=${estudiante.id}`, {
+      const response = await axios.get(`${API_BASE_URL}/calificaciones?estudiante_id=${estudiante.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
