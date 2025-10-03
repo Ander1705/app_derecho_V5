@@ -202,7 +202,7 @@ const GestionUsuarios = () => {
     return (suma / 5).toFixed(1)
   }
 
-  const usuariosFiltrados = usuarios.filter(usuario => {
+  const usuariosFiltrados = (usuarios || []).filter(usuario => {
     // Filtro por tipo
     if (filtroTipo !== 'todos' && usuario.role !== filtroTipo) {
       return false

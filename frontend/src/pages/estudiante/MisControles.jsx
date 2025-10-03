@@ -796,7 +796,7 @@ const MisControles = () => {
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
-                    {controlesFiltrados.map((control) => (
+                    {(controlesFiltrados || []).map((control) => (
                       <tr key={control.id} className={`${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-150`}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isDark ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-800'}`}>
@@ -873,7 +873,7 @@ const MisControles = () => {
 
               {/* Vista Móvil/Tablet - Cards (Estilo ControlOperativo) */}
               <div className="lg:hidden space-y-4 p-4">
-                {controlesFiltrados.map((control) => {
+                {(controlesFiltrados || []).map((control) => {
                   const fechaFormateada = control.created_at 
                     ? new Date(control.created_at).toLocaleDateString('es-ES', {
                         day: '2-digit',
@@ -1363,7 +1363,7 @@ const MisControles = () => {
                         className={`${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-blue focus:border-transparent border`}
                       >
                         <option value="">Seleccione un profesor</option>
-                        {profesores.map((profesor) => (
+                        {(profesores || []).map((profesor) => (
                           <option key={profesor.id} value={profesor.nombre}>
                             {profesor.nombre}
                           </option>
@@ -1802,7 +1802,7 @@ const MisControles = () => {
                         Archivos subidos ({documentos.length}/30):
                       </h3>
                       <div className="space-y-2">
-                        {documentos.map((doc) => (
+                        {(documentos || []).map((doc) => (
                           <div key={doc.id} className={`flex items-center justify-between ${isDark ? 'bg-gray-800' : 'bg-white'} p-3 rounded-lg border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
                             <div className="flex-1">
                               <p className={`text-sm font-medium ${isDark ? 'text-purple-400' : 'text-university-purple'}`}>

@@ -717,7 +717,7 @@ const ControlOperativoCoordinador = () => {
                     </tr>
                   </thead>
                   <tbody className={`${isDark ? 'bg-gray-800' : 'bg-white'} divide-y divide-gray-200`}>
-                    {controlesFiltrados.map((control) => (
+                    {(controlesFiltrados || []).map((control) => (
                       <tr key={control.id} className={isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <span className={`${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -802,7 +802,7 @@ const ControlOperativoCoordinador = () => {
 
               {/* Vista Mobile - Cards */}
               <div className="lg:hidden space-y-4 p-4">
-                {controlesFiltrados.map((control) => (
+                {(controlesFiltrados || []).map((control) => (
                   <div key={control.id} className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-4 border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                     {/* Header del Card */}
                     <div className="flex justify-between items-start mb-3">

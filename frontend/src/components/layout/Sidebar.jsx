@@ -193,7 +193,7 @@ const Sidebar = ({ onClose }) => {
 
       {/* Navegación principal */}
       <nav className="flex-1 px-4 py-4 space-y-2">
-        {navigation.map((item) => (
+        {(navigation || []).map((item) => (
           <NavLink
             key={item.name}
             to={item.href}
