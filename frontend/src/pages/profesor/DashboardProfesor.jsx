@@ -66,7 +66,7 @@ const DashboardProfesor = () => {
         const controlesAsignados = controles.length
         const controlesCompletados = controles.filter(c => c.estado_flujo === 'completo' || c.estado_flujo === 'con_resultado').length
         const controlesPendientes = controles.filter(c => c.estado_flujo === 'pendiente_profesor').length
-        const estudiantesUnicos = [...new Set(controles.map(c => c.created_by_id || c.nombre_estudiante))].length
+        const estudiantesUnicos = [...new Set((controles || []).map(c => c.created_by_id || c.nombre_estudiante))].length
         
         setMetricas({
           controlesAsignados,
@@ -76,7 +76,7 @@ const DashboardProfesor = () => {
         })
         
         // Generar actividad reciente real desde los controles
-        const actividadReal = controles
+        const actividadReal = (controles || [])
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
           .slice(0, 5)
           .map((control, index) => {
@@ -453,8 +453,8 @@ const DashboardProfesor = () => {
               </h2>
               
               <div className="space-y-4">
-                {actividadReciente.length > 0 ? (
-                  actividadReciente.map((actividad) => (
+                {(actividadReciente || []).length > 0 ? (
+                  (actividadReciente || []).map((actividad) => (
                     <div 
                       key={actividad.id} 
                       className={`flex items-start space-x-3 p-3 rounded-lg border ${getPriorityColor(actividad.prioridad)}`}

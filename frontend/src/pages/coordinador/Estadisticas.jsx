@@ -568,7 +568,7 @@ const Estadisticas = () => {
                   </tr>
                 </thead>
                 <tbody className="space-y-2">
-                  {estadisticas.resultadosPorArea.map((area, index) => (
+                  {(estadisticas.resultadosPorArea || []).map((area, index) => (
                     <tr key={area.area} className={`${isDark ? 'hover:bg-gray-600/30' : 'hover:bg-gray-50'} transition-colors rounded-lg`}>
                       <td className="px-6 py-4 font-semibold">{area.area}</td>
                       <td className="px-4 py-4 text-center">
@@ -615,8 +615,8 @@ const Estadisticas = () => {
             </h3>
             
             <div className="space-y-4">
-              {estadisticas.profesoresTop.map((profesor, index) => {
-                const maxCasos = Math.max(...estadisticas.profesoresTop.map(p => p.casos))
+              {(estadisticas.profesoresTop || []).map((profesor, index) => {
+                const maxCasos = Math.max(...(estadisticas.profesoresTop || []).map(p => p.casos))
                 const colors = ['bg-yellow-500', 'bg-gray-400', 'bg-orange-500', 'bg-blue-500', 'bg-purple-500']
                 const bgColor = colors[index] || 'bg-gray-500'
                 
@@ -655,8 +655,8 @@ const Estadisticas = () => {
             </h3>
             
             <div className="space-y-4">
-              {estadisticas.estudiantesTop.map((estudiante, index) => {
-                const maxCasos = Math.max(...estadisticas.estudiantesTop.map(e => e.casos))
+              {(estadisticas.estudiantesTop || []).map((estudiante, index) => {
+                const maxCasos = Math.max(...(estadisticas.estudiantesTop || []).map(e => e.casos))
                 const colors = ['bg-yellow-500', 'bg-gray-400', 'bg-orange-500', 'bg-purple-500', 'bg-pink-500']
                 const bgColor = colors[index] || 'bg-gray-500'
                 
@@ -702,8 +702,8 @@ const Estadisticas = () => {
             </div>
             
             <div className="space-y-4">
-              {estadisticas.porResultado.map((resultado, index) => {
-                const maxCantidad = Math.max(...estadisticas.porResultado.map(r => r.cantidad))
+              {(estadisticas.porResultado || []).map((resultado, index) => {
+                const maxCantidad = Math.max(...(estadisticas.porResultado || []).map(r => r.cantidad))
                 const colors = [
                   { from: 'from-emerald-500', to: 'to-emerald-600', bg: 'bg-emerald-500' },
                   { from: 'from-cyan-500', to: 'to-cyan-600', bg: 'bg-cyan-500' },

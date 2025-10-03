@@ -213,7 +213,7 @@ const MisCalificaciones = () => {
               </div>
               
               <div className="p-6 space-y-6">
-                {calificaciones.map((calificacion) => (
+                {(calificaciones || []).map((calificacion) => (
                   <div
                     key={calificacion.id}
                     className={`border rounded-lg p-6 ${isDark ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'}`}

@@ -88,7 +88,7 @@ const DashboardCoordinador = () => {
       })
       
       const colores = ['blue', 'green', 'red', 'purple', 'orange', 'indigo', 'pink']
-      const areasConsultaReales = Object.entries(areasCount)
+      const areasConsultaReales = Object.entries(areasCount || {})
         .map(([area, cantidad], index) => ({
           area,
           cantidad,
@@ -97,7 +97,7 @@ const DashboardCoordinador = () => {
         .sort((a, b) => b.cantidad - a.cantidad)
       
       // 5. Generar actividad reciente real
-      const actividadReal = controles
+      const actividadReal = (controles || [])
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 3)
         .map(control => ({
@@ -390,8 +390,8 @@ const DashboardCoordinador = () => {
               </h2>
               
               <div className="space-y-3">
-                {areasConsulta.length > 0 ? (
-                  areasConsulta.map((area, index) => (
+                {(areasConsulta || []).length > 0 ? (
+                  (areasConsulta || []).map((area, index) => (
                     <Link
                       key={index}
                       to={`/control-operativo?area=${encodeURIComponent(area.area)}`}
@@ -440,8 +440,8 @@ const DashboardCoordinador = () => {
               </h2>
               
               <div className="space-y-4">
-                {actividadReciente.length > 0 ? (
-                  actividadReciente.map((actividad) => (
+                {(actividadReciente || []).length > 0 ? (
+                  (actividadReciente || []).map((actividad) => (
                     <div key={actividad.id} className={`flex items-start space-x-3 p-3 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       {getActivityIcon(actividad.tipo)}
                       <div className="flex-1 min-w-0">

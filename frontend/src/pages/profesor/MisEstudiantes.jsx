@@ -81,7 +81,7 @@ const MisEstudiantes = () => {
       })
 
       // Convertir Map a Array y procesar áreas
-      const estudiantesArray = Array.from(estudiantesMap.values()).map(estudiante => ({
+      const estudiantesArray = Array.from(estudiantesMap.values() || []).map(estudiante => ({
         ...estudiante,
         areas: Array.from(estudiante.areas),
         areasTexto: Array.from(estudiante.areas).join(', ') || 'Sin área especificada'
@@ -328,9 +328,9 @@ const MisEstudiantes = () => {
               Lista de Estudiantes ({filteredEstudiantes.length})
             </h2>
             
-            {filteredEstudiantes.length > 0 ? (
+            {(filteredEstudiantes || []).length > 0 ? (
               <div className="space-y-4">
-                {filteredEstudiantes.map((estudiante, index) => (
+                {(filteredEstudiantes || []).map((estudiante, index) => (
                   <div
                     key={estudiante.nombre}
                     className={`p-6 rounded-lg border transition-all duration-200 hover:shadow-md ${isDark ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
@@ -368,7 +368,7 @@ const MisEstudiantes = () => {
                               Áreas de consulta:
                             </span>
                             <div className="flex flex-wrap gap-2">
-                              {estudiante.areas.map((area, areaIndex) => (
+                              {(estudiante.areas || []).map((area, areaIndex) => (
                                 <span
                                   key={area}
                                   className={`px-2 py-1 rounded-full text-xs font-medium ${getAreaColor(area, areaIndex)}`}
@@ -385,7 +385,7 @@ const MisEstudiantes = () => {
                               Casos recientes:
                             </span>
                             <div className="space-y-1">
-                              {estudiante.casos.slice(0, 2).map((caso) => (
+                              {(estudiante.casos || []).slice(0, 2).map((caso) => (
                                 <div key={caso.id} className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                                   • <span className="font-medium">{caso.nombre_consultante}</span>
                                   {caso.area_consulta && (

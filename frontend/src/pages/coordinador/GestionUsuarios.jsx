@@ -471,7 +471,7 @@ const GestionUsuarios = () => {
                     </tr>
                   </thead>
                   <tbody className={`${isDark ? 'bg-gray-800' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {usuariosFiltrados.map((usuario) => (
+                    {(usuariosFiltrados || []).map((usuario) => (
                       <tr key={usuario.id} className={isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -555,7 +555,7 @@ const GestionUsuarios = () => {
 
               {/* Vista Mobile - Cards */}
               <div className="lg:hidden space-y-4 p-4">
-                {usuariosFiltrados.map((usuario) => (
+                {(usuariosFiltrados || []).map((usuario) => (
                   <div key={usuario.id} className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-4 border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                     {/* Header del Card */}
                     <div className="flex items-start justify-between mb-3">
@@ -675,7 +675,7 @@ const GestionUsuarios = () => {
                   className={`${isDark ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-purple focus:border-transparent border`}
                 >
                   <option value="">Seleccione un control operativo...</option>
-                  {studentControls.map(control => (
+                  {(studentControls || []).map(control => (
                     <option key={control.id} value={control.id}>
                       Control #{control.id} - {control.nombre_consultante} ({control.area_consulta})
                     </option>
@@ -902,7 +902,7 @@ const GestionUsuarios = () => {
 
                   {/* Lista de Calificaciones */}
                   <div className="space-y-3">
-                    {studentCalificaciones.map((calificacion) => (
+                    {(studentCalificaciones || []).map((calificacion) => (
                       <div key={calificacion.id} className={`p-4 border rounded-lg ${isDark ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
                         <div className="flex items-center justify-between mb-3">
                           <div>

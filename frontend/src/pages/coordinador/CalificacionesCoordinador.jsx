@@ -75,7 +75,7 @@ const CalificacionesCoordinador = () => {
     const suma = calificaciones.reduce((total, cal) => total + cal.promedio_general, 0)
     const promedio = suma / calificaciones.length
     const excelentes = calificaciones.filter(cal => cal.promedio_general >= 4.5).length
-    const estudiantesUnicos = new Set(calificaciones.map(cal => cal.estudiante_id)).size
+    const estudiantesUnicos = new Set((calificaciones || []).map(cal => cal.estudiante_id)).size
     
     return {
       total: calificaciones.length,
@@ -295,7 +295,7 @@ const CalificacionesCoordinador = () => {
             </div>
             
             <div className="p-6 space-y-6">
-              {calificacionesFiltradas.map((calificacion) => (
+              {(calificacionesFiltradas || []).map((calificacion) => (
                 <div
                   key={calificacion.id}
                   className={`border rounded-lg p-6 ${isDark ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'}`}

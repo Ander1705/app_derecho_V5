@@ -63,7 +63,7 @@ const Header = ({ onMenuClick }) => {
           headers: { Authorization: `Bearer ${token}` }
         })
         
-        const notificacionesReales = response.data.map(notif => ({
+        const notificacionesReales = (response.data || []).map(notif => ({
           id: notif.id,
           tipo: notif.tipo || 'general',
           icono: getNotificationIcon(notif.tipo),
@@ -189,7 +189,7 @@ const Header = ({ onMenuClick }) => {
     
     // Actualizar estado local
     setNotifications(prev => 
-      prev.map(n => 
+      (prev || []).map(n => 
         n.id === notificationId ? { ...n, leida: true } : n
       )
     )
@@ -207,7 +207,7 @@ const Header = ({ onMenuClick }) => {
     }
     
     // Actualizar estado local
-    setNotifications(prev => prev.map(n => ({ ...n, leida: true })))
+    setNotifications(prev => (prev || []).map(n => ({ ...n, leida: true })))
     setUnreadCount(0)
   }
 
@@ -321,8 +321,8 @@ const Header = ({ onMenuClick }) => {
                   </div>
                   
                   <div className="max-h-64 overflow-y-auto">
-                    {notifications.length > 0 ? (
-                      notifications.map((notification) => {
+                    {(notifications || []).length > 0 ? (
+                      (notifications || []).map((notification) => {
                         const IconComponent = notification.icono
                         return (
                           <div

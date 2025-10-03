@@ -378,7 +378,7 @@ const DashboardEstudiante = () => {
               </h2>
               
               <div className="space-y-4">
-                {recordatorios.map((recordatorio) => (
+                {(recordatorios || []).map((recordatorio) => (
                   <div key={recordatorio.id} className={`flex items-start space-x-3 p-3 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
                     {getReminderIcon(recordatorio.tipo)}
                     <div className="flex-1 min-w-0">
