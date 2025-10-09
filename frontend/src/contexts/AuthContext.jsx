@@ -209,18 +209,49 @@ export const AuthProvider = ({ children }) => {
           console.log('🌐 URL de verificación:', `${API_BASE_URL}/api/auth/me`)
           
           const response = await axios.get('/api/auth/me')
+          const serverUser = response.data
           
-          console.log('✅ Token válido, restaurando sesión:', {
-            userId: response.data.id,
-            userEmail: response.data.email,
-            userRole: response.data.role,
+          // 🔍 VERIFICAR CONSISTENCIA: Token debe coincidir con usuario guardado
+          const savedUser = JSON.parse(localStorage.getItem('auth_user') || '{}')
+          const savedRole = localStorage.getItem('userRole')
+          
+          if (savedUser.id && savedUser.id !== serverUser.id) {
+            console.log('❌ Token no coincide con usuario guardado, limpiando sesión')
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('auth_user')
+            localStorage.removeItem('refreshToken')
+            localStorage.removeItem('lastActivity')
+            localStorage.removeItem('userRole')
+            localStorage.removeItem('userId')
+            delete axios.defaults.headers.common['Authorization']
+            dispatch({ type: 'LOGOUT' })
+            return
+          }
+          
+          if (savedRole && savedRole !== serverUser.role) {
+            console.log('❌ Rol de usuario cambió, limpiando sesión')
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('auth_user')
+            localStorage.removeItem('refreshToken')
+            localStorage.removeItem('lastActivity')
+            localStorage.removeItem('userRole')
+            localStorage.removeItem('userId')
+            delete axios.defaults.headers.common['Authorization']
+            dispatch({ type: 'LOGOUT' })
+            return
+          }
+          
+          console.log('✅ Token válido y consistente, restaurando sesión:', {
+            userId: serverUser.id,
+            userEmail: serverUser.email,
+            userRole: serverUser.role,
             responseStatus: response.status
           })
           
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
-              user: response.data,
+              user: serverUser,
               access_token: savedToken,
               refresh_token: savedRefreshToken
             }
@@ -311,11 +342,36 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     dispatch({ type: 'LOGIN_START' })
+    
+    // 🧹 LIMPIAR COMPLETAMENTE localStorage antes de nuevos datos
+    localStorage.removeItem('token')
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('lastActivity')
+    localStorage.removeItem('userRole')
+    localStorage.removeItem('userId')
+    delete axios.defaults.headers.common['Authorization']
+    
     try {
       const response = await axios.post('/api/auth/login', {
         email,
         password
       })
+      
+      const { user, access_token, refresh_token } = response.data
+      
+      // ✅ GUARDAR nuevos datos después de limpiar
+      localStorage.setItem('token', access_token)
+      localStorage.setItem('auth_token', access_token)
+      localStorage.setItem('auth_user', JSON.stringify(user))
+      localStorage.setItem('userRole', user.role)
+      localStorage.setItem('userId', user.id.toString())
+      localStorage.setItem('lastActivity', Date.now().toString())
+      if (refresh_token) {
+        localStorage.setItem('refreshToken', refresh_token)
+      }
+      
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: response.data

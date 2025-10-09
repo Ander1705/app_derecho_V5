@@ -21,6 +21,10 @@ const Calificaciones = () => {
   const [todosLosControles, setTodosLosControles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  
+  // 🚀 CACHE LOCAL para rendimiento
+  const [cache, setCache] = useState(null)
+  const [lastFetch, setLastFetch] = useState(null)
   const [mostrarTodos, setMostrarTodos] = useState(false)
   const [selectedControl, setSelectedControl] = useState(null)
   const [calificacionForm, setCalificacionForm] = useState({
@@ -43,7 +47,20 @@ const Calificaciones = () => {
     cargarControlesParaCalificar()
   }, [])
 
-  const cargarControlesParaCalificar = async () => {
+  const cargarControlesParaCalificar = async (force = false) => {
+    // 🚀 CACHE: Solo fetch si no hay cache o han pasado más de 2 minutos
+    const now = Date.now()
+    if (!force && cache && lastFetch && (now - lastFetch) < 120000) {
+      console.log('📦 Usando datos del cache local')
+      const controlesCompletos = cache.filter(c => 
+        c.estado_flujo === 'completo' && !c.ya_calificado
+      )
+      setTodosLosControles(cache)
+      setControles(controlesCompletos)
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
@@ -51,23 +68,22 @@ const Calificaciones = () => {
         headers: { Authorization: `Bearer ${token}` }
       })
       
-      console.log('🔍 DEBUG CALIFICACIONES: Todos los controles recibidos:', response.data?.length || 0)
-      console.log('🔍 DEBUG CALIFICACIONES: Datos completos:', response.data)
+      console.log('🔍 Cargando desde servidor - Controles recibidos:', response.data?.length || 0)
       
-      // Filtrar solo controles completos que necesitan calificación (y que NO estén ya calificados)
-      const controlesCompletos = response.data?.filter(c => 
+      const data = response.data || []
+      
+      // 📦 GUARDAR EN CACHE
+      setCache(data)
+      setLastFetch(now)
+      
+      // Filtrar solo controles completos que necesitan calificación
+      const controlesCompletos = data.filter(c => 
         c.estado_flujo === 'completo' && !c.ya_calificado
-      ) || []
+      )
       
-      console.log('🔍 DEBUG CALIFICACIONES: Estados de todos los controles:')
-      response.data?.forEach(control => {
-        console.log(`  - Control #${control.id}: estado_flujo="${control.estado_flujo}", concepto_asesor="${control.concepto_asesor ? 'SÍ' : 'NO'}", ya_calificado="${control.ya_calificado ? 'SÍ' : 'NO'}"`)
-      })
+      console.log('✅ Controles listos para calificar:', controlesCompletos.length)
       
-      console.log('✅ Controles listos para calificar (completos y no calificados):', controlesCompletos.length)
-      console.log('🎯 Controles listos:', controlesCompletos.map(c => `#${c.id} - ${c.nombre_estudiante}`))
-      
-      setTodosLosControles(response.data || [])
+      setTodosLosControles(data)
       setControles(controlesCompletos)
     } catch (error) {
       console.error('Error cargando controles:', error)

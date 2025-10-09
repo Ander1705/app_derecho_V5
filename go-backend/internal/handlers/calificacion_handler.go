@@ -91,11 +91,19 @@ func (h *CalificacionHandler) CrearCalificacion(c *gin.Context) {
 		return
 	}
 
-	// Cargar relaciones para la respuesta completa
+	// Cargar solo campos mínimos necesarios para respuesta
 	var calificacionCompleta models.Calificacion
-	if err := h.db.Preload("Estudiante").Preload("ProfesorEvaluador").Preload("CoordinadorEvaluador").Preload("ControlOperativo").First(&calificacionCompleta, calificacion.ID).Error; err != nil {
+	err := h.db.
+		Preload("Estudiante", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, nombre_usuario, email")
+		}).
+		Preload("ControlOperativo", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, nombre_consultante, area_consulta")
+		}).
+		First(&calificacionCompleta, calificacion.ID).Error
+	
+	if err != nil {
 		fmt.Printf("⚠️ Warning: Error cargando relaciones de calificación: %v\n", err)
-		// Continuar con calificación básica si falla el preload
 		calificacionCompleta = calificacion
 	} else {
 		calificacion = calificacionCompleta
@@ -160,7 +168,13 @@ func (h *CalificacionHandler) ListarCalificaciones(c *gin.Context) {
 	}
 
 	var calificaciones []models.Calificacion
-	query := h.db.Preload("Estudiante").Preload("ProfesorEvaluador").Preload("CoordinadorEvaluador")
+	query := h.db.
+		Preload("Estudiante", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, nombre_usuario, email")
+		}).
+		Preload("ControlOperativo", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, nombre_consultante, area_consulta")
+		})
 
 	// Filtrar según el rol del usuario
 	switch user.Role {

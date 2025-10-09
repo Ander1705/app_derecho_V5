@@ -459,6 +459,9 @@ const MisControles = () => {
         'nombre_estudiante', 
         'area_consulta',
         'nombre_consultante',
+        'sexo',
+        'tipo_documento',
+        'numero_documento',
         'descripcion_caso',
         'concepto_estudiante'
       ]
@@ -476,6 +479,9 @@ const MisControles = () => {
             case 'nombre_estudiante': return 'Nombre del estudiante responsable'
             case 'area_consulta': return 'Área de consulta'
             case 'nombre_consultante': return 'Nombre del consultante'
+            case 'sexo': return 'Sexo'
+            case 'tipo_documento': return 'Tipo de documento'
+            case 'numero_documento': return 'Número de documento'
             case 'descripcion_caso': return 'Descripción del caso'
             case 'concepto_estudiante': return 'Concepto del estudiante'
             default: return campo
@@ -1557,12 +1563,13 @@ const MisControles = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
                       <label className={`block text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-1`}>
-                        Sexo
+                        Sexo *
                       </label>
                       <select
                         name="sexo"
                         value={formData.sexo}
                         onChange={handleInputChange}
+                        required
                         className={`${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-blue focus:border-transparent border`}
                       >
                         <option value="">Seleccionar</option>
@@ -1573,12 +1580,13 @@ const MisControles = () => {
                     </div>
                     <div>
                       <label className={`block text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-1`}>
-                        Tipo de documento
+                        Tipo de documento *
                       </label>
                       <select
                         name="tipo_documento"
                         value={formData.tipo_documento}
                         onChange={handleInputChange}
+                        required
                         className={`${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-blue focus:border-transparent border`}
                       >
                         <option value="">Seleccionar</option>

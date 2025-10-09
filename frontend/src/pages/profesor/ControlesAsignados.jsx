@@ -460,23 +460,67 @@ const ControlesAsignados = () => {
       return
     }
 
+    const controlId = selectedControl.id
+    const conceptoTexto = conceptoAsesor.trim()
+
+    // 🚀 ACTUALIZACIÓN OPTIMISTA - Actualizar UI INMEDIATAMENTE
+    setControles(prev => prev.map(c => 
+      c.id === controlId 
+        ? { 
+            ...c, 
+            concepto_asesor: conceptoTexto, 
+            estado_flujo: 'completo',
+            guardando: true 
+          }
+        : c
+    ))
+
     try {
       setSaving(true)
       const token = localStorage.getItem('token')
       
       await axios.put(
-        `${API_BASE_URL}/profesor/control-operativo/${selectedControl.id}/concepto`,
-        { concepto_asesor: conceptoAsesor },
+        `${API_BASE_URL}/profesor/control-operativo/${controlId}/concepto`,
+        { concepto_asesor: conceptoTexto },
         { headers: { Authorization: `Bearer ${token}` } }
       )
 
-      // Mostrar modal de éxito
-      setSuccessMessage('Concepto de asesor jurídico guardado exitosamente. El estudiante será notificado.')
+      // ✅ Confirmar guardado exitoso
+      setControles(prev => prev.map(c => 
+        c.id === controlId ? { ...c, guardando: false } : c
+      ))
+
+      // Mostrar modal de éxito y cerrar
+      setSuccessMessage('Concepto guardado exitosamente. El estudiante será notificado.')
       setShowSuccessModal(true)
       setSelectedControl(null)
-      cargarControlesAsignados() // Recargar la lista
+      setConceptoAsesor('')
+
+      // 🎯 CAMBIAR A TAB COMPLETADOS para ver el resultado inmediatamente
+      setFiltros(prev => ({ ...prev, estado: 'completados' }))
+      
+      // Actualizar URL para reflejar el cambio
+      setSearchParams(prevParams => {
+        const newParams = new URLSearchParams(prevParams)
+        newParams.set('estado', 'completados')
+        return newParams
+      })
+
     } catch (error) {
       console.error('Error guardando concepto:', error)
+      
+      // ❌ REVERTIR cambios en caso de error
+      setControles(prev => prev.map(c => 
+        c.id === controlId 
+          ? { 
+              ...c, 
+              concepto_asesor: c.concepto_asesor || '', 
+              estado_flujo: 'pendiente_profesor',
+              guardando: false 
+            }
+          : c
+      ))
+
       setErrorMessage('Error al guardar el concepto: ' + (error.response?.data?.error || error.message))
       setShowErrorModal(true)
     } finally {

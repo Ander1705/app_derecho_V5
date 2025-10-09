@@ -67,8 +67,12 @@ const ControlOperativoCoordinador = () => {
 
   // Ya no necesitamos useEffect para búsqueda - se maneja directamente en onChange
 
-  // Los filtros locales se aplicarán solo cuando no haya búsqueda activa
-  // No necesitamos useEffect para esto
+  // Aplicar filtros automáticamente cuando cambien los filtros locales
+  useEffect(() => {
+    if (controles.length > 0 && !searchMode) {
+      aplicarFiltros()
+    }
+  }, [filtros.mes, filtros.ano, filtros.area, controles, searchMode, aplicarFiltros])
 
   const meses = [
     { value: '1', label: 'Enero' },
@@ -94,7 +98,7 @@ const ControlOperativoCoordinador = () => {
     return anos
   })()
 
-  const aplicarFiltros = () => {
+  const aplicarFiltros = useCallback(() => {
     // Esta función solo aplica filtros locales (mes, año, área)
     // NO maneja búsqueda por texto - eso se hace via API
     let controlesParaFiltrar = [...controles]
@@ -152,7 +156,7 @@ const ControlOperativoCoordinador = () => {
     }
 
     setControlesFiltrados(controlesParaFiltrar)
-  }
+  }, [controles, filtros.area, filtros.mes, filtros.ano])
 
   const limpiarFiltros = () => {
     console.log('🧹 Limpiando filtros...')
@@ -618,6 +622,27 @@ const ControlOperativoCoordinador = () => {
                   {anosDisponibles.map(ano => (
                     <option key={ano} value={ano}>{ano}</option>
                   ))}
+                </select>
+              </div>
+
+              {/* Filtro por Área de Consulta */}
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                  Área de Consulta
+                </label>
+                <select
+                  value={filtros.area}
+                  onChange={(e) => setFiltros({...filtros, area: e.target.value})}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                >
+                  <option value="">Todas las áreas</option>
+                  <option value="Laboral">Laboral</option>
+                  <option value="Civil">Civil</option>
+                  <option value="Penal">Penal</option>
+                  <option value="Comercial">Comercial</option>
+                  <option value="Familia">Familia</option>
+                  <option value="Administrativo">Administrativo</option>
+                  <option value="Constitucional">Constitucional</option>
                 </select>
               </div>
 

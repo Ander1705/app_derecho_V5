@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -132,52 +133,59 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 }
 
 func (h *ProfesorHandler) CompletarConcepto(c *gin.Context) {
+	controlID := c.Param("id")
+	var request struct {
+		ConceptoAsesor string `json:"concepto_asesor" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Concepto requerido"})
+		return
+	}
+
 	user, exists := auth.GetUserFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuario no autenticado"})
 		return
 	}
 
-	if user.Role != "profesor" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Acceso denegado"})
+	// UPDATE directo sin SELECT previo - MÁXIMO RENDIMIENTO
+	result := h.db.Model(&models.ControlOperativo{}).
+		Where("id = ? AND profesor_asignado_id = ? AND activo = true", controlID, user.ID).
+		Updates(map[string]interface{}{
+			"concepto_asesor": request.ConceptoAsesor,
+			"estado_flujo":    "completo",
+			"updated_at":      time.Now(),
+		})
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al guardar concepto"})
 		return
 	}
 
-	controlID := c.Param("id")
-	var req models.ConceptoAsesorRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Control no encontrado o no asignado"})
 		return
 	}
 
-	var control models.ControlOperativo
-	if err := h.db.First(&control, controlID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Control operativo no encontrado"})
-		return
-	}
+	// Notificación async (no bloqueante)
+	go func() {
+		// Solo buscar created_by_id para notificación
+		var createdByID uint
+		h.db.Model(&models.ControlOperativo{}).
+			Select("created_by_id").
+			Where("id = ?", controlID).
+			Scan(&createdByID)
+		
+		if createdByID > 0 {
+			controlIDUint, _ := strconv.ParseUint(controlID, 10, 32)
+			h.notificationService.NotificarControlCompletadoAEstudiante(uint(controlIDUint), createdByID)
+		}
+	}()
 
-	// Verificar que el profesor sea el asignado al control
-	if control.ProfesorAsignadoID == nil || *control.ProfesorAsignadoID != user.ID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "No está autorizado para editar este control"})
-		return
-	}
-
-	// Actualizar concepto y cambiar estado a completo
-	control.ConceptoAsesor = req.ConceptoAsesor
-	control.EstadoFlujo = "completo"
-	control.UpdatedAt = time.Now()
-
-	if err := h.db.Save(&control).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar control operativo"})
-		return
-	}
-
-	// Enviar notificación al estudiante
-	go h.notificationService.NotificarControlCompletadoAEstudiante(control.ID, control.CreatedByID)
-
+	// Respuesta inmediata
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Concepto del asesor guardado exitosamente",
-		"control": control,
+		"message": "Concepto guardado exitosamente",
+		"status":  "completed",
 	})
 }
