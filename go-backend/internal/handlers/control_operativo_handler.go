@@ -84,10 +84,13 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 		ProfesionOficio:          req.ProfesionOficio,
 		DescripcionCaso:          req.DescripcionCaso,
 		ConceptoEstudiante:       req.ConceptoEstudiante,
+		ProfesorAsignadoID:       req.ProfesorID,
 		EstadoFlujo:              "pendiente_profesor",
 		Activo:                   true,
 		CreatedByID:              user.ID,
 	}
+	
+	fmt.Printf("🔍 BACKEND: Asignando profesor ID: %v al control\n", req.ProfesorID)
 
 	if err := h.db.Create(&control).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error creando control operativo"})
@@ -100,7 +103,9 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 	}
 
 	// Enviar notificación al profesor de manera asíncrona
-	go h.notificationService.NotificarNuevoControlAProfesor(control.ID, req.NombreDocenteResponsable)
+	if req.ProfesorID != nil {
+		go h.notificationService.NotificarNuevoControlAProfesor(control.ID, *req.ProfesorID)
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Control operativo creado exitosamente",

@@ -38,9 +38,11 @@ func (h *CoordinadorHandler) ListarUsuarios(c *gin.Context) {
 	}
 
 	var usuarios []models.User
-	result := h.db.Where("role IN ('estudiante', 'profesor')").
+	result := h.db.Where("role IN ('estudiante', 'profesor') AND activo = true").
 		Order("created_at DESC").
 		Find(&usuarios)
+	
+	fmt.Printf("🔍 COORDINADOR: Listando usuarios activos, encontrados: %d\n", len(usuarios))
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener usuarios"})

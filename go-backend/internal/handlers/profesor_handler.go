@@ -57,15 +57,14 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 		return
 	}
 
-	// Usar directamente los datos del usuario autenticado
-	nombreCompleto := fmt.Sprintf("%s %s", strings.TrimSpace(user.Nombres), strings.TrimSpace(user.Apellidos))
-
 	var controles []models.ControlOperativo
-	// Buscar con nombre exacto y también con variaciones de espacios
-	dbResult := h.db.Preload("CreatedBy").Preload("DocumentosAdjuntos").
-		Where("(TRIM(nombre_docente_responsable) = TRIM(?) OR nombre_docente_responsable = ?) AND activo = true", nombreCompleto, nombreCompleto).
+	// Buscar controles asignados directamente por ID del profesor
+	dbResult := h.db.Preload("CreatedBy").Preload("ProfesorAsignado").Preload("DocumentosAdjuntos").
+		Where("profesor_asignado_id = ? AND activo = true", user.ID).
 		Order("created_at DESC").
 		Find(&controles)
+	
+	fmt.Printf("🔍 PROFESOR: Buscando controles para profesor ID %d, encontrados: %d\n", user.ID, len(controles))
 
 	if dbResult.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener controles"})
@@ -120,7 +119,9 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 			"created_at":                 control.CreatedAt,
 			"updated_at":                 control.UpdatedAt,
 			"created_by":                 control.CreatedByID,
+			"profesor_asignado_id":       control.ProfesorAsignadoID,
 			"created_by_user":            control.CreatedBy,
+			"profesor_asignado":          control.ProfesorAsignado,
 			"ya_calificado":              count > 0,
 		}
 
@@ -156,11 +157,8 @@ func (h *ProfesorHandler) CompletarConcepto(c *gin.Context) {
 		return
 	}
 
-	// Usar directamente los datos del usuario autenticado
-	nombreCompleto := fmt.Sprintf("%s %s", strings.TrimSpace(user.Nombres), strings.TrimSpace(user.Apellidos))
-	
-	// Verificar con nombres flexibles (ignorando espacios extra)
-	if strings.TrimSpace(control.NombreDocenteResponsable) != strings.TrimSpace(nombreCompleto) {
+	// Verificar que el profesor sea el asignado al control
+	if control.ProfesorAsignadoID == nil || *control.ProfesorAsignadoID != user.ID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "No está autorizado para editar este control"})
 		return
 	}

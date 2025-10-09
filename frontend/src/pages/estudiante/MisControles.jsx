@@ -67,6 +67,7 @@ const MisControles = () => {
     fecha_mes: new Date().getMonth() + 1,
     fecha_ano: new Date().getFullYear(),
     nombre_docente_responsable: '',
+    profesor_id: null,
     nombre_estudiante: inicialNombreEstudiante,
     area_consulta: '',
     remitido_por: '',
@@ -396,15 +397,16 @@ const MisControles = () => {
   }
 
   const contarPorEstado = (estado) => {
+    const controlesArray = controles || []
     switch (estado) {
       case 'pendientes':
-        return controles.filter(c => c.estado_flujo === 'pendiente_profesor').length
+        return controlesArray.filter(c => c && c.estado_flujo === 'pendiente_profesor').length
       case 'completos':
-        return controles.filter(c => c.estado_flujo === 'completo').length  
+        return controlesArray.filter(c => c && c.estado_flujo === 'completo').length  
       case 'finalizados':
-        return controles.filter(c => c.estado_flujo === 'con_resultado').length
+        return controlesArray.filter(c => c && c.estado_flujo === 'con_resultado').length
       default:
-        return controles.length
+        return controlesArray.length
     }
   }
 
@@ -426,6 +428,19 @@ const MisControles = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }))
+  }
+
+  const handleProfesorChange = (e) => {
+    const selectedProfesorId = e.target.value
+    const selectedProfesor = profesores.find(p => p.id.toString() === selectedProfesorId)
+    
+    console.log('🔍 Profesor seleccionado:', selectedProfesor)
+    
+    setFormData(prev => ({
+      ...prev,
+      profesor_id: selectedProfesor ? selectedProfesor.id : null,
+      nombre_docente_responsable: selectedProfesor ? selectedProfesor.nombre : ''
     }))
   }
 
@@ -569,6 +584,7 @@ const MisControles = () => {
       fecha_mes: new Date().getMonth() + 1,
       fecha_ano: new Date().getFullYear(),
       nombre_docente_responsable: '',
+      profesor_id: null,
       nombre_estudiante: inicialNombreEstudiante,
       area_consulta: '',
       remitido_por: '',
@@ -736,7 +752,7 @@ const MisControles = () => {
                 onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
                 className={`w-full px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-university-purple focus:border-transparent ${isDark ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'}`}
               >
-                <option value="todos">Todos ({controles.length})</option>
+                <option value="todos">Todos ({(controles || []).length})</option>
                 <option value="pendientes">Pendientes ({contarPorEstado('pendientes')})</option>
                 <option value="completos">Completos ({contarPorEstado('completos')})</option>
                 <option value="finalizados">Finalizados ({contarPorEstado('finalizados')})</option>
@@ -747,7 +763,7 @@ const MisControles = () => {
             <div className="flex items-center justify-center sm:justify-start sm:col-span-2 lg:col-span-1">
               <FunnelIcon className={`h-4 w-4 mr-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
               <span className={`text-xs sm:text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                Mostrando {controlesFiltrados.length} de {controles.length}
+                Mostrando {(controlesFiltrados || []).length} de {(controles || []).length}
               </span>
             </div>
           </div>
@@ -1357,14 +1373,14 @@ const MisControles = () => {
                         Nombre del Docente Responsable
                       </label>
                       <select
-                        name="nombre_docente_responsable"
-                        value={formData.nombre_docente_responsable}
-                        onChange={handleInputChange}
+                        name="profesor_selection"
+                        value={formData.profesor_id || ''}
+                        onChange={handleProfesorChange}
                         className={`${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-university-blue focus:border-transparent border`}
                       >
                         <option value="">Seleccione un profesor</option>
                         {(profesores || []).map((profesor) => (
-                          <option key={profesor.id} value={profesor.nombre}>
+                          <option key={profesor.id} value={profesor.id}>
                             {profesor.nombre}
                           </option>
                         ))}

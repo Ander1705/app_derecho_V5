@@ -42,7 +42,9 @@ type ControlOperativo struct {
 	CreatedAt                time.Time `json:"created_at"`
 	UpdatedAt                time.Time `json:"updated_at"`
 	CreatedByID              uint      `gorm:"not null" json:"created_by"`
+	ProfesorAsignadoID       *uint     `gorm:"index" json:"profesor_asignado_id"`
 	CreatedBy                User      `gorm:"foreignKey:CreatedByID" json:"created_by_user,omitempty"`
+	ProfesorAsignado         *User     `gorm:"foreignKey:ProfesorAsignadoID" json:"profesor_asignado,omitempty"`
 	DocumentosAdjuntos       []DocumentoAdjunto `gorm:"foreignKey:ControlOperativoID" json:"documentos_adjuntos,omitempty"`
 	Notificaciones           []Notificacion     `gorm:"foreignKey:ControlOperativoID" json:"notificaciones,omitempty"`
 }
@@ -104,6 +106,7 @@ type ControlOperativoRequest struct {
 	ProfesionOficio          string `json:"profesion_oficio"`
 	DescripcionCaso          string `json:"descripcion_caso" binding:"required"`
 	ConceptoEstudiante       string   `json:"concepto_estudiante" binding:"required"`
+	ProfesorID               *uint    `json:"profesor_id"`
 	DocumentosAdjuntos       []string `json:"documentos_adjuntos,omitempty"`
 }
 

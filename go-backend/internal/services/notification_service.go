@@ -17,20 +17,11 @@ func NewNotificationService(db *gorm.DB) *NotificationService {
 }
 
 // Crear notificación cuando un estudiante crea un control operativo
-func (s *NotificationService) NotificarNuevoControlAProfesor(controlOperativoID uint, profesorNombre string) error {
-	// Buscar el profesor por nombre completo
-	var profesor models.Profesor
+func (s *NotificationService) NotificarNuevoControlAProfesor(controlOperativoID uint, profesorID uint) error {
+	// Buscar el usuario del profesor directamente
 	var user models.User
-	
-	// Primero buscar el profesor
-	if err := s.db.Where("nombres || ' ' || apellidos = ?", profesorNombre).First(&profesor).Error; err != nil {
-		log.Printf("Error encontrando profesor %s: %v", profesorNombre, err)
-		return err
-	}
-
-	// Buscar el usuario del profesor
-	if err := s.db.Where("id = ?", profesor.UserID).First(&user).Error; err != nil {
-		log.Printf("Error encontrando usuario del profesor: %v", err)
+	if err := s.db.Where("id = ? AND role = 'profesor' AND activo = true", profesorID).First(&user).Error; err != nil {
+		log.Printf("Error encontrando profesor con ID %d: %v", profesorID, err)
 		return err
 	}
 
@@ -48,7 +39,7 @@ func (s *NotificationService) NotificarNuevoControlAProfesor(controlOperativoID 
 		return err
 	}
 
-	log.Printf("✉️ Notificación enviada al profesor %s", profesorNombre)
+	log.Printf("✉️ Notificación enviada al profesor ID %d (%s)", profesorID, user.NombreUsuario)
 	return nil
 }
 

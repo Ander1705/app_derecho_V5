@@ -338,7 +338,7 @@ const GestionUsuarios = () => {
                   Estudiantes
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {usuarios.filter(u => u.role === 'estudiante').length}
+                  {(usuarios || []).filter(u => u && u.role === 'estudiante').length}
                 </p>
               </div>
             </div>
@@ -356,7 +356,7 @@ const GestionUsuarios = () => {
                   Profesores
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {usuarios.filter(u => u.role === 'profesor').length}
+                  {(usuarios || []).filter(u => u && u.role === 'profesor').length}
                 </p>
               </div>
             </div>
@@ -374,7 +374,7 @@ const GestionUsuarios = () => {
                   Suspendidos
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {usuarios.filter(u => !u.activo).length}
+                  {(usuarios || []).filter(u => u && !u.activo).length}
                 </p>
               </div>
             </div>

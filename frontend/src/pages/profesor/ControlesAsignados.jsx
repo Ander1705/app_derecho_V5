@@ -319,10 +319,14 @@ const ControlesAsignados = () => {
         const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
           headers: { Authorization: `Bearer ${token}` }
         })
-        // Extraer solo el array de controles de la respuesta
+        // Extraer solo el array de controles de la respuesta con validación defensiva
         const controlesArray = Array.isArray(response.data) ? response.data : (response.data?.data || [])
-        setControles(controlesArray)
-        setControlesOriginales(controlesArray)
+        
+        // Validación defensiva adicional para asegurar que es un array válido
+        const validControlesArray = Array.isArray(controlesArray) ? controlesArray : []
+        
+        setControles(validControlesArray)
+        setControlesOriginales(validControlesArray)
         console.log('✅ Controles cargados desde el backend:', controlesArray.length)
         console.log('📋 Controles originales establecidos:', controlesArray.length)
         
@@ -606,7 +610,7 @@ const ControlesAsignados = () => {
                   Pendientes
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {controles.filter(c => c.estado_flujo === 'pendiente_profesor').length}
+                  {(controles || []).filter(c => c && c.estado_flujo === 'pendiente_profesor').length}
                 </p>
               </div>
             </div>
@@ -624,7 +628,7 @@ const ControlesAsignados = () => {
                   Completados
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {controles.filter(c => c.estado_flujo === 'completo' || c.estado_flujo === 'con_resultado').length}
+                  {(controles || []).filter(c => c && (c.estado_flujo === 'completo' || c.estado_flujo === 'con_resultado')).length}
                 </p>
               </div>
             </div>
@@ -642,7 +646,7 @@ const ControlesAsignados = () => {
                   Total Asignados
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {controles.length}
+                  {(controles || []).length}
                 </p>
               </div>
             </div>
