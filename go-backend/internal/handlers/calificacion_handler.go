@@ -91,8 +91,15 @@ func (h *CalificacionHandler) CrearCalificacion(c *gin.Context) {
 		return
 	}
 
-	// Cargar relaciones para la respuesta
-	h.db.Preload("Estudiante").Preload("ProfesorEvaluador").Preload("CoordinadorEvaluador").Find(&calificacion)
+	// Cargar relaciones para la respuesta completa
+	var calificacionCompleta models.Calificacion
+	if err := h.db.Preload("Estudiante").Preload("ProfesorEvaluador").Preload("CoordinadorEvaluador").Preload("ControlOperativo").First(&calificacionCompleta, calificacion.ID).Error; err != nil {
+		fmt.Printf("⚠️ Warning: Error cargando relaciones de calificación: %v\n", err)
+		// Continuar con calificación básica si falla el preload
+		calificacionCompleta = calificacion
+	} else {
+		calificacion = calificacionCompleta
+	}
 
 	// Crear notificación para el estudiante
 	go func() {

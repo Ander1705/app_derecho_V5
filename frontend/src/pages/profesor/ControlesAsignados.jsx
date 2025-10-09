@@ -49,6 +49,30 @@ const ControlesAsignados = () => {
     cargarControlesAsignados()
   }, [])
 
+  // Actualización automática cada 30 segundos (optimizada)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Solo actualizar si no se está cargando actualmente
+      if (!loading) {
+        console.log('🔄 Actualizando controles asignados automáticamente...')
+        cargarControlesAsignados()
+      }
+    }, 30000) // 30 segundos
+    
+    return () => clearInterval(interval)
+  }, [loading])
+
+  // Actualización cuando se regresa a la pestaña
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('👁️ Pestaña enfocada, actualizando controles...')
+      cargarControlesAsignados()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
+
   // Efecto para actualizar filtros cuando cambian los parámetros de URL
   useEffect(() => {
     const estadoUrl = searchParams.get('estado') || (searchParams.get('filtro') === 'pendientes' ? 'pendientes' : 'todos')

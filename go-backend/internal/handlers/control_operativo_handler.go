@@ -97,6 +97,14 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 		return
 	}
 
+	// Recargar control con todas las relaciones para respuesta completa
+	var controlCompleto models.ControlOperativo
+	if err := h.db.Preload("CreatedBy").Preload("ProfesorAsignado").Preload("DocumentosAdjuntos").First(&controlCompleto, control.ID).Error; err != nil {
+		fmt.Printf("⚠️ Warning: Error cargando relaciones del control: %v\n", err)
+		// Continuar con control básico si falla el preload
+		controlCompleto = control
+	}
+
 	// Procesar documentos adjuntos de manera asíncrona para no bloquear la respuesta
 	if len(req.DocumentosAdjuntos) > 0 {
 		go h.procesarDocumentosAdjuntos(control.ID, req.DocumentosAdjuntos)
@@ -109,7 +117,7 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Control operativo creado exitosamente",
-		"control": control,
+		"control": controlCompleto,
 	})
 }
 

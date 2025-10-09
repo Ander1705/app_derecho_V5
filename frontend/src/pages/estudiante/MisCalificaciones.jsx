@@ -27,6 +27,30 @@ const MisCalificaciones = () => {
     cargarCalificaciones()
   }, [])
 
+  // Actualización automática cada 60 segundos para calificaciones (optimizada)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Solo actualizar si no se está cargando actualmente
+      if (!loading) {
+        console.log('🔄 Actualizando calificaciones automáticamente...')
+        cargarCalificaciones()
+      }
+    }, 60000) // 60 segundos
+    
+    return () => clearInterval(interval)
+  }, [loading])
+
+  // Actualización cuando se regresa a la pestaña
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('👁️ Pestaña enfocada, actualizando calificaciones...')
+      cargarCalificaciones()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
+
   const cargarCalificaciones = async () => {
     try {
       setLoading(true)

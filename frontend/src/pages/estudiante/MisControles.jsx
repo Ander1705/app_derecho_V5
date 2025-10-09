@@ -532,9 +532,12 @@ const MisControles = () => {
         // Los archivos ya están subidos como temporales, el backend los procesa automáticamente
       }
       
-      // Agregar el nuevo control a la lista
+      // Agregar el nuevo control a la lista inmediatamente
       if (response.data.control) {
-        setControles(prevControles => [response.data.control, ...prevControles])
+        const nuevoControl = response.data.control
+        setControles(prevControles => [nuevoControl, ...prevControles])
+        setControlesOriginales(prevOriginales => [nuevoControl, ...prevOriginales])
+        console.log('✅ Control agregado instantáneamente a la lista local:', nuevoControl.id)
       }
       
       // Cerrar modal y resetear
