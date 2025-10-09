@@ -90,6 +90,36 @@ const initialState = {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
+  // Función utilitaria para limpiar completamente localStorage
+  const clearAllStorageData = useCallback(() => {
+    console.log('🧹 LIMPIEZA COMPLETA de localStorage iniciada')
+    
+    // Limpiar todos los campos conocidos
+    localStorage.removeItem('token')
+    localStorage.removeItem('auth_token') 
+    localStorage.removeItem('auth_user')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('lastActivity')
+    localStorage.removeItem('userRole')
+    localStorage.removeItem('userId')
+    
+    // FUERZA BRUTA: Limpiar TODOS los campos que empiecen con 'auth', 'user', 'token'
+    const keysToRemove = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && (key.includes('auth') || key.includes('user') || key.includes('token') || key.includes('refresh'))) {
+        keysToRemove.push(key)
+      }
+    }
+    keysToRemove.forEach(key => {
+      console.log('🗑️ Eliminando:', key)
+      localStorage.removeItem(key)
+    })
+    
+    delete axios.defaults.headers.common['Authorization']
+    console.log('✅ LIMPIEZA COMPLETA terminada')
+  }, [])
+
   // Función para actualizar actividad del usuario
   const updateActivity = useCallback(() => {
     if (state.isAuthenticated) {
@@ -136,13 +166,14 @@ export const AuthProvider = ({ children }) => {
       
       if (timeSinceLastActivity >= sessionTimeout) {
         console.log('⏰ Sesión expirada por inactividad')
+        clearAllStorageData()
         dispatch({ type: 'LOGOUT' })
       }
     }
 
     const intervalId = setInterval(checkSessionTimeout, 60000) // Verificar cada minuto
     return () => clearInterval(intervalId)
-  }, [state.isAuthenticated, state.lastActivity, state.sessionTimeout])
+  }, [state.isAuthenticated, state.lastActivity, state.sessionTimeout, clearAllStorageData])
 
   // Configurar interceptor de axios para incluir token automáticamente
   useEffect(() => {
@@ -192,12 +223,7 @@ export const AuthProvider = ({ children }) => {
           // Si han pasado más de 8 minutos, cerrar sesión
           if (timeSinceLastActivity >= sessionTimeout) {
             console.log('⏰ Sesión expirada al cargar la aplicación')
-            localStorage.removeItem('token')
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('auth_user')
-            localStorage.removeItem('refreshToken')
-            localStorage.removeItem('lastActivity')
-            delete axios.defaults.headers.common['Authorization']
+            clearAllStorageData()
             dispatch({ type: 'LOGOUT' })
             return
           }
@@ -217,26 +243,14 @@ export const AuthProvider = ({ children }) => {
           
           if (savedUser.id && savedUser.id !== serverUser.id) {
             console.log('❌ Token no coincide con usuario guardado, limpiando sesión')
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('auth_user')
-            localStorage.removeItem('refreshToken')
-            localStorage.removeItem('lastActivity')
-            localStorage.removeItem('userRole')
-            localStorage.removeItem('userId')
-            delete axios.defaults.headers.common['Authorization']
+            clearAllStorageData()
             dispatch({ type: 'LOGOUT' })
             return
           }
           
           if (savedRole && savedRole !== serverUser.role) {
             console.log('❌ Rol de usuario cambió, limpiando sesión')
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('auth_user')
-            localStorage.removeItem('refreshToken')
-            localStorage.removeItem('lastActivity')
-            localStorage.removeItem('userRole')
-            localStorage.removeItem('userId')
-            delete axios.defaults.headers.common['Authorization']
+            clearAllStorageData()
             dispatch({ type: 'LOGOUT' })
             return
           }
@@ -278,12 +292,7 @@ export const AuthProvider = ({ children }) => {
           })
           
           // Limpiar todos los tokens relacionados
-          localStorage.removeItem('token')
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('auth_user')
-          localStorage.removeItem('refreshToken')
-          localStorage.removeItem('lastActivity')
-          delete axios.defaults.headers.common['Authorization']
+          clearAllStorageData()
           dispatch({ type: 'LOGOUT' })
         }
       } else {
@@ -293,7 +302,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     initializeAuth()
-  }, [])
+  }, [clearAllStorageData])
 
   // Interceptor para manejar tokens expirados
   useEffect(() => {
@@ -325,9 +334,11 @@ export const AuthProvider = ({ children }) => {
               return axios(originalRequest)
             } catch (refreshError) {
               console.error('Error al refrescar token:', refreshError)
+              clearAllStorageData()
               dispatch({ type: 'LOGOUT' })
             }
           } else {
+            clearAllStorageData()
             dispatch({ type: 'LOGOUT' })
           }
         }
@@ -338,20 +349,13 @@ export const AuthProvider = ({ children }) => {
     return () => {
       axios.interceptors.response.eject(responseInterceptor)
     }
-  }, [state.user])
+  }, [state.user, clearAllStorageData])
 
   const login = useCallback(async (email, password) => {
     dispatch({ type: 'LOGIN_START' })
     
     // 🧹 LIMPIAR COMPLETAMENTE localStorage antes de nuevos datos
-    localStorage.removeItem('token')
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('lastActivity')
-    localStorage.removeItem('userRole')
-    localStorage.removeItem('userId')
-    delete axios.defaults.headers.common['Authorization']
+    clearAllStorageData()
     
     try {
       const response = await axios.post('/api/auth/login', {
@@ -418,16 +422,11 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(() => {
     // Limpiar inmediatamente todos los datos de localStorage
-    localStorage.removeItem('token')
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('lastActivity')
-    delete axios.defaults.headers.common['Authorization']
+    clearAllStorageData()
     dispatch({ type: 'LOGOUT' })
     
     console.log('🚪 Logout completado - localStorage limpio')
-  }, [])
+  }, [clearAllStorageData])
 
   const register = useCallback(async (userData) => {
     dispatch({ type: 'LOGIN_START' })
