@@ -337,29 +337,46 @@ const ControlOperativoEstudiante = () => {
         estrato: formData.estrato ? parseInt(formData.estrato) : 0
       }
       
-      const response = await axios.post('/api/control-operativo', dataToSend)
-      console.log('✅ Control operativo guardado con ID:', response.data.id)
-      
-      // Subir archivos al control operativo recién creado
-      if (documentos.length > 0 && response.data.control) {
-        console.log(`📎 Subiendo ${documentos.length} archivos al control ${response.data.control.id}`)
+      // Subir archivos temporales ANTES de crear el control
+      let archivosTemporales = []
+      if (documentos.length > 0) {
+        console.log(`📎 Subiendo ${documentos.length} archivos temporales`)
         
         for (const doc of documentos) {
           try {
             const formDataFiles = new FormData()
             formDataFiles.append('file', doc.file)
             
-            await axios.post(`/api/control-operativo/${response.data.control.id}/archivo`, formDataFiles, {
+            const uploadResponse = await axios.post('/api/upload/temp', formDataFiles, {
               headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
               }
             })
+            
+            if (uploadResponse.data.filename) {
+              archivosTemporales.push(uploadResponse.data.filename)
+            }
           } catch (fileError) {
             console.error('❌ Error subiendo archivo:', doc.filename, fileError)
+            throw new Error(`Error subiendo archivo ${doc.filename}`)
           }
         }
-        console.log('✅ Archivos subidos exitosamente')
+        console.log('✅ Archivos temporales subidos exitosamente:', archivosTemporales)
       }
+
+      // Agregar archivos temporales al payload del control
+      const dataWithFiles = {
+        ...dataToSend,
+        documentos_adjuntos: archivosTemporales
+      }
+
+      const response = await axios.post('/api/control-operativo', dataWithFiles, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      console.log('✅ Control operativo guardado con ID:', response.data.id)
       
       setInfoModalData({
         title: "Control Operativo Guardado Exitosamente",
@@ -399,6 +416,14 @@ const ControlOperativoEstudiante = () => {
       } else if (error.request) {
         errorMessage = 'Error de conexión con el servidor'
         errorDetails = ['Verifica tu conexión a internet', 'Asegúrate de que el servidor esté funcionando']
+      } else if (error.message && error.message.includes('Error subiendo archivo')) {
+        errorMessage = 'Error al subir archivos adjuntos'
+        errorDetails = [
+          'Verifica que todos los archivos sean PDF válidos',
+          'Asegúrate de que ningún archivo exceda los 5MB',
+          'Verifica tu conexión a internet',
+          error.message
+        ]
       } else {
         errorMessage = 'Error inesperado'
         errorDetails = [error.message || 'Error desconocido']

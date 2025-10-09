@@ -62,7 +62,7 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 
 	var controles []models.ControlOperativo
 	// Buscar con nombre exacto y también con variaciones de espacios
-	dbResult := h.db.Preload("CreatedBy").
+	dbResult := h.db.Preload("CreatedBy").Preload("DocumentosAdjuntos").
 		Where("(TRIM(nombre_docente_responsable) = TRIM(?) OR nombre_docente_responsable = ?) AND activo = true", nombreCompleto, nombreCompleto).
 		Order("created_at DESC").
 		Find(&controles)
