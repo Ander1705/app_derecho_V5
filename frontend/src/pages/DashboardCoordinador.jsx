@@ -208,47 +208,47 @@ const DashboardCoordinador = () => {
 
   return (
     <div className={`min-h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
         
 
         {/* Bienvenida */}
-        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6 mb-6`}>
-          <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-2`}>
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg md:rounded-xl shadow-sm border p-4 sm:p-6 mb-4 sm:mb-6`}>
+          <h1 className={`text-xl sm:text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-1 sm:mb-2`}>
             Bienvenido, Luz Mary Rincon
           </h1>
-          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+          <p className={`text-sm sm:text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             Panel de control - Consultorio Jurídico
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           
           {/* Columna Principal */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
             
             {/* Métricas */}
-            <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6`}>
-              <h2 className={`text-xl font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'} mb-6 flex items-center`}>
-                <ChartBarIcon className={`h-5 w-5 mr-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+            <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg md:rounded-xl shadow-sm border p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'} mb-4 sm:mb-6 flex items-center`}>
+                <ChartBarIcon className={`h-4 w-4 sm:h-5 sm:w-5 mr-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
                 Métricas
               </h2>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* Métrica: Estudiantes Registrados */}
                 <Link 
                   to="/gestion-usuarios?role=estudiante"
-                  className={`block text-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-blue-50 hover:bg-blue-100'}`}
+                  className={`block text-center p-3 sm:p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-blue-50 hover:bg-blue-100'}`}
                 >
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
-                    <UserGroupIcon className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl mx-auto mb-2 sm:mb-3 flex items-center justify-center ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+                    <UserGroupIcon className={`h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                   </div>
-                  <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className={`text-xl sm:text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                     {metricas.estudiantesRegistrados}
                   </div>
-                  <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <div className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                     Estudiantes
                   </div>
-                  <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} hidden sm:block`}>
                     Registrados
                   </div>
                 </Link>
@@ -256,18 +256,18 @@ const DashboardCoordinador = () => {
                 {/* Métrica: Profesores Registrados */}
                 <Link 
                   to="/gestion-usuarios?role=profesor"
-                  className={`block text-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-green-50 hover:bg-green-100'}`}
+                  className={`block text-center p-3 sm:p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-green-50 hover:bg-green-100'}`}
                 >
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${isDark ? 'bg-green-900/30' : 'bg-green-100'}`}>
-                    <UserGroupIcon className={`h-6 w-6 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl mx-auto mb-2 sm:mb-3 flex items-center justify-center ${isDark ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                    <UserGroupIcon className={`h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
                   </div>
-                  <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className={`text-xl sm:text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                     {metricas.profesoresRegistrados}
                   </div>
-                  <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <div className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                     Profesores
                   </div>
-                  <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} hidden sm:block`}>
                     Registrados
                   </div>
                 </Link>
@@ -275,18 +275,18 @@ const DashboardCoordinador = () => {
                 {/* Métrica: Controles Pendientes */}
                 <Link 
                   to="/control-operativo?estado=pendiente"
-                  className={`block text-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-orange-50 hover:bg-orange-100'}`}
+                  className={`block text-center p-3 sm:p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-orange-50 hover:bg-orange-100'}`}
                 >
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${isDark ? 'bg-orange-900/30' : 'bg-orange-100'}`}>
-                    <ClockIcon className={`h-6 w-6 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl mx-auto mb-2 sm:mb-3 flex items-center justify-center ${isDark ? 'bg-orange-900/30' : 'bg-orange-100'}`}>
+                    <ClockIcon className={`h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
                   </div>
-                  <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className={`text-xl sm:text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                     {metricas.controlesPendientes}
                   </div>
-                  <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <div className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                     Pendientes
                   </div>
-                  <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} hidden sm:block`}>
                     Sin Resultado
                   </div>
                 </Link>
@@ -294,40 +294,41 @@ const DashboardCoordinador = () => {
                 {/* Métrica: Total Reportes */}
                 <Link 
                   to="/control-operativo"
-                  className={`block text-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-purple-50 hover:bg-purple-100'}`}
+                  className={`block text-center p-3 sm:p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-purple-50 hover:bg-purple-100'}`}
                 >
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${isDark ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
-                    <DocumentTextIcon className={`h-6 w-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl mx-auto mb-2 sm:mb-3 flex items-center justify-center ${isDark ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                    <DocumentTextIcon className={`h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
                   </div>
-                  <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className={`text-xl sm:text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                     {metricas.totalReportes}
                   </div>
-                  <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Total Reportes
+                  <div className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <span className="hidden sm:inline">Total Reportes</span>
+                    <span className="sm:hidden">Reportes</span>
                   </div>
                 </Link>
               </div>
             </div>
 
             {/* Acciones */}
-            <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6`}>
-              <h2 className={`text-xl font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'} mb-6`}>
+            <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg md:rounded-xl shadow-sm border p-4 sm:p-6`}>
+              <h2 className={`text-lg sm:text-xl font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'} mb-4 sm:mb-6`}>
                 Acciones
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {/* Acción: Crear Respaldo */}
                 <Link
                   to="/backup-sistema"
-                  className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
+                  className={`group rounded-lg md:rounded-xl p-3 sm:p-4 lg:p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isDark ? 'bg-blue-900/30 group-hover:bg-blue-900/40' : 'bg-blue-100 group-hover:bg-blue-200'}`}>
-                      <PlusIcon className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg md:rounded-xl flex items-center justify-center transition-colors ${isDark ? 'bg-blue-900/30 group-hover:bg-blue-900/40' : 'bg-blue-100 group-hover:bg-blue-200'}`}>
+                      <PlusIcon className={`h-5 w-5 sm:h-6 sm:w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                     </div>
-                    <div className="flex-1">
-                      <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-blue-600`}>Crear Respaldo</h3>
-                      <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Respaldar datos del sistema</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`font-semibold text-sm sm:text-base ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-blue-600`}>Crear Respaldo</h3>
+                      <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'} truncate`}>Respaldar datos del sistema</p>
                     </div>
                   </div>
                 </Link>

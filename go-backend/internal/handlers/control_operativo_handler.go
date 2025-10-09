@@ -118,7 +118,7 @@ func (h *ControlOperativoHandler) ListarControles(c *gin.Context) {
 	// Parsear parámetros de paginación
 	pagination := services.PaginationParams{
 		Page:   1,
-		Limit:  100,
+		Limit:  1000,
 		Sort:   "created_at",
 		Order:  "desc",
 		Search: c.Query("search"),
@@ -130,7 +130,7 @@ func (h *ControlOperativoHandler) ListarControles(c *gin.Context) {
 		}
 	}
 	if limit := c.Query("limit"); limit != "" {
-		if l, err := strconv.Atoi(limit); err == nil && l > 0 && l <= 100 {
+		if l, err := strconv.Atoi(limit); err == nil && l > 0 && l <= 1000 {
 			pagination.Limit = l
 		}
 	}

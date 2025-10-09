@@ -65,8 +65,8 @@ const DashboardProfesor = () => {
         // Calcular métricas reales desde los controles
         const controlesAsignados = controles.length
         const controlesCompletados = controles.filter(c => c.estado_flujo === 'completo' || c.estado_flujo === 'con_resultado').length
-        const controlesPendientes = controles.filter(c => c.estado_flujo === 'pendiente_profesor').length
-        const estudiantesUnicos = [...new Set((controles || []).map(c => c.created_by_id || c.nombre_estudiante))].length
+        const controlesPendientes = controles.filter(c => !c.concepto_asesor || c.concepto_asesor.trim() === '' || c.estado_flujo === 'pendiente_profesor').length
+        const estudiantesUnicos = [...new Set((controles || []).map(c => c.created_by_id || c.created_by || c.nombre_estudiante).filter(Boolean))].length
         
         setMetricas({
           controlesAsignados,

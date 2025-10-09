@@ -134,7 +134,6 @@ func (h *CoordinadorHandler) ListarControlesCompletos(c *gin.Context) {
 		Preload("CreatedBy").
 		Where(whereClause).
 		Order("created_at DESC").
-		Limit(50).
 		Find(&controles)
 	
 	// Debug log para ver cuántos controles se están devolviendo

@@ -137,48 +137,51 @@ const Login = () => {
         }}></div>
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="max-w-7xl w-full">
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
             
             {/* Lado izquierdo - Información institucional */}
-            <div className="order-1 lg:translate-x-0">
-              <div className="text-center space-y-10">
+            <div className="order-2 lg:order-1 lg:translate-x-0">
+              <div className="text-center space-y-6 md:space-y-8 lg:space-y-10">
                   {/* Logo/Escudo con efectos modernos */}
                   <div className="flex justify-center">
                     <div className="relative group cursor-pointer">
                       {/* Anillos de luz alrededor del escudo */}
-                      <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 opacity-15 blur-lg group-hover:opacity-25 transition-opacity duration-500"></div>
+                      <div className="absolute -inset-2 md:-inset-4 rounded-full bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 opacity-15 blur-lg group-hover:opacity-25 transition-opacity duration-500"></div>
                       
                       {/* Contenedor del escudo */}
-                      <div className="relative w-56 h-56 flex items-center justify-center">
+                      <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 flex items-center justify-center">
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/20 group-hover:scale-105 transition-transform duration-500"></div>
                         <img 
                           src="/escudo.svg" 
                           alt="Escudo Universidad Colegio Mayor de Cundinamarca" 
-                          className="relative z-10 w-44 h-44 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-500"
+                          className="relative z-10 w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-500"
                         />
                       </div>
                     </div>
                   </div>
                   
                   {/* Títulos con animaciones */}
-                  <div className="space-y-6">
+                  <div className="space-y-3 md:space-y-4 lg:space-y-6">
                     <div className="overflow-hidden">
-                      <h1 className="text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-university-gold leading-tight">
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-university-gold leading-tight">
                         SISTEMA
                       </h1>
-                      <h1 className="text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-university-gold via-yellow-300 to-white leading-tight">
+                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-university-gold via-yellow-300 to-white leading-tight">
                         JURÍDICO
                       </h1>
                     </div>
                     
-                    <div className="space-y-2">
-                      <h3 className="text-2xl lg:text-3xl font-semibold text-blue-100">
+                    <div className="space-y-1 md:space-y-2">
+                      <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-blue-100">
                         {/* Nombre responsivo */}
-                        <span className="hidden sm:block">
+                        <span className="hidden md:block">
                           Universidad Colegio Mayor de Cundinamarca
+                        </span>
+                        <span className="hidden sm:block md:hidden">
+                          Colegio Mayor de Cundinamarca
                         </span>
                         <span className="sm:hidden">
                           UCMC
@@ -187,13 +190,13 @@ const Login = () => {
                     </div>
                     
                     {/* Badge de facultad */}
-                    <div className="inline-flex items-center space-x-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3">
-                      <ShieldCheckIcon className="w-8 h-8 text-university-gold" />
-                      <span className="text-lg font-semibold text-white">Facultad de Derecho</span>
+                    <div className="inline-flex items-center space-x-2 md:space-x-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-2 md:px-6 md:py-3">
+                      <ShieldCheckIcon className="w-5 h-5 md:w-8 md:h-8 text-university-gold" />
+                      <span className="text-sm md:text-lg font-semibold text-white">Facultad de Derecho</span>
                     </div>
                     
-                    <div className="flex justify-center">
-                      <p className="text-lg text-blue-200/80 max-w-lg leading-relaxed text-center">
+                    <div className="flex justify-center px-4">
+                      <p className="text-sm md:text-base lg:text-lg text-blue-200/80 max-w-sm md:max-w-lg leading-relaxed text-center">
                         Plataforma integral para la gestión profesional de casos legales, administración de clientes y generación de documentos jurídicos especializados.
                       </p>
                     </div>
@@ -203,26 +206,26 @@ const Login = () => {
             </div>
 
             {/* Lado derecho - Formulario de login */}
-            <div className="order-2 lg:translate-x-0">
+            <div className="order-1 lg:order-2 lg:translate-x-0">
               <div className="flex justify-center lg:justify-end">
-                  <div className="w-full max-w-lg">
+                  <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg">
                     {/* Container principal con efectos glassmorphism */}
                     <div className="relative group">
                       {/* Efectos de fondo */}
-                      <div className="absolute -inset-1 rounded-3xl blur-lg transition-all duration-700 bg-gradient-to-r from-university-gold via-purple-500 to-purple-600 opacity-25 group-hover:opacity-40"></div>
+                      <div className="absolute -inset-1 rounded-2xl md:rounded-3xl blur-lg transition-all duration-700 bg-gradient-to-r from-university-gold via-purple-500 to-purple-600 opacity-25 group-hover:opacity-40"></div>
                       
                       {/* Formulario principal */}
-                      <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
+                      <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl">
                         {/* Header del formulario */}
-                        <div className="text-center mb-8">
-                          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-700 mb-6 shadow-lg">
-                            <KeyIcon className="w-8 h-8 text-white" />
+                        <div className="text-center mb-6 md:mb-8">
+                          <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br from-purple-600 to-purple-700 mb-4 md:mb-6 shadow-lg">
+                            <KeyIcon className="w-6 h-6 md:w-8 md:h-8 text-white" />
                           </div>
                           
-                          <h2 className="text-3xl font-bold text-white mb-2">
+                          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">
                             Acceso Seguro
                           </h2>
-                          <p className="text-blue-200">
+                          <p className="text-sm md:text-base text-blue-200">
                             Ingresa tus credenciales institucionales
                           </p>
                         </div>
@@ -263,14 +266,14 @@ const Login = () => {
                           </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                           {/* Campo Email */}
                           <div className="relative group">
-                            <label className="block text-sm font-medium text-blue-200 mb-2 group-focus-within:text-white transition-colors">
+                            <label className="block text-xs md:text-sm font-medium text-blue-200 mb-1 md:mb-2 group-focus-within:text-white transition-colors">
                               Correo Electrónico
                             </label>
                               <div className="relative">
-                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg md:rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
                                 <input
                                   id="email"
                                   name="email"
@@ -279,7 +282,7 @@ const Login = () => {
                                   required
                                   value={formData.email}
                                   onChange={handleChange}
-                                  className={`relative w-full px-4 py-4 bg-white/5 border-2 rounded-xl text-white placeholder-blue-300 backdrop-blur-sm focus:outline-none transition-all duration-300 ${
+                                  className={`relative w-full px-3 md:px-4 py-3 md:py-4 bg-white/5 border-2 rounded-lg md:rounded-xl text-white placeholder-blue-300 backdrop-blur-sm focus:outline-none transition-all duration-300 text-sm md:text-base ${
                                     validationErrors.email
                                       ? 'border-red-400 focus:border-red-300'
                                       : 'border-white/20 focus:border-university-gold hover:border-white/40'
@@ -287,7 +290,7 @@ const Login = () => {
                                   placeholder="correo@unicolmayor.edu.co"
                                   disabled={isSubmitting}
                                 />
-                                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-university-gold to-purple-500 rounded-l-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+                                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-university-gold to-purple-500 rounded-l-lg md:rounded-l-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
                               </div>
                               {validationErrors.email && (
                                 <p className="mt-2 text-sm text-red-300 flex items-center">
@@ -301,11 +304,11 @@ const Login = () => {
 
                           {/* Campo Password */}
                             <div className="relative group">
-                              <label className="block text-sm font-medium text-blue-200 mb-2 group-focus-within:text-white transition-colors">
+                              <label className="block text-xs md:text-sm font-medium text-blue-200 mb-1 md:mb-2 group-focus-within:text-white transition-colors">
                                 Contraseña
                               </label>
                               <div className="relative">
-                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg md:rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
                                 <input
                                   id="password"
                                   name="password"
@@ -314,7 +317,7 @@ const Login = () => {
                                   required
                                   value={formData.password}
                                   onChange={handleChange}
-                                  className={`relative w-full px-4 py-4 pr-12 bg-white/5 border-2 rounded-xl text-white placeholder-blue-300 backdrop-blur-sm focus:outline-none transition-all duration-300 ${
+                                  className={`relative w-full px-3 md:px-4 py-3 md:py-4 pr-10 md:pr-12 bg-white/5 border-2 rounded-lg md:rounded-xl text-white placeholder-blue-300 backdrop-blur-sm focus:outline-none transition-all duration-300 text-sm md:text-base ${
                                     validationErrors.password
                                       ? 'border-red-400 focus:border-red-300'
                                       : 'border-white/20 focus:border-university-gold hover:border-white/40'
@@ -324,17 +327,17 @@ const Login = () => {
                                 />
                                 <button
                                   type="button"
-                                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                                  className="absolute inset-y-0 right-0 pr-3 md:pr-4 flex items-center"
                                   onClick={() => setShowPassword(!showPassword)}
                                   disabled={isSubmitting}
                                 >
                                   {showPassword ? (
-                                    <EyeSlashIcon className="w-5 h-5 text-blue-300 hover:text-white transition-colors" />
+                                    <EyeSlashIcon className="w-4 h-4 md:w-5 md:h-5 text-blue-300 hover:text-white transition-colors" />
                                   ) : (
-                                    <EyeIcon className="w-5 h-5 text-blue-300 hover:text-white transition-colors" />
+                                    <EyeIcon className="w-4 h-4 md:w-5 md:h-5 text-blue-300 hover:text-white transition-colors" />
                                   )}
                                 </button>
-                                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-university-gold to-purple-500 rounded-l-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+                                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-university-gold to-purple-500 rounded-l-lg md:rounded-l-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
                               </div>
                               {validationErrors.password && (
                                 <p className="mt-2 text-sm text-red-300 flex items-center">
@@ -347,18 +350,18 @@ const Login = () => {
                             </div>
 
                           {/* Opciones adicionales */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                               <label className="flex items-center">
                                 <input
                                   type="checkbox"
                                   className="w-4 h-4 rounded border-white/20 bg-white/5 text-university-gold focus:ring-university-gold focus:ring-offset-0"
                                 />
-                                <span className="ml-2 text-sm text-blue-200">Recordar sesión</span>
+                                <span className="ml-2 text-xs sm:text-sm text-blue-200">Recordar sesión</span>
                               </label>
                               
                               <Link 
                                 to="/recuperar-contraseña" 
-                                className="text-sm text-university-gold hover:text-yellow-300 transition-colors"
+                                className="text-xs sm:text-sm text-university-gold hover:text-yellow-300 transition-colors text-center sm:text-right"
                               >
                                 ¿Olvidaste tu contraseña?
                               </Link>
@@ -370,20 +373,21 @@ const Login = () => {
                             disabled={isSubmitting}
                             className="relative w-full group overflow-hidden"
                           >
-                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700"></div>
-                            <div className="absolute inset-0 bg-gradient-to-r from-university-gold to-yellow-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <div className="absolute inset-0 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div className="absolute inset-0 rounded-lg md:rounded-xl bg-gradient-to-r from-purple-600 to-purple-700"></div>
+                            <div className="absolute inset-0 bg-gradient-to-r from-university-gold to-yellow-500 rounded-lg md:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div className="absolute inset-0 bg-white/10 rounded-lg md:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             
-                            <div className="relative py-4 px-6 flex items-center justify-center space-x-3 text-white font-semibold">
+                            <div className="relative py-3 md:py-4 px-4 md:px-6 flex items-center justify-center space-x-2 md:space-x-3 text-white font-semibold text-sm md:text-base">
                               {isSubmitting ? (
                                 <>
-                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                  <span>Iniciando sesión...</span>
+                                  <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <span className="hidden sm:inline">Iniciando sesión...</span>
+                                  <span className="sm:hidden">Iniciando...</span>
                                 </>
                               ) : (
                                 <>
                                   <span>Iniciar Sesión</span>
-                                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                   </svg>
                                 </>
@@ -392,8 +396,8 @@ const Login = () => {
                           </button>
 
                           {/* Enlaces de navegación */}
-                          <div className="text-center pt-4 space-y-3">
-                            <p className="text-sm text-blue-300">
+                          <div className="text-center pt-3 md:pt-4 space-y-2 md:space-y-3">
+                            <p className="text-xs sm:text-sm text-blue-300">
                               ¿No tienes una cuenta?{' '}
                               <Link 
                                 to="/registro" 
@@ -402,13 +406,14 @@ const Login = () => {
                                 Regístrate aquí
                               </Link>
                             </p>
-                            <p className="text-sm text-blue-300">
+                            <p className="text-xs sm:text-sm text-blue-300">
                               ¿Necesitas ayuda?{' '}
                               <a 
                                 href="mailto:consultoriojuridico.kennedy@universidadmayor.edu.co" 
-                                className="text-university-gold hover:text-yellow-300 font-medium transition-colors"
+                                className="text-university-gold hover:text-yellow-300 font-medium transition-colors break-all sm:break-normal"
                               >
-                                Contactar coordinador
+                                <span className="hidden sm:inline">Contactar coordinador</span>
+                                <span className="sm:hidden">Contactar</span>
                               </a>
                             </p>
                           </div>
@@ -423,8 +428,8 @@ const Login = () => {
       </div>
 
       {/* Footer minimalista */}
-      <div className="absolute bottom-6 left-0 right-0 text-center z-20">
-        <p className="text-blue-300/60 text-sm">
+      <div className="absolute bottom-3 md:bottom-6 left-0 right-0 text-center z-20 px-4">
+        <p className="text-blue-300/60 text-xs md:text-sm">
           © 2025 Universidad Colegio Mayor de Cundinamarca
         </p>
       </div>

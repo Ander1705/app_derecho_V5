@@ -182,10 +182,9 @@ const ControlOperativoCoordinador = () => {
         headers: { Authorization: `Bearer ${token}` }
       })
       
-      // Ordenar por fecha de creación descendente (más recientes primero) y limitar a 100
+      // Ordenar por fecha de creación descendente (más recientes primero)
       const controlesOrdenados = (response.data || [])
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 100)
       
       console.log('📋 Controles cargados y ordenados:', controlesOrdenados.length)
       setControles(controlesOrdenados)
