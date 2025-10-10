@@ -85,28 +85,15 @@ func (h *CalificacionHandler) CrearCalificacion(c *gin.Context) {
 		calificacion.CoordinadorEvaluadorID = &user.ID
 	}
 
-	// El hook BeforeSave calculará automáticamente el promedio
-	if err := h.db.Create(&calificacion).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error creando calificación"})
-		return
-	}
-
-	// Cargar solo campos mínimos necesarios para respuesta
-	var calificacionCompleta models.Calificacion
-	err := h.db.
-		Preload("Estudiante", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, nombre_usuario, email")
-		}).
-		Preload("ControlOperativo", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, nombre_consultante, area_consulta")
-		}).
-		First(&calificacionCompleta, calificacion.ID).Error
+	// Usar transacción para operación atómica
+	err := h.db.Transaction(func(tx *gorm.DB) error {
+		// El hook BeforeSave calculará automáticamente el promedio
+		return tx.Create(&calificacion).Error
+	})
 	
 	if err != nil {
-		fmt.Printf("⚠️ Warning: Error cargando relaciones de calificación: %v\n", err)
-		calificacionCompleta = calificacion
-	} else {
-		calificacion = calificacionCompleta
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error creando calificación"})
+		return
 	}
 
 	// Crear notificación para el estudiante

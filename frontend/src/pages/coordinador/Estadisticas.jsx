@@ -58,7 +58,7 @@ const Estadisticas = () => {
       const token = localStorage.getItem('token')
       
       // Construir parámetros para el nuevo endpoint
-      let url = `${API_BASE_URL}/coordinador/estadisticas-completas`
+      let url = '/api/coordinador/estadisticas-completas'
       const params = new URLSearchParams()
       
       if (filtroAno) {
@@ -72,13 +72,15 @@ const Estadisticas = () => {
         url += '?' + params.toString()
       }
 
-      // Usar el nuevo endpoint de estadísticas completas
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      console.log('📊 Cargando estadísticas desde:', url)
+      
+      // Usar el endpoint de estadísticas completas
+      const response = await axios.get(url)
 
       const data = response.data || {}
 
+      console.log('📊 Datos recibidos del backend:', data)
+      
       // Usar datos directamente del endpoint exhaustivo
       const general = {
         totalControles: data.general?.total_controles || 0,
@@ -87,6 +89,8 @@ const Estadisticas = () => {
         controlesPendientes: data.general?.controles_pendientes || 0,
         controlesCompletos: data.general?.controles_completos || 0
       }
+      
+      console.log('📊 Estadísticas generales procesadas:', general)
 
       // Estadísticas por área (ya procesadas por el backend)
       const porArea = data.por_area || []
@@ -119,16 +123,16 @@ const Estadisticas = () => {
       }
 
       // Estadísticas por ciudad (ya procesadas por el backend)
-      const porCiudad = (data.por_ciudad || []).slice(0, 5)
+      const porCiudad = Array.isArray(data.por_ciudad) ? data.por_ciudad.slice(0, 5) : []
 
       // Top profesores (ya procesados por el backend)
-      const profesoresTop = (data.top_profesores || []).slice(0, 5)
+      const profesoresTop = Array.isArray(data.top_profesores) ? data.top_profesores.slice(0, 5) : []
 
       // Top estudiantes (ya procesados por el backend)
-      const estudiantesTop = (data.top_estudiantes || []).slice(0, 5)
+      const estudiantesTop = Array.isArray(data.top_estudiantes) ? data.top_estudiantes.slice(0, 5) : []
 
       // Calcular tendencias desde datos mensuales
-      const tendenciasMensuales = data.tendencias_mensuales || []
+      const tendenciasMensuales = Array.isArray(data.tendencias_mensuales) ? data.tendencias_mensuales : []
       let controlEsteMe = 0
       let controlMesAnterior = 0
       
@@ -149,8 +153,8 @@ const Estadisticas = () => {
         crecimiento
       }
 
-      // Procesar datos para el gráfico mensual
-      const porMes = tendenciasMensuales.reverse() // Mostrar cronológicamente
+      // Procesar datos para el gráfico mensual (crear copia para no mutar el original)
+      const porMes = [...tendenciasMensuales].reverse() // Mostrar cronológicamente
 
       setEstadisticas({
         general,
@@ -165,7 +169,12 @@ const Estadisticas = () => {
       })
 
     } catch (error) {
-      console.error('Error cargando estadísticas:', error)
+      console.error('❌ Error cargando estadísticas:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      })
       // En caso de error, mantener estadísticas vacías
       setEstadisticas({
         general: {

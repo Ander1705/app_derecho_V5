@@ -59,8 +59,8 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 	}
 
 	var controles []models.ControlOperativo
-	// Buscar controles asignados directamente por ID del profesor
-	dbResult := h.db.Preload("CreatedBy").Preload("ProfesorAsignado").Preload("DocumentosAdjuntos").
+	// Buscar controles sin preloads costosos para mejorar rendimiento
+	dbResult := h.db.Select("id, ciudad, fecha_dia, fecha_mes, fecha_ano, nombre_docente_responsable, nombre_estudiante, area_consulta, remitido_por, correo_electronico, nombre_consultante, edad, fecha_nacimiento_dia, fecha_nacimiento_mes, fecha_nacimiento_ano, lugar_nacimiento, sexo, tipo_documento, numero_documento, lugar_expedicion, direccion, barrio, estrato, numero_telefonico, numero_celular, estado_civil, escolaridad, profesion_oficio, descripcion_caso, concepto_estudiante, concepto_asesor, estado_flujo, estado_resultado, activo, created_at, updated_at, created_by_id, profesor_asignado_id").
 		Where("profesor_asignado_id = ? AND activo = true", user.ID).
 		Order("created_at DESC").
 		Find(&controles)

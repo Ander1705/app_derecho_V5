@@ -52,20 +52,18 @@ const ControlOperativoCoordinador = () => {
     }
   }, [user?.role]) // Solo depende del rol, NO de searchParams
 
-  // Aplicar filtro de área una sola vez al montar
+  // Aplicar filtro de área DESPUÉS de cargar controles para asegurar que funcione
   useEffect(() => {
     const areaParam = searchParams.get('area')
     
-    if (areaParam) {
+    if (areaParam && controles.length > 0) {
       console.log('🎯 Filtrando por área desde URL:', areaParam)
       setFiltros(prev => ({
         ...prev,
         area: areaParam
       }))
     }
-  }, []) // Solo ejecutar una vez al montar
-
-  // Ya no necesitamos useEffect para búsqueda - se maneja directamente en onChange
+  }, [controles.length, searchParams]) // Ejecutar cuando se cargan los controles
 
   // Aplicar filtros automáticamente cuando cambien los filtros locales
   useEffect(() => {

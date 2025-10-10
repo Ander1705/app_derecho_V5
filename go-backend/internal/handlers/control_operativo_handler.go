@@ -92,17 +92,25 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 	
 	fmt.Printf("🔍 BACKEND: Asignando profesor ID: %v al control\n", req.ProfesorID)
 
-	if err := h.db.Create(&control).Error; err != nil {
+	// Usar transacción para operación atómica y más rápida
+	err := h.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&control).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	
+	if err != nil {
+		fmt.Printf("❌ BACKEND: Error creando control: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error creando control operativo"})
 		return
 	}
-
-	// Recargar control con todas las relaciones para respuesta completa
-	var controlCompleto models.ControlOperativo
-	if err := h.db.Preload("CreatedBy").Preload("ProfesorAsignado").Preload("DocumentosAdjuntos").First(&controlCompleto, control.ID).Error; err != nil {
-		fmt.Printf("⚠️ Warning: Error cargando relaciones del control: %v\n", err)
-		// Continuar con control básico si falla el preload
-		controlCompleto = control
+	
+	// Asignar relaciones básicas sin consulta adicional
+	control.CreatedBy = *user
+	if req.ProfesorID != nil {
+		// Solo asignar el ID del profesor sin consulta adicional
+		control.ProfesorAsignado = &models.User{ID: *req.ProfesorID}
 	}
 
 	// Procesar documentos adjuntos de manera asíncrona para no bloquear la respuesta
@@ -117,7 +125,7 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Control operativo creado exitosamente",
-		"control": controlCompleto,
+		"control": control,
 	})
 }
 

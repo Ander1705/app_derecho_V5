@@ -237,23 +237,17 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get('/api/auth/me')
           const serverUser = response.data
           
-          // 🔍 VERIFICAR CONSISTENCIA: Token debe coincidir con usuario guardado
-          const savedUser = JSON.parse(localStorage.getItem('auth_user') || '{}')
-          const savedRole = localStorage.getItem('userRole')
+          // 🔍 ACTUALIZAR localStorage con datos del servidor (source of truth)
+          // No verificar consistencia para evitar conflictos al cambiar usuarios
+          localStorage.setItem('auth_user', JSON.stringify(serverUser))
+          localStorage.setItem('userRole', serverUser.role)
+          localStorage.setItem('userId', serverUser.id.toString())
           
-          if (savedUser.id && savedUser.id !== serverUser.id) {
-            console.log('❌ Token no coincide con usuario guardado, limpiando sesión')
-            clearAllStorageData()
-            dispatch({ type: 'LOGOUT' })
-            return
-          }
-          
-          if (savedRole && savedRole !== serverUser.role) {
-            console.log('❌ Rol de usuario cambió, limpiando sesión')
-            clearAllStorageData()
-            dispatch({ type: 'LOGOUT' })
-            return
-          }
+          console.log('🔄 localStorage actualizado con datos del servidor:', {
+            userId: serverUser.id,
+            userRole: serverUser.role,
+            userEmail: serverUser.email
+          })
           
           console.log('✅ Token válido y consistente, restaurando sesión:', {
             userId: serverUser.id,
