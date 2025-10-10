@@ -9,7 +9,6 @@ import RegistroEstudiante from './pages/auth/RegistroEstudiante'
 import RegistroProfesor from './pages/auth/RegistroProfesor'
 import VerificarEmail from './pages/auth/VerificarEmail'
 import RegisterSelector from './components/auth/RegisterSelector'
-import Dashboard from './pages/Dashboard'
 import DashboardCoordinador from './pages/DashboardCoordinador'
 import DashboardEstudiante from './pages/estudiante/DashboardEstudiante'
 import DashboardProfesor from './pages/profesor/DashboardProfesor'
@@ -47,7 +46,19 @@ const DashboardRedirect = () => {
     return <DashboardCoordinador />
   }
   
-  return <Dashboard />
+  // Fallback para roles no definidos
+  return (
+    <div className="min-h-full bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          Bienvenido al Sistema
+        </h1>
+        <p className="text-gray-600">
+          Tu rol no está definido. Contacta al administrador.
+        </p>
+      </div>
+    </div>
+  )
 }
 
 function App() {

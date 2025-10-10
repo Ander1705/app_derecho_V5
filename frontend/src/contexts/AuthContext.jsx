@@ -120,6 +120,18 @@ export const AuthProvider = ({ children }) => {
     console.log('✅ LIMPIEZA COMPLETA terminada')
   }, [])
 
+  // Listener para cambios en otras pestañas
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+        if (e.key === 'auth_token' || e.key === 'auth_user' || e.key === 'auth_role') {
+            window.location.reload()
+        }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
   // Función para actualizar actividad del usuario
   const updateActivity = useCallback(() => {
     if (state.isAuthenticated) {
@@ -194,109 +206,59 @@ export const AuthProvider = ({ children }) => {
 
   // Verificar token existente al cargar la aplicación
   useEffect(() => {
-    console.log('🚀 INICIANDO AuthContext - useEffect principal')
-    
-    const initializeAuth = async () => {
-      console.log('🔍 initializeAuth ejecutándose...')
-      
-      const savedToken = localStorage.getItem('auth_token') || localStorage.getItem('token')
-      const savedRefreshToken = localStorage.getItem('refreshToken')
-      const savedLastActivity = localStorage.getItem('lastActivity')
-      
-      
-      if (savedToken) {
-        const now = Date.now()
+    const verificarSesion = async () => {
+        const token = localStorage.getItem('auth_token')
+        const savedUser = localStorage.getItem('auth_user')
+        const savedRole = localStorage.getItem('auth_role')
+        const timestamp = localStorage.getItem('auth_timestamp')
         
-        // Verificar timeout solo si hay lastActivity guardado
-        if (savedLastActivity) {
-          const lastActivity = parseInt(savedLastActivity)
-          const timeSinceLastActivity = now - lastActivity
-          const sessionTimeout = 8 * 60 * 1000 // 8 minutos en milisegundos
-          
-          console.log('⏱️ Verificando timeout:', {
-            lastActivityTime: new Date(lastActivity).toLocaleTimeString(),
-            timeSinceLastActivity: Math.floor(timeSinceLastActivity / 1000 / 60),
-            timeoutMinutes: 8,
-            isExpired: timeSinceLastActivity >= sessionTimeout
-          })
-          
-          // Si han pasado más de 8 minutos, cerrar sesión
-          if (timeSinceLastActivity >= sessionTimeout) {
-            console.log('⏰ Sesión expirada al cargar la aplicación')
-            clearAllStorageData()
-            dispatch({ type: 'LOGOUT' })
+        if (!token || !savedUser || !savedRole) {
+            localStorage.clear()
+            dispatch({ type: 'SET_LOADING', payload: false })
             return
-          }
+        }
+        
+        // Verificar edad de sesión (24 horas)
+        const now = Date.now()
+        const sessionAge = now - parseInt(timestamp || '0')
+        if (sessionAge > 24 * 60 * 60 * 1000) {
+            logout()
+            return
         }
         
         try {
-          axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`
-          console.log('🚀 Verificando token con el servidor...')
-          console.log('🌐 URL de verificación:', `${API_BASE_URL}/api/auth/me`)
-          
-          const response = await axios.get('/api/auth/me')
-          const serverUser = response.data
-          
-          // 🔍 ACTUALIZAR localStorage con datos del servidor (source of truth)
-          // No verificar consistencia para evitar conflictos al cambiar usuarios
-          localStorage.setItem('auth_user', JSON.stringify(serverUser))
-          localStorage.setItem('userRole', serverUser.role)
-          localStorage.setItem('userId', serverUser.id.toString())
-          
-          console.log('🔄 localStorage actualizado con datos del servidor:', {
-            userId: serverUser.id,
-            userRole: serverUser.role,
-            userEmail: serverUser.email
-          })
-          
-          console.log('✅ Token válido y consistente, restaurando sesión:', {
-            userId: serverUser.id,
-            userEmail: serverUser.email,
-            userRole: serverUser.role,
-            responseStatus: response.status
-          })
-          
-          dispatch({
-            type: 'LOGIN_SUCCESS',
-            payload: {
-              user: serverUser,
-              access_token: savedToken,
-              refresh_token: savedRefreshToken
+            const response = await axios.get('/api/auth/me', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            
+            const currentUser = response.data
+            const savedUserObj = JSON.parse(savedUser)
+            
+            // Verificar consistencia
+            if (currentUser.id !== savedUserObj.id || currentUser.role !== savedRole) {
+                console.error('Inconsistencia de sesión detectada')
+                logout()
+                return
             }
-          })
-          
-          // Actualizar actividad inmediatamente al restaurar sesión
-          const currentTime = Date.now()
-          localStorage.setItem('lastActivity', currentTime.toString())
-          dispatch({ type: 'UPDATE_ACTIVITY' })
-          
-          console.log('🔄 Sesión restaurada exitosamente:', {
-            isAuthenticated: true,
-            hasToken: true,
-            activityUpdated: true
-          })
-          
+            
+            dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: {
+                    user: currentUser,
+                    access_token: token,
+                    refresh_token: localStorage.getItem('refreshToken')
+                }
+            })
+            
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
         } catch (error) {
-          console.error('❌ Error verificando token:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            url: error.config?.url,
-            message: error.message
-          })
-          
-          // Limpiar todos los tokens relacionados
-          clearAllStorageData()
-          dispatch({ type: 'LOGOUT' })
+            console.error('Token inválido:', error)
+            logout()
         }
-      } else {
-        console.log('📭 No hay token guardado, usuario no autenticado')
-        dispatch({ type: 'SET_LOADING', payload: false })
-      }
     }
-
-    initializeAuth()
-  }, [clearAllStorageData])
+    
+    verificarSesion()
+  }, [])
 
   // Interceptor para manejar tokens expirados
   useEffect(() => {
@@ -346,81 +308,126 @@ export const AuthProvider = ({ children }) => {
   }, [state.user, clearAllStorageData])
 
   const login = useCallback(async (email, password) => {
-    dispatch({ type: 'LOGIN_START' })
-    
-    // 🧹 LIMPIAR COMPLETAMENTE localStorage antes de nuevos datos
-    clearAllStorageData()
-    
     try {
-      const response = await axios.post('/api/auth/login', {
-        email,
-        password
-      })
-      
-      const { user, access_token, refresh_token } = response.data
-      
-      // ✅ GUARDAR nuevos datos después de limpiar
-      localStorage.setItem('token', access_token)
-      localStorage.setItem('auth_token', access_token)
-      localStorage.setItem('auth_user', JSON.stringify(user))
-      localStorage.setItem('userRole', user.role)
-      localStorage.setItem('userId', user.id.toString())
-      localStorage.setItem('lastActivity', Date.now().toString())
-      if (refresh_token) {
-        localStorage.setItem('refreshToken', refresh_token)
-      }
-      
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: response.data
-      })
-
-      return { success: true }
-    } catch (error) {
-      let errorMessage = 'Error de autenticación'
-      
-      if (error.response) {
-        // Errores del servidor
-        switch (error.response.status) {
-          case 401:
-            if (error.response.data?.detail === 'Invalid credentials') {
-              errorMessage = '❌ Credenciales incorrectas. Verifica tu correo electrónico y contraseña.'
-            } else {
-              errorMessage = '❌ No tienes autorización para acceder. Verifica tus credenciales.'
-            }
-            break
-          case 404:
-            errorMessage = '❌ Usuario no encontrado. Verifica tu correo electrónico o regístrate.'
-            break
-          case 422:
-            errorMessage = '❌ Datos inválidos. Verifica el formato del correo y la contraseña.'
-            break
-          case 500:
-            errorMessage = '❌ Error interno del servidor. Inténtalo nuevamente más tarde.'
-            break
-          default:
-            errorMessage = error.response.data?.detail || '❌ Error de autenticación'
+        // 1. PRIMERO limpiar TODO
+        localStorage.clear()
+        sessionStorage.clear()
+        delete axios.defaults.headers.common['Authorization']
+        
+        // 2. Hacer login
+        const response = await axios.post('/api/auth/login', { email, password })
+        const { user, access_token, refresh_token } = response.data
+        
+        // 3. Validar respuesta
+        if (!access_token || !user || !user.role) {
+            throw new Error('Respuesta de login inválida')
         }
-      } else if (error.request) {
-        errorMessage = '❌ Error de conexión. Verifica que el servidor esté funcionando o inténtalo más tarde.'
-      } else {
-        errorMessage = '❌ Error inesperado. Inténtalo nuevamente.'
-      }
-      dispatch({
-        type: 'LOGIN_FAILURE',
-        payload: errorMessage
-      })
-      return { success: false, error: errorMessage }
+        
+        // 4. Guardar con claves únicas
+        localStorage.setItem('auth_token', access_token)
+        localStorage.setItem('auth_user', JSON.stringify(user))
+        localStorage.setItem('auth_role', user.role)
+        localStorage.setItem('auth_user_id', user.id.toString())
+        localStorage.setItem('auth_timestamp', Date.now().toString())
+        localStorage.setItem('lastActivity', Date.now().toString())
+        if (refresh_token) {
+            localStorage.setItem('refreshToken', refresh_token)
+        }
+        
+        // 5. Configurar axios
+        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
+        
+        // 6. Actualizar estado
+        dispatch({
+            type: 'LOGIN_SUCCESS',
+            payload: { user, access_token, refresh_token }
+        })
+        
+        // 7. Redirigir según rol
+        const roleRoutes = {
+            estudiante: '/estudiante/dashboard',
+            profesor: '/profesor/dashboard',
+            coordinador: '/coordinador/dashboard'
+        }
+        
+        window.location.replace(roleRoutes[user.role] || '/login')
+        return { success: true }
+    } catch (error) {
+        localStorage.clear()
+        sessionStorage.clear()
+        
+        let errorMessage = 'Error de autenticación'
+        
+        if (error.response) {
+            switch (error.response.status) {
+                case 401:
+                    if (error.response.data?.detail === 'Invalid credentials') {
+                        errorMessage = '❌ Credenciales incorrectas. Verifica tu correo electrónico y contraseña.'
+                    } else {
+                        errorMessage = '❌ No tienes autorización para acceder. Verifica tus credenciales.'
+                    }
+                    break
+                case 404:
+                    errorMessage = '❌ Usuario no encontrado. Verifica tu correo electrónico o regístrate.'
+                    break
+                case 422:
+                    errorMessage = '❌ Datos inválidos. Verifica el formato del correo y la contraseña.'
+                    break
+                case 500:
+                    errorMessage = '❌ Error interno del servidor. Inténtalo nuevamente más tarde.'
+                    break
+                default:
+                    errorMessage = error.response.data?.detail || '❌ Error de autenticación'
+            }
+        } else if (error.request) {
+            errorMessage = '❌ Error de conexión. Verifica que el servidor esté funcionando o inténtalo más tarde.'
+        } else {
+            errorMessage = '❌ Error inesperado. Inténtalo nuevamente.'
+        }
+        
+        dispatch({
+            type: 'LOGIN_FAILURE',
+            payload: errorMessage
+        })
+        
+        throw error
     }
   }, [])
 
-  const logout = useCallback(() => {
-    // Limpiar inmediatamente todos los datos de localStorage
-    clearAllStorageData()
-    dispatch({ type: 'LOGOUT' })
-    
-    console.log('🚪 Logout completado - localStorage limpio')
-  }, [clearAllStorageData])
+  const logout = useCallback(async () => {
+    try {
+        // 1. Limpiar COMPLETAMENTE localStorage
+        const keysToRemove = []
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            if (key) keysToRemove.push(key)
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key))
+        
+        // 2. Limpiar sessionStorage
+        sessionStorage.clear()
+        
+        // 3. Limpiar estado de React
+        dispatch({ type: 'LOGOUT' })
+        
+        // 4. Eliminar cookies si existen
+        document.cookie.split(";").forEach(c => {
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/")
+        })
+        
+        // 5. Limpiar axios headers
+        delete axios.defaults.headers.common['Authorization']
+        
+        // 6. Esperar antes de redirigir
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // 7. Redirigir con replace
+        window.location.replace('/login')
+    } catch (error) {
+        console.error('Error en logout:', error)
+        window.location.replace('/login')
+    }
+  }, [])
 
   const register = useCallback(async (userData) => {
     dispatch({ type: 'LOGIN_START' })
