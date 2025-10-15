@@ -82,7 +82,7 @@ const Header = ({ onMenuClick }) => {
         // Generar notificaciones basadas en el rol del usuario
         const notificacionesGeneradas = []
         
-        if (user.role === 'estudiante') {
+        if (user?.role === 'estudiante') {
           // Notificaciones para estudiantes
           notificacionesGeneradas.push({
             id: 'estudiante_bienvenida',
@@ -93,7 +93,7 @@ const Header = ({ onMenuClick }) => {
             tiempo: 'Ahora',
             leida: false
           })
-        } else if (user.role === 'profesor') {
+        } else if (user?.role === 'profesor') {
           // Notificaciones para profesores
           notificacionesGeneradas.push({
             id: 'profesor_controles',
@@ -104,7 +104,7 @@ const Header = ({ onMenuClick }) => {
             tiempo: 'Hace 1 hora',
             leida: false
           })
-        } else if (user.role === 'coordinador') {
+        } else if (user?.role === 'coordinador') {
           // Notificaciones para coordinadores
           notificacionesGeneradas.push({
             id: 'coordinador_revision',

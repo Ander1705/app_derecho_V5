@@ -33,7 +33,16 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Componente para mostrar el dashboard correcto según el rol
 const DashboardRedirect = () => {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  
+  // Esperar a que termine la carga antes de redirigir
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
   
   if (user?.role === 'estudiante') {
     return <DashboardEstudiante />

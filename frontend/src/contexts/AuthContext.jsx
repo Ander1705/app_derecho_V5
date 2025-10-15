@@ -69,6 +69,12 @@ const authReducer = (state, action) => {
         ...state,
         error: null
       }
+    case 'SET_INITIALIZED':
+      return {
+        ...state,
+        initialized: true,
+        loading: false
+      }
     default:
       return state
   }
@@ -82,7 +88,8 @@ const initialState = {
   loading: true,
   error: null,
   lastActivity: null,
-  sessionTimeout: 8 * 60 * 1000 // 8 minutos en milisegundos
+  sessionTimeout: 24 * 60 * 60 * 1000, // 24 horas en milisegundos
+  initialized: false
 }
 
 export const AuthProvider = ({ children }) => {
@@ -153,25 +160,27 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.isAuthenticated, updateActivity])
 
-  // Timer para verificar timeout de sesión
+  // Timer para verificar timeout de sesión (DESHABILITADO para evitar logouts automáticos)
   useEffect(() => {
     if (!state.isAuthenticated || !state.lastActivity) return
 
     const checkSessionTimeout = () => {
       const now = Date.now()
       const timeSinceLastActivity = now - state.lastActivity
-      const sessionTimeout = 8 * 60 * 1000 // 8 minutos en milisegundos
+      const sessionTimeout = 24 * 60 * 60 * 1000 // 24 horas en milisegundos
       
+      // Solo cerrar sesión si realmente han pasado más de 24 horas
       if (timeSinceLastActivity >= sessionTimeout) {
-        console.log('⏰ Sesión expirada por inactividad')
+        console.log('⏰ Sesión expirada por inactividad después de 24 horas')
         clearAllStorageData()
         dispatch({ type: 'LOGOUT' })
       }
     }
 
-    const intervalId = setInterval(checkSessionTimeout, 60000) // Verificar cada minuto
+    // Verificar solo cada 30 minutos para reducir impacto
+    const intervalId = setInterval(checkSessionTimeout, 30 * 60 * 1000)
     return () => clearInterval(intervalId)
-  }, [state.isAuthenticated, state.lastActivity, state.sessionTimeout, clearAllStorageData])
+  }, [state.isAuthenticated, state.lastActivity, clearAllStorageData])
 
   // Configurar interceptor de axios para incluir token automáticamente
   useEffect(() => {
@@ -209,7 +218,7 @@ export const AuthProvider = ({ children }) => {
         if (savedLastActivity) {
           const lastActivity = parseInt(savedLastActivity)
           const timeSinceLastActivity = now - lastActivity
-          const sessionTimeout = 8 * 60 * 1000 // 8 minutos en milisegundos
+          const sessionTimeout = 24 * 60 * 60 * 1000 // 24 horas en milisegundos
           
           console.log('⏱️ Verificando timeout:', {
             lastActivityTime: new Date(lastActivity).toLocaleTimeString(),
@@ -235,22 +244,21 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get('/api/auth/me')
           const serverUser = response.data
           
-          // 🔍 VERIFICAR CONSISTENCIA: Token debe coincidir con usuario guardado
+          // 🔍 VERIFICAR CONSISTENCIA: Solo verificar si los datos están muy desactualizados
           const savedUser = JSON.parse(localStorage.getItem('auth_user') || '{}')
           const savedRole = localStorage.getItem('userRole')
           
+          // Actualizar datos del usuario si han cambiado, pero NO cerrar sesión
           if (savedUser.id && savedUser.id !== serverUser.id) {
-            console.log('❌ Token no coincide con usuario guardado, limpiando sesión')
-            clearAllStorageData()
-            dispatch({ type: 'LOGOUT' })
-            return
+            console.log('⚠️ Actualizando datos de usuario')
+            localStorage.setItem('auth_user', JSON.stringify(serverUser))
+            localStorage.setItem('userRole', serverUser.role)
+            localStorage.setItem('userId', serverUser.id.toString())
           }
           
           if (savedRole && savedRole !== serverUser.role) {
-            console.log('❌ Rol de usuario cambió, limpiando sesión')
-            clearAllStorageData()
-            dispatch({ type: 'LOGOUT' })
-            return
+            console.log('⚠️ Actualizando rol de usuario')
+            localStorage.setItem('userRole', serverUser.role)
           }
           
           console.log('✅ Token válido y consistente, restaurando sesión:', {
@@ -295,7 +303,7 @@ export const AuthProvider = ({ children }) => {
         }
       } else {
         console.log('📭 No hay token guardado, usuario no autenticado')
-        dispatch({ type: 'SET_LOADING', payload: false })
+        dispatch({ type: 'SET_INITIALIZED' })
       }
     }
 
@@ -809,7 +817,28 @@ export const AuthProvider = ({ children }) => {
     // Funciones de registro manual
     registrarEstudianteManual,
     registrarProfesorManual
-  }), [state, login, logout, register, updateProfile, clearError, forgotPassword, resetPassword, validarCodigo, validarDatosPersonales, registroEstudiante, listarEstudiantes, registrarEstudiante, actualizarEstudiante, eliminarEstudiante, registrarEstudianteManual, registrarProfesorManual])
+  }), [
+    state.isAuthenticated,
+    state.user,
+    state.loading,
+    state.error,
+    login,
+    logout,
+    register,
+    updateProfile,
+    clearError,
+    forgotPassword,
+    resetPassword,
+    validarCodigo,
+    validarDatosPersonales,
+    registroEstudiante,
+    listarEstudiantes,
+    registrarEstudiante,
+    actualizarEstudiante,
+    eliminarEstudiante,
+    registrarEstudianteManual,
+    registrarProfesorManual
+  ])
 
   return (
     <AuthContext.Provider value={value}>

@@ -214,7 +214,7 @@ const DashboardEstudiante = () => {
         {/* Bienvenida */}
         <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6 mb-6`}>
           <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-2`}>
-            Hola, {user?.nombres} {user?.apellidos}
+            Hola, {user?.nombres || user?.nombre_usuario || 'Estudiante'} {user?.apellidos || ''}
           </h1>
           <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             Tu espacio de consultoría jurídica
