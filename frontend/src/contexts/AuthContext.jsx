@@ -165,27 +165,12 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.isAuthenticated, updateActivity])
 
-  // Timer para verificar timeout de sesión (DESHABILITADO para evitar logouts automáticos)
+  // Timer para verificar timeout de sesión (COMPLETAMENTE DESHABILITADO)
   useEffect(() => {
-    if (!state.isAuthenticated || !state.lastActivity) return
-
-    const checkSessionTimeout = () => {
-      const now = Date.now()
-      const timeSinceLastActivity = now - state.lastActivity
-      const sessionTimeout = 24 * 60 * 60 * 1000 // 24 horas en milisegundos
-      
-      // Solo cerrar sesión si realmente han pasado más de 24 horas
-      if (timeSinceLastActivity >= sessionTimeout) {
-        console.log('⏰ Sesión expirada por inactividad después de 24 horas')
-        clearAllStorageData()
-        dispatch({ type: 'LOGOUT' })
-      }
-    }
-
-    // Verificar solo cada 30 minutos para reducir impacto
-    const intervalId = setInterval(checkSessionTimeout, 30 * 60 * 1000)
-    return () => clearInterval(intervalId)
-  }, [state.isAuthenticated, state.lastActivity, clearAllStorageData])
+    // 🚨 COMPLETAMENTE DESHABILITADO - NO HACER LOGOUT AUTOMÁTICO NUNCA
+    console.log('⚠️ Timer de sesión DESHABILITADO - Sin logout automático')
+    return () => {} // Sin cleanup
+  }, [])
 
   // Configurar interceptor de axios para incluir token automáticamente
   useEffect(() => {
@@ -227,26 +212,9 @@ export const AuthProvider = ({ children }) => {
       if (savedToken && sessionData) {
         const now = Date.now()
         
-        // Verificar timeout solo si han pasado MUCHAS horas (muy permisivo)
-        if (savedLastActivity) {
-          const lastActivity = parseInt(savedLastActivity)
-          const timeSinceLastActivity = now - lastActivity
-          const sessionTimeout = 7 * 24 * 60 * 60 * 1000 // 7 DÍAS en milisegundos (muy permisivo)
-          
-          console.log('⏱️ Verificando timeout permisivo:', {
-            lastActivityTime: new Date(lastActivity).toLocaleTimeString(),
-            timeSinceLastActivity: Math.floor(timeSinceLastActivity / 1000 / 60 / 60), // en horas
-            timeoutHours: 7 * 24,
-            isExpired: timeSinceLastActivity >= sessionTimeout
-          })
-          
-          // Solo cerrar sesión si han pasado más de 7 días (muy permisivo)
-          if (timeSinceLastActivity >= sessionTimeout) {
-            console.log('⏰ Sesión expirada después de 7 días')
-            logout()
-            return
-          }
-        }
+        // 🚨 VERIFICACIÓN DE TIMEOUT COMPLETAMENTE DESHABILITADA
+        console.log('⚠️ Verificación de timeout DESHABILITADA - Manteniendo sesión siempre')
+        // NO verificar timeout NUNCA
         
         try {
           axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`
@@ -256,32 +224,9 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get('/api/auth/me')
           const serverUser = response.data
           
-          // 🔍 VERIFICAR CONSISTENCIA BÁSICA - Menos estricta para evitar logouts innecesarios
-          const parsedSessionData = JSON.parse(sessionData)
-          const savedRole = localStorage.getItem('userRole')
-          const savedUserId = localStorage.getItem('userId')
-          
-          console.log('🔍 Verificando consistencia básica:', {
-            serverUserId: serverUser.id,
-            serverRole: serverUser.role,
-            savedUserId: savedUserId,
-            savedRole: savedRole
-          })
-          
-          // Solo verificar inconsistencias críticas (diferentes usuarios, no roles)
-          if (savedUserId && serverUser.id.toString() !== savedUserId) {
-            console.log('❌ USUARIO DIFERENTE DETECTADO - Limpiando sesión')
-            clearAllStorageData()
-            sessionStorage.clear()
-            dispatch({ type: 'LOGOUT' })
-            return
-          }
-          
-          // Si el rol cambió, actualizar sin hacer logout
-          if (savedRole && serverUser.role !== savedRole) {
-            console.log('🔄 ROL ACTUALIZADO:', savedRole, '->', serverUser.role)
-            localStorage.setItem('userRole', serverUser.role)
-          }
+          // 🚨 VERIFICACIÓN DE CONSISTENCIA COMPLETAMENTE DESHABILITADA
+          console.log('⚠️ Verificaciones de consistencia DESHABILITADAS - Aceptando cualquier usuario/rol')
+          // NO verificar consistencia NUNCA - solo actualizar datos
           
           // Solo actualizar si todo es consistente
           console.log('✅ Sesión consistente - Manteniendo usuario actual')
@@ -339,52 +284,12 @@ export const AuthProvider = ({ children }) => {
     initializeAuth()
   }, [clearAllStorageData])
 
-  // Interceptor para manejar tokens expirados
+  // Interceptor para manejar tokens expirados (COMPLETAMENTE DESHABILITADO)
   useEffect(() => {
-    const responseInterceptor = axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true
-          const refreshToken = localStorage.getItem('refreshToken')
-          
-          if (refreshToken) {
-            try {
-              const response = await axios.post('/api/auth/refresh', {
-                refresh_token: refreshToken
-              })
-              
-              const newToken = response.data.access_token
-              dispatch({
-                type: 'LOGIN_SUCCESS',
-                payload: {
-                  user: state.user,
-                  access_token: newToken,
-                  refresh_token: response.data.refresh_token || refreshToken
-                }
-              })
-              
-              originalRequest.headers['Authorization'] = `Bearer ${newToken}`
-              return axios(originalRequest)
-            } catch (refreshError) {
-              console.error('Error al refrescar token:', refreshError)
-              clearAllStorageData()
-              dispatch({ type: 'LOGOUT' })
-            }
-          } else {
-            clearAllStorageData()
-            dispatch({ type: 'LOGOUT' })
-          }
-        }
-        return Promise.reject(error)
-      }
-    )
-
-    return () => {
-      axios.interceptors.response.eject(responseInterceptor)
-    }
-  }, [state.user, clearAllStorageData])
+    console.log('⚠️ Interceptor de errores 401 DESHABILITADO - Sin logout automático por tokens')
+    // 🚨 NO configurar interceptor que cause logouts automáticos
+    return () => {} // Sin cleanup
+  }, [])
 
   const login = useCallback(async (email, password) => {
     dispatch({ type: 'LOGIN_START' })
