@@ -29,54 +29,19 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
-    // Optimizaciones de build
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']
-      }
+    // Minificación conservadora para evitar errores
+    minify: 'esbuild', // Más estable que terser
+    // Mantener algunas optimizaciones básicas
+    esbuildOptions: {
+      drop: ['console', 'debugger'],
     },
     rollupOptions: {
       output: {
-        // Separar vendors para mejor caching y evitar errores de inicialización
-        manualChunks: (id) => {
-          // React core debe cargarse primero
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'react-core'
-          }
-          // Router y navegación
-          if (id.includes('react-router')) {
-            return 'react-router'
-          }
-          // HTTP y API
-          if (id.includes('axios')) {
-            return 'http-client'
-          }
-          // UI Components
-          if (id.includes('@heroicons') || id.includes('@headlessui') || id.includes('lucide-react')) {
-            return 'ui-components'
-          }
-          // Otros vendors
-          if (id.includes('node_modules')) {
-            return 'vendors'
-          }
-          // Contextos críticos - separar para evitar dependencias circulares
-          if (id.includes('contexts/AuthContext.jsx')) {
-            return 'auth-context'
-          }
-          if (id.includes('contexts/ThemeContext.jsx')) {
-            return 'theme-context'
-          }
-          // Components principales
-          if (id.includes('components/')) {
-            return 'components'
-          }
-          // Pages
-          if (id.includes('pages/')) {
-            return 'pages'
-          }
+        // CONFIGURACIÓN CONSERVADORA PARA PRODUCCIÓN - Sin chunking manual
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          axios: ['axios'],
+          icons: ['@heroicons/react', '@headlessui/react']
         },
         // Nombres optimizados para cache
         chunkFileNames: 'assets/js/[name]-[hash].js',
@@ -94,12 +59,10 @@ export default defineConfig({
     },
     // Aumentar límite de chunk para evitar warnings
     chunkSizeWarningLimit: 1000,
-    // Targets optimizados para mejor compatibilidad
-    target: ['es2020', 'chrome60', 'firefox60', 'safari11', 'edge18'],
-    // Configuración para evitar errores de inicialización
-    cssCodeSplit: true,
-    // Configuración experimental para tree shaking
-    experimentalTreeShaking: true
+    // Target conservador para mayor compatibilidad
+    target: 'es2015',
+    // Configuración estable para CSS
+    cssCodeSplit: true
   },
   // Optimizar resolución de módulos
   resolve: {
@@ -107,7 +70,7 @@ export default defineConfig({
       '@': '/src'
     }
   },
-  // Optimizaciones para desarrollo
+  // Optimizaciones para desarrollo y producción
   optimizeDeps: {
     include: [
       'react',
@@ -115,9 +78,10 @@ export default defineConfig({
       'react-router-dom',
       'axios',
       '@headlessui/react',
-      '@heroicons/react',
-      'lucide-react'
-    ]
+      '@heroicons/react/24/outline',
+      '@heroicons/react/24/solid'
+    ],
+    exclude: ['lucide-react'] // Excluir si causa problemas
   },
   // Variables de entorno
   define: {
