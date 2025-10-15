@@ -64,14 +64,14 @@ type FileOptimization struct {
 func GetOptimizedConfig() *OptimizationConfig {
 	return &OptimizationConfig{
 		Database: DatabaseOptimization{
-			MaxIdleConns:        25,  // Conexiones idle máximas
-			MaxOpenConns:        100, // Conexiones abiertas máximas
-			ConnMaxLifetime:     time.Hour,   // 1 hora
-			ConnMaxIdleTime:     time.Minute * 30, // 30 minutos
+			MaxIdleConns:        50,  // Aumentado para mejor rendimiento
+			MaxOpenConns:        200, // Aumentado para manejar más concurrencia
+			ConnMaxLifetime:     time.Minute * 30, // Reducido para renovar conexiones más frecuentemente
+			ConnMaxIdleTime:     time.Minute * 10, // Reducido para liberar conexiones idle más rápido
 			DefaultPageSize:     20,  // Paginación por defecto
 			MaxPageSize:         100, // Máximo por página
-			QueryTimeout:        time.Second * 30, // 30 segundos timeout
-			BatchSize:           50,  // Tamaño de lote para operaciones masivas
+			QueryTimeout:        time.Second * 10, // Reducido para detectar consultas lentas
+			BatchSize:           100, // Aumentado para operaciones masivas más eficientes
 			EnablePreparedStmts: true, // Habilitar prepared statements
 		},
 		Server: ServerOptimization{

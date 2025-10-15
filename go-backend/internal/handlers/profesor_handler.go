@@ -58,9 +58,12 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 		return
 	}
 
+	// **OPTIMIZACIÓN CRÍTICA**: Consulta con preloads optimizados solo en campos necesarios
 	var controles []models.ControlOperativo
-	// Buscar controles asignados directamente por ID del profesor
-	dbResult := h.db.Preload("CreatedBy").Preload("ProfesorAsignado").Preload("DocumentosAdjuntos").
+	dbResult := h.db.Select("control_operativos.*").
+		Preload("CreatedBy", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, nombres, apellidos, email, role") // Solo campos necesarios
+		}).
 		Where("profesor_asignado_id = ? AND activo = true", user.ID).
 		Order("created_at DESC").
 		Find(&controles)
@@ -72,14 +75,29 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 		return
 	}
 
+	// **OPTIMIZACIÓN**: Obtener todas las calificaciones en una sola consulta
+	var controlIDs []uint
+	for _, control := range controles {
+		controlIDs = append(controlIDs, control.ID)
+	}
+
+	calificacionesMap := make(map[uint]bool)
+	if len(controlIDs) > 0 {
+		var calificaciones []models.Calificacion
+		h.db.Select("control_operativo_id").
+			Where("control_operativo_id IN ?", controlIDs).
+			Find(&calificaciones)
+		
+		for _, cal := range calificaciones {
+			calificacionesMap[cal.ControlOperativoID] = true
+		}
+	}
+
 	// Crear respuesta con información de calificaciones usando mapas
 	var response []map[string]interface{}
 	for _, control := range controles {
-		// Verificar si ya existe una calificación para este control
-		var count int64
-		h.db.Model(&models.Calificacion{}).
-			Where("control_operativo_id = ? AND estudiante_id = ?", control.ID, control.CreatedByID).
-			Count(&count)
+		// **OPTIMIZACIÓN**: Usar mapa pre-calculado en lugar de consulta individual
+		yaCalificado := calificacionesMap[control.ID]
 
 		// Convertir el control a mapa y agregar el campo ya_calificado
 		controlMap := map[string]interface{}{
@@ -123,7 +141,7 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 			"profesor_asignado_id":       control.ProfesorAsignadoID,
 			"created_by_user":            control.CreatedBy,
 			"profesor_asignado":          control.ProfesorAsignado,
-			"ya_calificado":              count > 0,
+			"ya_calificado":              yaCalificado,
 		}
 
 		response = append(response, controlMap)

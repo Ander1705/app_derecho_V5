@@ -97,23 +97,28 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 		return
 	}
 
-	// Recargar control con todas las relaciones para respuesta completa
+	// **OPTIMIZACIÓN CRÍTICA**: Cargar solo las relaciones necesarias para la respuesta inmediata
 	var controlCompleto models.ControlOperativo
-	if err := h.db.Preload("CreatedBy").Preload("ProfesorAsignado").Preload("DocumentosAdjuntos").First(&controlCompleto, control.ID).Error; err != nil {
-		fmt.Printf("⚠️ Warning: Error cargando relaciones del control: %v\n", err)
+	if err := h.db.Select("*").Preload("CreatedBy", func(db *gorm.DB) *gorm.DB {
+		return db.Select("id, nombres, apellidos, email, role") // Solo campos necesarios
+	}).First(&controlCompleto, control.ID).Error; err != nil {
+		fmt.Printf("⚠️ Warning: Error cargando relaciones básicas del control: %v\n", err)
 		// Continuar con control básico si falla el preload
 		controlCompleto = control
 	}
 
-	// Procesar documentos adjuntos de manera asíncrona para no bloquear la respuesta
-	if len(req.DocumentosAdjuntos) > 0 {
-		go h.procesarDocumentosAdjuntos(control.ID, req.DocumentosAdjuntos)
-	}
+	// **OPTIMIZACIÓN**: Procesamiento asíncrono inmediato sin bloqueo
+	go func() {
+		// Procesar documentos adjuntos de manera asíncrona
+		if len(req.DocumentosAdjuntos) > 0 {
+			h.procesarDocumentosAdjuntos(control.ID, req.DocumentosAdjuntos)
+		}
 
-	// Enviar notificación al profesor de manera asíncrona
-	if req.ProfesorID != nil {
-		go h.notificationService.NotificarNuevoControlAProfesor(control.ID, *req.ProfesorID)
-	}
+		// Enviar notificación al profesor de manera asíncrona
+		if req.ProfesorID != nil {
+			h.notificationService.NotificarNuevoControlAProfesor(control.ID, *req.ProfesorID)
+		}
+	}()
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Control operativo creado exitosamente",

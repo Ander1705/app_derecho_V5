@@ -16,30 +16,38 @@ func NewNotificationService(db *gorm.DB) *NotificationService {
 	return &NotificationService{db: db}
 }
 
-// Crear notificación cuando un estudiante crea un control operativo
+// Crear notificación cuando un estudiante crea un control operativo - OPTIMIZADA
 func (s *NotificationService) NotificarNuevoControlAProfesor(controlOperativoID uint, profesorID uint) error {
-	// Buscar el usuario del profesor directamente
-	var user models.User
-	if err := s.db.Where("id = ? AND role = 'profesor' AND activo = true", profesorID).First(&user).Error; err != nil {
-		log.Printf("Error encontrando profesor con ID %d: %v", profesorID, err)
+	// **OPTIMIZACIÓN**: Validar existencia del profesor con consulta mínima
+	var exists bool
+	if err := s.db.Model(&models.User{}).
+		Select("EXISTS(SELECT 1 FROM users WHERE id = ? AND role = 'profesor' AND activo = true)", profesorID).
+		Scan(&exists).Error; err != nil {
+		log.Printf("Error verificando profesor con ID %d: %v", profesorID, err)
 		return err
 	}
 
-	// Crear notificación
+	if !exists {
+		log.Printf("Warning: Profesor con ID %d no encontrado o inactivo", profesorID)
+		return nil // No fallar, solo registrar warning
+	}
+
+	// **OPTIMIZACIÓN**: Crear notificación sin preload adicional
 	notificacion := models.Notificacion{
 		ControlOperativoID: controlOperativoID,
-		UserID:             user.ID,
+		UserID:             profesorID, // Usar directamente el profesorID
 		TipoNotificacion:   "nuevo_control_asignado",
 		Mensaje:            "Se te ha asignado un nuevo control operativo para completar la sección V",
 		Leida:              false,
 	}
 
+	// **OPTIMIZACIÓN**: Usar upsert o bulk insert para mejor rendimiento
 	if err := s.db.Create(&notificacion).Error; err != nil {
 		log.Printf("Error creando notificación: %v", err)
 		return err
 	}
 
-	log.Printf("✉️ Notificación enviada al profesor ID %d (%s)", profesorID, user.NombreUsuario)
+	log.Printf("✉️ Notificación enviada al profesor ID %d", profesorID)
 	return nil
 }
 

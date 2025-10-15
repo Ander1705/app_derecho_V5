@@ -1,35 +1,58 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+
+// Importaciones críticas - cargar inmediatamente
 import Layout from './components/layout/Layout'
-import Login from './pages/auth/Login'
-import ForgotPassword from './pages/auth/ForgotPassword'
-import ValidacionEstudiante from './pages/auth/ValidacionEstudiante'
-import RegistroEstudiante from './pages/auth/RegistroEstudiante'
-import RegistroProfesor from './pages/auth/RegistroProfesor'
-import VerificarEmail from './pages/auth/VerificarEmail'
-import RegisterSelector from './components/auth/RegisterSelector'
-import Dashboard from './pages/Dashboard'
-import DashboardCoordinador from './pages/DashboardCoordinador'
-import DashboardEstudiante from './pages/estudiante/DashboardEstudiante'
-import DashboardProfesor from './pages/profesor/DashboardProfesor'
-import ControlesAsignados from './pages/profesor/ControlesAsignados'
-import MisEstudiantes from './pages/profesor/MisEstudiantes'
-import Calificaciones from './pages/profesor/Calificaciones'
-import ClientsPage from './pages/clients/ClientsPage'
-import FormsPage from './pages/forms/FormsPage'
-import GestionUsuarios from './pages/coordinador/GestionUsuarios'
-import ControlOperativo from './pages/coordinador/ControlOperativo'
-import ControlOperativoCoordinador from './pages/coordinador/ControlOperativoCoordinador'
-import Estadisticas from './pages/coordinador/Estadisticas'
-import CalificacionesCoordinador from './pages/coordinador/CalificacionesCoordinador'
-// import ControlOperativoEstudiante from './pages/estudiante/ControlOperativo' // Reemplazado por MisControles
-import MisControles from './pages/estudiante/MisControles'
-import MisCalificaciones from './pages/estudiante/MisCalificaciones'
-import Perfil from './pages/Perfil'
-import PerfilEstudiante from './pages/estudiante/PerfilEstudiante'
-import CalificacionesIntro from './pages/CalificacionesIntro'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+
+// Lazy loading para evitar errores de inicialización
+const Login = lazy(() => import('./pages/auth/Login'))
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
+const ValidacionEstudiante = lazy(() => import('./pages/auth/ValidacionEstudiante'))
+const RegistroEstudiante = lazy(() => import('./pages/auth/RegistroEstudiante'))
+const RegistroProfesor = lazy(() => import('./pages/auth/RegistroProfesor'))
+const VerificarEmail = lazy(() => import('./pages/auth/VerificarEmail'))
+const RegisterSelector = lazy(() => import('./components/auth/RegisterSelector'))
+
+// Dashboards
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const DashboardCoordinador = lazy(() => import('./pages/DashboardCoordinador'))
+const DashboardEstudiante = lazy(() => import('./pages/estudiante/DashboardEstudiante'))
+const DashboardProfesor = lazy(() => import('./pages/profesor/DashboardProfesor'))
+
+// Páginas de coordinador
+const ClientsPage = lazy(() => import('./pages/clients/ClientsPage'))
+const FormsPage = lazy(() => import('./pages/forms/FormsPage'))
+const GestionUsuarios = lazy(() => import('./pages/coordinador/GestionUsuarios'))
+const ControlOperativoCoordinador = lazy(() => import('./pages/coordinador/ControlOperativoCoordinador'))
+const Estadisticas = lazy(() => import('./pages/coordinador/Estadisticas'))
+const CalificacionesCoordinador = lazy(() => import('./pages/coordinador/CalificacionesCoordinador'))
+
+// Páginas de profesor
+const ControlesAsignados = lazy(() => import('./pages/profesor/ControlesAsignados'))
+const MisEstudiantes = lazy(() => import('./pages/profesor/MisEstudiantes'))
+const Calificaciones = lazy(() => import('./pages/profesor/Calificaciones'))
+
+// Páginas de estudiante
+const MisControles = lazy(() => import('./pages/estudiante/MisControles'))
+const MisCalificaciones = lazy(() => import('./pages/estudiante/MisCalificaciones'))
+const PerfilEstudiante = lazy(() => import('./pages/estudiante/PerfilEstudiante'))
+
+// Páginas compartidas
+const Perfil = lazy(() => import('./pages/Perfil'))
+const CalificacionesIntro = lazy(() => import('./pages/CalificacionesIntro'))
+
+// Componente de carga
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Cargando...</p>
+    </div>
+  </div>
+)
 
 // Componente para mostrar el dashboard correcto según el rol
 const DashboardRedirect = () => {
@@ -70,16 +93,17 @@ function App() {
           }}
         >
         <div className="min-h-screen bg-slate-50">
-          <Routes>
-            {/* Rutas públicas de autenticación */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/auth" element={<Login />} />
-            <Route path="/recuperar-contraseña" element={<ForgotPassword />} />
-            <Route path="/registro" element={<RegisterSelector />} />
-            <Route path="/registro-estudiante" element={<RegistroEstudiante />} />
-            <Route path="/registro-profesor" element={<RegistroProfesor />} />
-            <Route path="/verificar-email" element={<VerificarEmail />} />
-            <Route path="/validacion-estudiante" element={<ValidacionEstudiante />} />
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              {/* Rutas públicas de autenticación */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/auth" element={<Login />} />
+              <Route path="/recuperar-contraseña" element={<ForgotPassword />} />
+              <Route path="/registro" element={<RegisterSelector />} />
+              <Route path="/registro-estudiante" element={<RegistroEstudiante />} />
+              <Route path="/registro-profesor" element={<RegistroProfesor />} />
+              <Route path="/verificar-email" element={<VerificarEmail />} />
+              <Route path="/validacion-estudiante" element={<ValidacionEstudiante />} />
             
             {/* Rutas protegidas con layout para coordinadores y estudiantes */}
             <Route path="/" element={
@@ -125,9 +149,10 @@ function App() {
               <Route path="actividad-profesor" element={<div className="p-6"><h1 className="text-2xl font-bold">Actividad del Profesor - En desarrollo</h1></div>} />
             </Route>
             
-            {/* Redirección por defecto */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+              {/* Redirección por defecto */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
         </div>
         </Router>
       </AuthProvider>

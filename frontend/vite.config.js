@@ -40,12 +40,43 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        // Separar vendors para mejor caching
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['@headlessui/react', '@heroicons/react', 'lucide-react'],
-          http: ['axios']
+        // Separar vendors para mejor caching y evitar errores de inicialización
+        manualChunks: (id) => {
+          // React core debe cargarse primero
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react-core'
+          }
+          // Router y navegación
+          if (id.includes('react-router')) {
+            return 'react-router'
+          }
+          // HTTP y API
+          if (id.includes('axios')) {
+            return 'http-client'
+          }
+          // UI Components
+          if (id.includes('@heroicons') || id.includes('@headlessui') || id.includes('lucide-react')) {
+            return 'ui-components'
+          }
+          // Otros vendors
+          if (id.includes('node_modules')) {
+            return 'vendors'
+          }
+          // Contextos críticos - separar para evitar dependencias circulares
+          if (id.includes('contexts/AuthContext.jsx')) {
+            return 'auth-context'
+          }
+          if (id.includes('contexts/ThemeContext.jsx')) {
+            return 'theme-context'
+          }
+          // Components principales
+          if (id.includes('components/')) {
+            return 'components'
+          }
+          // Pages
+          if (id.includes('pages/')) {
+            return 'pages'
+          }
         },
         // Nombres optimizados para cache
         chunkFileNames: 'assets/js/[name]-[hash].js',
@@ -64,7 +95,11 @@ export default defineConfig({
     // Aumentar límite de chunk para evitar warnings
     chunkSizeWarningLimit: 1000,
     // Targets optimizados para mejor compatibilidad
-    target: ['es2020', 'chrome60', 'firefox60', 'safari11', 'edge18']
+    target: ['es2020', 'chrome60', 'firefox60', 'safari11', 'edge18'],
+    // Configuración para evitar errores de inicialización
+    cssCodeSplit: true,
+    // Configuración experimental para tree shaking
+    experimentalTreeShaking: true
   },
   // Optimizar resolución de módulos
   resolve: {

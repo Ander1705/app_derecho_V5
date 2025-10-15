@@ -3,7 +3,6 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
-import API_BASE_URL from '@/config/api'
 import { 
   Bars3Icon, 
   BellIcon, 

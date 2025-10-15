@@ -2,8 +2,13 @@ import { createContext, useContext, useReducer, useEffect, useMemo, useCallback 
 import axios from 'axios'
 
 // Configuración de axios - usar proxy de Vite configurado en vite.config.js
-axios.defaults.baseURL = ''
-axios.defaults.headers.common['Content-Type'] = 'application/json'
+// Solo configurar si axios no está ya configurado para evitar reinicios
+if (!axios.defaults.baseURL) {
+  axios.defaults.baseURL = ''
+}
+if (!axios.defaults.headers.common['Content-Type']) {
+  axios.defaults.headers.common['Content-Type'] = 'application/json'
+}
 
 // Estados del contexto de autenticación
 const AuthContext = createContext()
@@ -209,9 +214,17 @@ export const AuthProvider = ({ children }) => {
       const savedToken = localStorage.getItem('auth_token') || localStorage.getItem('token')
       const savedRefreshToken = localStorage.getItem('refreshToken')
       const savedLastActivity = localStorage.getItem('lastActivity')
+      const sessionData = localStorage.getItem('session_data')
+      const currentSession = localStorage.getItem('current_session')
       
+      console.log('📋 Datos de sesión encontrados:', {
+        hasToken: !!savedToken,
+        hasSessionData: !!sessionData,
+        currentSession,
+        lastActivity: savedLastActivity
+      })
       
-      if (savedToken) {
+      if (savedToken && sessionData) {
         const now = Date.now()
         
         // Verificar timeout solo si hay lastActivity guardado
@@ -244,22 +257,41 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get('/api/auth/me')
           const serverUser = response.data
           
-          // 🔍 VERIFICAR CONSISTENCIA: Solo verificar si los datos están muy desactualizados
+          // 🔍 VERIFICAR CONSISTENCIA ESTRICTA para evitar mezcla de usuarios
+          const parsedSessionData = JSON.parse(sessionData)
           const savedUser = JSON.parse(localStorage.getItem('auth_user') || '{}')
           const savedRole = localStorage.getItem('userRole')
+          const savedUserId = localStorage.getItem('userId')
           
-          // Actualizar datos del usuario si han cambiado, pero NO cerrar sesión
-          if (savedUser.id && savedUser.id !== serverUser.id) {
-            console.log('⚠️ Actualizando datos de usuario')
-            localStorage.setItem('auth_user', JSON.stringify(serverUser))
-            localStorage.setItem('userRole', serverUser.role)
-            localStorage.setItem('userId', serverUser.id.toString())
+          console.log('🔍 Verificando consistencia:', {
+            serverUserId: serverUser.id,
+            serverRole: serverUser.role,
+            savedUserId: savedUserId,
+            savedRole: savedRole,
+            sessionUserId: parsedSessionData.userId,
+            sessionRole: parsedSessionData.role
+          })
+          
+          // Si hay inconsistencia en ID o rol, limpiar sesión completamente
+          if (
+            serverUser.id.toString() !== savedUserId ||
+            serverUser.role !== savedRole ||
+            serverUser.id !== parsedSessionData.userId ||
+            serverUser.role !== parsedSessionData.role
+          ) {
+            console.log('❌ INCONSISTENCIA DETECTADA - Limpiando sesión mezclada')
+            clearAllStorageData()
+            sessionStorage.clear()
+            dispatch({ type: 'LOGOUT' })
+            return
           }
           
-          if (savedRole && savedRole !== serverUser.role) {
-            console.log('⚠️ Actualizando rol de usuario')
-            localStorage.setItem('userRole', serverUser.role)
-          }
+          // Solo actualizar si todo es consistente
+          console.log('✅ Sesión consistente - Manteniendo usuario actual')
+          localStorage.setItem('auth_user', JSON.stringify(serverUser))
+          localStorage.setItem('userRole', serverUser.role)
+          localStorage.setItem('userId', serverUser.id.toString())
+          localStorage.setItem('userEmail', serverUser.email)
           
           console.log('✅ Token válido y consistente, restaurando sesión:', {
             userId: serverUser.id,
@@ -360,8 +392,12 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     dispatch({ type: 'LOGIN_START' })
     
-    // 🧹 LIMPIAR COMPLETAMENTE localStorage antes de nuevos datos
+    // 🧹 LIMPIAR COMPLETAMENTE localStorage Y sessionStorage antes de nuevos datos
+    console.log('🧹 LIMPIEZA TOTAL antes del login')
     clearAllStorageData()
+    
+    // LIMPIAR TAMBIÉN sessionStorage para evitar mezcla de sesiones
+    sessionStorage.clear()
     
     try {
       const response = await axios.post('/api/auth/login', {
@@ -371,13 +407,31 @@ export const AuthProvider = ({ children }) => {
       
       const { user, access_token, refresh_token } = response.data
       
-      // ✅ GUARDAR nuevos datos después de limpiar
+      console.log('✅ LOGIN EXITOSO:', { userId: user.id, role: user.role, email: user.email })
+      
+      // ✅ GUARDAR nuevos datos ÚNICOS para esta sesión
+      const sessionData = {
+        token: access_token,
+        user: user,
+        role: user.role,
+        userId: user.id,
+        email: user.email,
+        loginTime: Date.now(),
+        lastActivity: Date.now()
+      }
+      
+      // Guardar con claves únicas por sesión
+      const sessionKey = `session_${user.id}_${user.role}_${Date.now()}`
+      localStorage.setItem('current_session', sessionKey)
       localStorage.setItem('token', access_token)
       localStorage.setItem('auth_token', access_token)
       localStorage.setItem('auth_user', JSON.stringify(user))
       localStorage.setItem('userRole', user.role)
       localStorage.setItem('userId', user.id.toString())
+      localStorage.setItem('userEmail', user.email)
       localStorage.setItem('lastActivity', Date.now().toString())
+      localStorage.setItem('session_data', JSON.stringify(sessionData))
+      
       if (refresh_token) {
         localStorage.setItem('refreshToken', refresh_token)
       }
