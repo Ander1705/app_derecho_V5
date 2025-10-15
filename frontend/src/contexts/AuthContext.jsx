@@ -227,24 +227,23 @@ export const AuthProvider = ({ children }) => {
       if (savedToken && sessionData) {
         const now = Date.now()
         
-        // Verificar timeout solo si hay lastActivity guardado
+        // Verificar timeout solo si han pasado MUCHAS horas (muy permisivo)
         if (savedLastActivity) {
           const lastActivity = parseInt(savedLastActivity)
           const timeSinceLastActivity = now - lastActivity
-          const sessionTimeout = 24 * 60 * 60 * 1000 // 24 horas en milisegundos
+          const sessionTimeout = 7 * 24 * 60 * 60 * 1000 // 7 DÍAS en milisegundos (muy permisivo)
           
-          console.log('⏱️ Verificando timeout:', {
+          console.log('⏱️ Verificando timeout permisivo:', {
             lastActivityTime: new Date(lastActivity).toLocaleTimeString(),
-            timeSinceLastActivity: Math.floor(timeSinceLastActivity / 1000 / 60),
-            timeoutMinutes: 8,
+            timeSinceLastActivity: Math.floor(timeSinceLastActivity / 1000 / 60 / 60), // en horas
+            timeoutHours: 7 * 24,
             isExpired: timeSinceLastActivity >= sessionTimeout
           })
           
-          // Si han pasado más de 8 minutos, cerrar sesión
+          // Solo cerrar sesión si han pasado más de 7 días (muy permisivo)
           if (timeSinceLastActivity >= sessionTimeout) {
-            console.log('⏰ Sesión expirada al cargar la aplicación')
-            clearAllStorageData()
-            dispatch({ type: 'LOGOUT' })
+            console.log('⏰ Sesión expirada después de 7 días')
+            logout()
             return
           }
         }
@@ -257,33 +256,31 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get('/api/auth/me')
           const serverUser = response.data
           
-          // 🔍 VERIFICAR CONSISTENCIA ESTRICTA para evitar mezcla de usuarios
+          // 🔍 VERIFICAR CONSISTENCIA BÁSICA - Menos estricta para evitar logouts innecesarios
           const parsedSessionData = JSON.parse(sessionData)
-          const savedUser = JSON.parse(localStorage.getItem('auth_user') || '{}')
           const savedRole = localStorage.getItem('userRole')
           const savedUserId = localStorage.getItem('userId')
           
-          console.log('🔍 Verificando consistencia:', {
+          console.log('🔍 Verificando consistencia básica:', {
             serverUserId: serverUser.id,
             serverRole: serverUser.role,
             savedUserId: savedUserId,
-            savedRole: savedRole,
-            sessionUserId: parsedSessionData.userId,
-            sessionRole: parsedSessionData.role
+            savedRole: savedRole
           })
           
-          // Si hay inconsistencia en ID o rol, limpiar sesión completamente
-          if (
-            serverUser.id.toString() !== savedUserId ||
-            serverUser.role !== savedRole ||
-            serverUser.id !== parsedSessionData.userId ||
-            serverUser.role !== parsedSessionData.role
-          ) {
-            console.log('❌ INCONSISTENCIA DETECTADA - Limpiando sesión mezclada')
+          // Solo verificar inconsistencias críticas (diferentes usuarios, no roles)
+          if (savedUserId && serverUser.id.toString() !== savedUserId) {
+            console.log('❌ USUARIO DIFERENTE DETECTADO - Limpiando sesión')
             clearAllStorageData()
             sessionStorage.clear()
             dispatch({ type: 'LOGOUT' })
             return
+          }
+          
+          // Si el rol cambió, actualizar sin hacer logout
+          if (savedRole && serverUser.role !== savedRole) {
+            console.log('🔄 ROL ACTUALIZADO:', savedRole, '->', serverUser.role)
+            localStorage.setItem('userRole', serverUser.role)
           }
           
           // Solo actualizar si todo es consistente
@@ -392,12 +389,15 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     dispatch({ type: 'LOGIN_START' })
     
-    // 🧹 LIMPIAR COMPLETAMENTE localStorage Y sessionStorage antes de nuevos datos
-    console.log('🧹 LIMPIEZA TOTAL antes del login')
-    clearAllStorageData()
+    // 🧹 LIMPIEZA BÁSICA antes del login - Menos agresiva
+    console.log('🧹 Limpieza básica antes del login')
     
-    // LIMPIAR TAMBIÉN sessionStorage para evitar mezcla de sesiones
-    sessionStorage.clear()
+    // Solo limpiar tokens y datos de usuario, no todo el localStorage
+    const keysToRemove = ['token', 'auth_token', 'auth_user', 'refreshToken', 'userRole', 'userId', 'userEmail', 'lastActivity', 'session_data', 'current_session']
+    keysToRemove.forEach(key => localStorage.removeItem(key))
+    
+    // Limpiar axios headers
+    delete axios.defaults.headers.common['Authorization']
     
     try {
       const response = await axios.post('/api/auth/login', {
@@ -409,7 +409,7 @@ export const AuthProvider = ({ children }) => {
       
       console.log('✅ LOGIN EXITOSO:', { userId: user.id, role: user.role, email: user.email })
       
-      // ✅ GUARDAR nuevos datos ÚNICOS para esta sesión
+      // ✅ GUARDAR datos de sesión con estructura simple
       const sessionData = {
         token: access_token,
         user: user,
@@ -420,9 +420,7 @@ export const AuthProvider = ({ children }) => {
         lastActivity: Date.now()
       }
       
-      // Guardar con claves únicas por sesión
-      const sessionKey = `session_${user.id}_${user.role}_${Date.now()}`
-      localStorage.setItem('current_session', sessionKey)
+      // Guardar datos de forma simple y directa
       localStorage.setItem('token', access_token)
       localStorage.setItem('auth_token', access_token)
       localStorage.setItem('auth_user', JSON.stringify(user))
@@ -481,12 +479,23 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const logout = useCallback(() => {
-    // Limpiar inmediatamente todos los datos de localStorage
-    clearAllStorageData()
+    console.log('🚪 Iniciando logout')
+    
+    // Limpiar solo las claves específicas de autenticación
+    const keysToRemove = ['token', 'auth_token', 'auth_user', 'refreshToken', 'userRole', 'userId', 'userEmail', 'lastActivity', 'session_data', 'current_session']
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key)
+      console.log(`🗑️ Removido: ${key}`)
+    })
+    
+    // Limpiar headers de axios
+    delete axios.defaults.headers.common['Authorization']
+    
+    // Actualizar estado
     dispatch({ type: 'LOGOUT' })
     
-    console.log('🚪 Logout completado - localStorage limpio')
-  }, [clearAllStorageData])
+    console.log('🚪 Logout completado')
+  }, [])
 
   const register = useCallback(async (userData) => {
     dispatch({ type: 'LOGIN_START' })

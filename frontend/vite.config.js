@@ -28,7 +28,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: false,
+    sourcemap: false, // Completamente deshabilitado
+    emptyOutDir: true, // Limpiar directorio de salida
     // Minificación conservadora para evitar errores
     minify: 'esbuild', // Más estable que terser
     // Mantener algunas optimizaciones básicas
@@ -37,12 +38,8 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        // CONFIGURACIÓN CONSERVADORA PARA PRODUCCIÓN - Sin chunking manual
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          axios: ['axios'],
-          icons: ['@heroicons/react', '@headlessui/react']
-        },
+        // CONFIGURACIÓN ULTRA-CONSERVADORA - Sin chunking manual para evitar errores
+        manualChunks: undefined,
         // Nombres optimizados para cache
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
