@@ -5,12 +5,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [
     react({
-      // Optimizaciones de React
+      // CONFIGURACIÓN MÍNIMA - Sin optimizaciones que puedan causar problemas
       babel: {
-        plugins: [
-          // Remover console.log en producción
-          process.env.NODE_ENV === 'production' && 'transform-remove-console'
-        ].filter(Boolean)
+        plugins: [] // Sin plugins de babel en absoluto
       }
     })
   ],
@@ -29,60 +26,46 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false, // Completamente deshabilitado
-    emptyOutDir: true, // Limpiar directorio de salida
-    // Minificación conservadora para evitar errores
-    minify: 'esbuild', // Más estable que terser
-    // Mantener algunas optimizaciones básicas
+    emptyOutDir: true,
+    // CONFIGURACIÓN EXTREMA - Sin minificación para evitar problemas
+    minify: false, // DESHABILITADO COMPLETAMENTE
+    // Sin optimizaciones de esbuild
     esbuildOptions: {
-      drop: ['console', 'debugger'],
+      // Sin optimizaciones en absoluto
     },
     rollupOptions: {
+      // Configuración para generar UN SOLO ARCHIVO
       output: {
-        // CONFIGURACIÓN ULTRA-CONSERVADORA - Sin chunking manual para evitar errores
-        manualChunks: undefined,
-        // Nombres optimizados para cache
-        chunkFileNames: 'assets/js/[name]-[hash].js',
-        entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: ({ name }) => {
-          if (/\.(gif|jpe?g|png|svg)$/.test(name ?? '')) {
-            return 'assets/images/[name]-[hash][extname]'
-          }
-          if (/\.css$/.test(name ?? '')) {
-            return 'assets/css/[name]-[hash][extname]'
-          }
-          return 'assets/[name]-[hash][extname]'
-        }
-      }
+        // FORZAR TODO EN UN SOLO ARCHIVO
+        manualChunks: () => 'index', // Forzar todo en un solo chunk
+        inlineDynamicImports: true, // Incluir importaciones dinámicas
+        chunkFileNames: 'assets/js/[name].js', // Sin hash para evitar cache
+        entryFileNames: 'assets/js/[name].js', // Sin hash
+        assetFileNames: 'assets/[name][extname]' // Sin hash
+      },
+      // Configuración extrema para evitar dependencias circulares
+      external: [], // No externalizar nada
+      treeshake: false // Deshabilitar tree shaking
     },
-    // Aumentar límite de chunk para evitar warnings
-    chunkSizeWarningLimit: 1000,
-    // Target conservador para mayor compatibilidad
+    // Límite muy alto para evitar warnings
+    chunkSizeWarningLimit: 5000,
+    // Target más básico
     target: 'es2015',
-    // Configuración estable para CSS
-    cssCodeSplit: true
+    // Sin división de CSS
+    cssCodeSplit: false // Todo el CSS en un archivo
   },
-  // Optimizar resolución de módulos
+  // Resolución simplificada
   resolve: {
     alias: {
       '@': '/src'
     }
   },
-  // Optimizaciones para desarrollo y producción
+  // DESHABILITAR optimizaciones de dependencias
   optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      'axios',
-      '@headlessui/react',
-      '@heroicons/react/24/outline',
-      '@heroicons/react/24/solid'
-    ],
-    exclude: ['lucide-react'] // Excluir si causa problemas
+    disabled: true // COMPLETAMENTE DESHABILITADO
   },
-  // Variables de entorno
+  // Variables mínimas
   define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString())
+    'process.env.NODE_ENV': JSON.stringify('production')
   }
 })
