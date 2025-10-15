@@ -55,7 +55,7 @@ const DashboardProfesor = () => {
       // Intentar cargar controles reales del backend
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
+        const response = await axios.get('/api/profesor/controles-asignados', {
           headers: { Authorization: `Bearer ${token}` }
         })
         

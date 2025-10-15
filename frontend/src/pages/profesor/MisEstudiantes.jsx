@@ -45,7 +45,7 @@ const MisEstudiantes = () => {
       const token = localStorage.getItem('token')
       
       // Obtener controles asignados al profesor
-      const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
+      const response = await axios.get('/api/profesor/controles-asignados', {
         headers: { Authorization: `Bearer ${token}` }
       })
 

@@ -59,7 +59,7 @@ const Header = ({ onMenuClick }) => {
       
       // Intentar cargar notificaciones reales del backend
       try {
-        const response = await axios.get(`${API_BASE_URL}/notificaciones`, {
+        const response = await axios.get('/api/notificaciones', {
           headers: { Authorization: `Bearer ${token}` }
         })
         
@@ -180,7 +180,7 @@ const Header = ({ onMenuClick }) => {
   const marcarComoLeida = async (notificationId) => {
     try {
       const token = localStorage.getItem('token')
-      await axios.put(`${API_BASE_URL}/notificaciones/${notificationId}/leida`, {}, {
+      await axios.put(`/api/notificaciones/${notificationId}/leida`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
     } catch (error) {
@@ -199,7 +199,7 @@ const Header = ({ onMenuClick }) => {
   const marcarTodasComoLeidas = async () => {
     try {
       const token = localStorage.getItem('token')
-      await axios.put(`${API_BASE_URL}/notificaciones/marcar-todas-leidas`, {}, {
+      await axios.put('/api/notificaciones/marcar-todas-leidas', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
     } catch (error) {

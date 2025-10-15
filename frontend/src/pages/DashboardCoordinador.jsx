@@ -61,14 +61,14 @@ const DashboardCoordinador = () => {
       // 🎯 CARGAR ESTADÍSTICAS REALES DEL ENDPOINT ESPECÍFICO
       
       // 1. Obtener estadísticas del coordinador (incluye todas las métricas)
-      const estadisticasResponse = await axios.get(`${API_BASE_URL}/coordinador/estadisticas`, {
+      const estadisticasResponse = await axios.get('/api/coordinador/estadisticas', {
         headers: { Authorization: `Bearer ${token}` }
       })
       const estadisticas = estadisticasResponse.data || {}
       console.log('📊 Estadísticas recibidas del backend:', estadisticas)
       
       // 2. Obtener controles para actividad reciente y áreas de consulta
-      const controlesResponse = await axios.get(`${API_BASE_URL}/coordinador/controles-completos`, {
+      const controlesResponse = await axios.get('/api/coordinador/controles-completos', {
         headers: { Authorization: `Bearer ${token}` }
       })
       const controles = controlesResponse.data || []

@@ -64,7 +64,7 @@ const Calificaciones = () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
-      const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
+      const response = await axios.get('/api/profesor/controles-asignados', {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -178,7 +178,7 @@ const Calificaciones = () => {
       }
 
       await axios.post(
-        `${API_BASE_URL}/profesor/calificaciones`,
+        '/api/profesor/calificaciones',
         calificacionData,
         { headers: { Authorization: `Bearer ${token}` } }
       )

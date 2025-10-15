@@ -58,7 +58,7 @@ const MisCalificaciones = () => {
       const token = localStorage.getItem('token')
       
       console.log('🔄 Cargando calificaciones del estudiante...')
-      const response = await axios.get(`${API_BASE_URL}/calificaciones/estudiante`, {
+      const response = await axios.get('/api/calificaciones/estudiante', {
         headers: { Authorization: `Bearer ${token}` }
       })
       

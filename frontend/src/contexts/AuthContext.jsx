@@ -1,10 +1,8 @@
 import { createContext, useContext, useReducer, useEffect, useMemo, useCallback } from 'react'
 import axios from 'axios'
 
-// Configuración de axios - usar proxy de Vite
-const API_BASE_URL = ''
-
-axios.defaults.baseURL = API_BASE_URL
+// Configuración de axios - usar proxy de Vite configurado en vite.config.js
+axios.defaults.baseURL = ''
 axios.defaults.headers.common['Content-Type'] = 'application/json'
 
 // Estados del contexto de autenticación
@@ -232,7 +230,7 @@ export const AuthProvider = ({ children }) => {
         try {
           axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`
           console.log('🚀 Verificando token con el servidor...')
-          console.log('🌐 URL de verificación:', `${API_BASE_URL}/api/auth/me`)
+          console.log('🌐 URL de verificación:', '/api/auth/me')
           
           const response = await axios.get('/api/auth/me')
           const serverUser = response.data

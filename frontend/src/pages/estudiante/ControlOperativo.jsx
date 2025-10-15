@@ -65,7 +65,7 @@ const ControlOperativoEstudiante = () => {
   const cargarProfesores = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get(`${API_BASE_URL}/profesores`, {
+      const response = await axios.get('/api/profesores', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setProfesores(response.data)

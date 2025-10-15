@@ -58,7 +58,7 @@ const Estadisticas = () => {
       const token = localStorage.getItem('token')
       
       // Construir parámetros para el nuevo endpoint
-      let url = `${API_BASE_URL}/coordinador/estadisticas-completas`
+      let url = '/api/coordinador/estadisticas-completas'
       const params = new URLSearchParams()
       
       if (filtroAno) {

@@ -79,7 +79,7 @@ const PerfilEstudiante = () => {
     try {
       setLoadingCalificaciones(true)
       const token = localStorage.getItem('token')
-      const response = await axios.get(`${API_BASE_URL}/calificaciones/estudiante`, {
+      const response = await axios.get('/api/calificaciones/estudiante', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setCalificaciones(response.data || [])

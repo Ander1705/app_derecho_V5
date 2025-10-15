@@ -340,7 +340,7 @@ const ControlesAsignados = () => {
       const token = localStorage.getItem('token')
       
       try {
-        const response = await axios.get(`${API_BASE_URL}/profesor/controles-asignados`, {
+        const response = await axios.get('/api/profesor/controles-asignados', {
           headers: { Authorization: `Bearer ${token}` }
         })
         // Extraer solo el array de controles de la respuesta con validación defensiva
@@ -480,7 +480,7 @@ const ControlesAsignados = () => {
       const token = localStorage.getItem('token')
       
       await axios.put(
-        `${API_BASE_URL}/profesor/control-operativo/${controlId}/concepto`,
+        `/api/profesor/control-operativo/${controlId}/concepto`,
         { concepto_asesor: conceptoTexto },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -568,7 +568,7 @@ const ControlesAsignados = () => {
       }
 
       await axios.post(
-        `${API_BASE_URL}/profesor/calificaciones`,
+        '/api/profesor/calificaciones',
         calificacionData,
         { headers: { Authorization: `Bearer ${token}` } }
       )

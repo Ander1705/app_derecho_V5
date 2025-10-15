@@ -49,7 +49,7 @@ const DashboardEstudiante = () => {
         const token = localStorage.getItem('token')
         console.log('🌐 Llamando al endpoint de estadísticas...')
         
-        const estadisticasRes = await axios.get(`${API_BASE_URL}/auth/estudiante/estadisticas`, {
+        const estadisticasRes = await axios.get('/api/auth/estudiante/estadisticas', {
           headers: { Authorization: `Bearer ${token}` }
         })
         
