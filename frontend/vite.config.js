@@ -12,22 +12,19 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    minify: false, // 🚨 DESHABILITAR minificación para evitar errores
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'axios-vendor': ['axios'],
-        },
+        // 🚨 GENERAR UN SOLO ARCHIVO - Sin chunks separados
+        manualChunks: undefined,
+        inlineDynamicImports: true,
+        // Nombres simples sin hash para debug
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name].[ext]'
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 5000, // Aumentar límite para archivo grande
   },
   server: {
     port: 5173,

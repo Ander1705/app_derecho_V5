@@ -290,15 +290,20 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     dispatch({ type: 'LOGIN_START' })
     
-    // 🧹 LIMPIEZA BÁSICA antes del login - Menos agresiva
-    console.log('🧹 Limpieza básica antes del login')
+    // 🚨 LIMPIEZA EXTREMA antes del login para evitar mezcla de roles
+    console.log('🧹 LIMPIEZA EXTREMA antes del login - Eliminando TODA la sesión anterior')
     
-    // Solo limpiar tokens y datos de usuario, no todo el localStorage
-    const keysToRemove = ['token', 'auth_token', 'auth_user', 'refreshToken', 'userRole', 'userId', 'userEmail', 'lastActivity', 'session_data', 'current_session']
-    keysToRemove.forEach(key => localStorage.removeItem(key))
+    // 1. Limpiar COMPLETAMENTE localStorage
+    localStorage.clear()
     
-    // Limpiar axios headers
+    // 2. Limpiar sessionStorage también
+    sessionStorage.clear()
+    
+    // 3. Limpiar axios headers
     delete axios.defaults.headers.common['Authorization']
+    
+    // 4. Forzar reinicio del estado de autenticación
+    dispatch({ type: 'LOGOUT' })
     
     try {
       const response = await axios.post('/api/auth/login', {
@@ -380,22 +385,24 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const logout = useCallback(() => {
-    console.log('🚪 Iniciando logout')
+    console.log('🚪 Iniciando logout COMPLETO')
     
-    // Limpiar solo las claves específicas de autenticación
-    const keysToRemove = ['token', 'auth_token', 'auth_user', 'refreshToken', 'userRole', 'userId', 'userEmail', 'lastActivity', 'session_data', 'current_session']
-    keysToRemove.forEach(key => {
-      localStorage.removeItem(key)
-      console.log(`🗑️ Removido: ${key}`)
-    })
+    // 🚨 LIMPIEZA TOTAL para evitar persistencia de datos entre roles
+    console.log('🧹 LIMPIEZA TOTAL de localStorage y sessionStorage')
     
-    // Limpiar headers de axios
+    // 1. Limpiar COMPLETAMENTE localStorage
+    localStorage.clear()
+    
+    // 2. Limpiar COMPLETAMENTE sessionStorage
+    sessionStorage.clear()
+    
+    // 3. Limpiar headers de axios
     delete axios.defaults.headers.common['Authorization']
     
-    // Actualizar estado
+    // 4. Actualizar estado
     dispatch({ type: 'LOGOUT' })
     
-    console.log('🚪 Logout completado')
+    console.log('🚪 Logout COMPLETO terminado - TODA la sesión eliminada')
   }, [])
 
   const register = useCallback(async (userData) => {
