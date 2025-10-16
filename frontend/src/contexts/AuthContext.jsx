@@ -378,30 +378,34 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const logout = useCallback(() => {
-    console.log('🚪 LOGOUT - Limpieza completa')
+    console.log('🚪 LOGOUT DEFINITIVO - Limpieza agresiva')
     
     try {
-      // 1. Limpiar headers axios INMEDIATAMENTE
+      // 1. Limpiar INMEDIATAMENTE todo axios
       delete axios.defaults.headers.common['Authorization']
+      delete axios.defaults.headers['Authorization']
       
-      // 2. Limpiar storage
+      // 2. Limpieza AGRESIVA de storage
       localStorage.clear()
       sessionStorage.clear()
       
-      // 3. Actualizar estado a logout
+      // 3. Limpiar cookies si las hay
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      
+      // 4. Actualizar estado INMEDIATAMENTE
       dispatch({ type: 'LOGOUT' })
       
-      console.log('✅ LOGOUT COMPLETADO')
+      console.log('✅ LOGOUT AGRESIVO COMPLETADO')
       
-      // 4. FORZAR navegación al login
-      setTimeout(() => {
-        window.location.href = '/login'
-      }, 100)
+      // 5. FORZAR navegación INMEDIATA
+      window.location.replace('/login')
       
     } catch (error) {
       console.error('Error en logout:', error)
-      // Fallback: forzar reload completo
-      window.location.reload()
+      // Fallback nuclear
+      window.location.replace('/login')
     }
   }, [])
 
