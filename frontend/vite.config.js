@@ -8,27 +8,17 @@ export default defineConfig({
     host: true
   },
   build: {
-    // CONFIGURACIONES para evitar problemas de minificación
-    minify: 'esbuild',
+    // CAMBIO CRÍTICO: Desactivar minificación problemática
+    minify: false,  // CAMBIAR de 'esbuild' a false
+    sourcemap: true, // Activar para debug
     target: 'es2015',
-    sourcemap: false, // Desactivar sourcemaps en producción
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Separar vendors para evitar conflictos
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['axios']
-        }
-      }
-    },
-    // Evitar problemas con variables temporales
-    esbuild: {
-      keepNames: true,
-      legalComments: 'none'
-    }
+    outDir: 'dist'
   },
-  // Agregar para producción
-  define: {
-    'process.env.NODE_ENV': JSON.stringify('production')
+  esbuild: {
+    // Mantener nombres de variables
+    keepNames: true,
+    minifyIdentifiers: false,
+    minifySyntax: false,
+    minifyWhitespace: false
   }
 })

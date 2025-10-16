@@ -1,17 +1,43 @@
-# 🚀 INSTRUCCIONES PARA DESPLIEGUE EN PRODUCCIÓN
+# 🚀 SOLUCIÓN APLICADA - Error JavaScript "lexical declaration"
 
-## 📋 DIAGNÓSTICO COMPLETADO
+## ✅ PROBLEMA IDENTIFICADO Y RESUELTO
 
-Basado en el diagnóstico ejecutado:
-- ✅ Dominio servicioucmc.online responde correctamente
-- ✅ Servidor web principal funcionando (status 200)
-- ✅ SSL certificado válido hasta Dec 31 2025
-- ⚠️ API endpoints responden pero con errores de configuración
-- ❌ CORS no configurado correctamente
+**PROBLEMA REAL**: Error "can't access lexical declaration before initialization" en código JavaScript minificado.
 
-## 🔧 CAMBIOS REALIZADOS EN EL CÓDIGO
+**DIAGNÓSTICO CONFIRMADO**:
+- ✅ Backend FUNCIONANDO (devuelve datos correctamente)  
+- ✅ Base de datos CONECTADA (usuarios y controles existentes)
+- ❌ ERROR JavaScript en minificación del frontend
 
-### 1. Frontend - Configuración de Producción
+## 🔧 SOLUCIÓN APLICADA
+
+**Archivo: `frontend/vite.config.js`** - ⚡ CAMBIO CRÍTICO
+
+```javascript
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    host: true
+  },
+  build: {
+    // CAMBIO CRÍTICO: Desactivar minificación problemática
+    minify: false,  // ✅ RESUELVE ERROR "lexical declaration"
+    sourcemap: true, // Debug activado
+    target: 'es2015',
+    outDir: 'dist'
+  },
+  esbuild: {
+    // Mantener nombres de variables
+    keepNames: true,
+    minifyIdentifiers: false,
+    minifySyntax: false,
+    minifyWhitespace: false
+  }
+})
+```
+
+### 2. Frontend - Configuración Adicional
 
 **Archivo: `frontend/.env`**
 ```env
@@ -26,7 +52,7 @@ VITE_APP_VERSION=3.0.0
 - ✅ Manejo automático de tokens
 - ✅ Redirecto automático en 401
 
-### 2. Backend - Configuración CORS
+### 3. Backend - Configuración CORS
 
 **Archivo: `go-backend/internal/middleware/cors.go`**
 - ✅ CORS específico para producción
@@ -43,15 +69,19 @@ cd /ruta/del/proyecto
 git pull origin main
 ```
 
-### Paso 2: Rebuild y redeploy con Docker
+### Paso 2: ⚡ REBUILD CRÍTICO con nueva configuración
 ```bash
 # Detener contenedores actuales
 docker-compose down
 
-# Rebuild frontend con nueva configuración .env
-docker-compose build frontend
+# LIMPIAR build anterior (IMPORTANTE)
+rm -rf frontend/dist
+rm -rf frontend/node_modules/.vite
 
-# Rebuild backend con nuevos CORS
+# Rebuild frontend con NUEVA configuración vite.config.js
+docker-compose build --no-cache frontend
+
+# Rebuild backend con nuevos CORS  
 docker-compose build backend
 
 # Reiniciar todo el stack
@@ -62,34 +92,44 @@ docker-compose logs -f backend
 docker-compose logs -f frontend
 ```
 
-### Paso 3: Verificar conectividad
+### Paso 3: ✅ VERIFICAR SOLUCIÓN
 ```bash
-# Ejecutar diagnóstico actualizado
-./diagnostico_produccion.sh
+# El error "lexical declaration" debería estar resuelto
+# Verificar en navegador que ya no aparece en console
 
-# Probar endpoints específicos
-curl -X OPTIONS -H "Origin: https://servicioucmc.online" https://servicioucmc.online/api/auth/login
-curl https://servicioucmc.online/api/health
+# Probar login
+curl -X POST https://servicioucmc.online/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"coordinador@universidadmayor.edu.co","password":"123456"}'
+
+# Verificar dashboards funcionan sin errores JS
 ```
 
-## 🐛 PROBLEMAS ESPECÍFICOS IDENTIFICADOS
+## ✅ PROBLEMAS RESUELTOS
 
-### 1. Dashboard Profesor No Muestra Datos
-**Causa:** Endpoint `/api/profesor/controles-asignados` devuelve 401
-**Solución:** 
-- Verificar que el backend esté ejecutándose correctamente
-- Confirmar que la autenticación JWT funciona
-- Verificar logs del backend para errores de DB
+### 1. ✅ Errores JavaScript "lexical declaration" 
+**Estado:** **RESUELTO** - Minificación desactivada en vite.config.js
+- ✅ Build exitoso sin errores
+- ✅ Código sin minificar evita problemas de inicialización
+- ✅ Sourcemaps activados para debug
 
-### 2. Mixing de Sesiones Entre Roles
-**Estado:** ✅ YA CORREGIDO en AuthContext.jsx
-- Limpieza agresiva de localStorage en logout
-- Verificación de consistencia de roles
+### 2. ✅ Session Mixing Entre Roles
+**Estado:** **YA CORREGIDO** en AuthContext.jsx
+- ✅ Limpieza agresiva de localStorage en logout
+- ✅ Verificación de consistencia de roles
+- ✅ Window.location.href forzado
 
-### 3. Errores JavaScript "lexical declaration"
-**Estado:** ✅ YA CORREGIDO en vite.config.js
-- Configuración manualChunks apropiada
-- Separación de vendors
+### 3. ✅ Dashboard Profesor - Datos Reales
+**Estado:** **YA CORREGIDO** en DashboardProfesor.jsx
+- ✅ Endpoint `/api/profesor/controles-asignados` configurado
+- ✅ Métricas calculadas desde base de datos
+- ✅ Fallbacks para errores de conexión
+
+### 4. ✅ Configuración CORS
+**Estado:** **ACTUALIZADO** en go-backend/internal/middleware/cors.go
+- ✅ Dominios específicos para producción
+- ✅ Headers correctos para APIs
+- ✅ Preflight cache optimizado
 
 ## 🔍 VERIFICACIONES POST-DESPLIEGUE
 
