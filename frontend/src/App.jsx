@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/layout/Layout'
@@ -32,6 +33,29 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 // Componente para mostrar el dashboard correcto según el rol
 const DashboardRedirect = () => {
   const { user, loading } = useAuth()
+  
+  // 🚨 LIMPIEZA PREVENTIVA: Verificar si hay mezcla de roles
+  useEffect(() => {
+    if (!loading && user) {
+      const savedRole = localStorage.getItem('userRole')
+      const savedUserId = localStorage.getItem('userId')
+      
+      // Si hay discrepancia CRÍTICA, limpiar EVERYTHING
+      if (savedRole && savedRole !== user.role) {
+        console.log('🚨 DISCREPANCIA DE ROL DETECTADA:', savedRole, 'vs', user.role)
+        localStorage.clear()
+        sessionStorage.clear()
+        window.location.reload() // FORZAR reload completo
+      }
+      
+      if (savedUserId && savedUserId !== user.id?.toString()) {
+        console.log('🚨 DISCREPANCIA DE USER ID DETECTADA:', savedUserId, 'vs', user.id)
+        localStorage.clear()
+        sessionStorage.clear()
+        window.location.reload() // FORZAR reload completo
+      }
+    }
+  }, [user, loading])
   
   // Esperar a que termine la carga antes de redirigir
   if (loading) {
