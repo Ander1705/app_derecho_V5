@@ -49,22 +49,27 @@ const DashboardEstudiante = () => {
         const token = localStorage.getItem('token')
         console.log('🌐 Llamando al endpoint de estadísticas...')
         
-        const estadisticasRes = await axios.get('/api/auth/estudiante/estadisticas', {
+        const estadisticasRes = await axios.get('/api/control-operativo/list', {
           headers: { Authorization: `Bearer ${token}` }
         })
         
-        const estadisticas = estadisticasRes.data || {}
-        console.log('✅ Estadísticas cargadas desde backend:', estadisticas)
+        const responseData = estadisticasRes.data || {}
+        const controles = responseData.data || []  // Estructura paginada: {data: [], total_records: 5}
+        console.log('✅ Controles cargados desde backend:', controles.length, 'controles')
         
-        if (estadisticas) {
-          // Usar estadísticas reales del backend
+        if (Array.isArray(controles)) {
+          // Calcular estadísticas reales desde los controles
+          const controlesCompletos = controles.filter(c => c.estado_flujo === 'completo').length
+          const controlesPendientes = controles.filter(c => c.estado_flujo === 'pendiente_profesor').length
+          const controlesConResultado = controles.filter(c => c.estado_resultado && c.estado_resultado !== '').length
+          
           const progresoReal = {
-            misReportes: estadisticas.controles_creados || 0,
-            controlesCompletos: estadisticas.controles_completos || 0,
-            controlesPendientes: estadisticas.controles_pendientes || 0,
-            controlesConResultado: estadisticas.controles_con_resultado || 0,
-            ultimoReporte: estadisticas.fecha_registro ? 
-              new Date(estadisticas.fecha_registro).toLocaleDateString('es-ES') : 'Sin reportes',
+            misReportes: controles.length,
+            controlesCompletos: controlesCompletos,
+            controlesPendientes: controlesPendientes,
+            controlesConResultado: controlesConResultado,
+            ultimoReporte: controles.length > 0 ? 
+              new Date(controles[0].created_at).toLocaleDateString('es-ES') : 'Sin reportes',
             estado: 'Activo'
           }
           
@@ -74,7 +79,7 @@ const DashboardEstudiante = () => {
           // Recordatorios basados en datos reales
           const recordatoriosReales = []
           
-          if (estadisticas.controles_creados === 0) {
+          if (controles.length === 0) {
             recordatoriosReales.push({ 
               id: 1, 
               mensaje: 'Crea tu primer control operativo para comenzar', 
@@ -83,31 +88,31 @@ const DashboardEstudiante = () => {
           } else {
             recordatoriosReales.push({ 
               id: 1, 
-              mensaje: `Has creado ${estadisticas.controles_creados} controles operativos`, 
+              mensaje: `Has creado ${controles.length} controles operativos`, 
               tipo: 'info' 
             })
           }
           
-          if (estadisticas.controles_pendientes > 0) {
+          if (controlesPendientes > 0) {
             recordatoriosReales.push({ 
               id: 2, 
-              mensaje: `Tienes ${estadisticas.controles_pendientes} controles esperando revisión del profesor`, 
+              mensaje: `Tienes ${controlesPendientes} controles esperando revisión del profesor`, 
               tipo: 'info' 
             })
           }
           
-          if (estadisticas.controles_completos > 0) {
+          if (controlesCompletos > 0) {
             recordatoriosReales.push({ 
               id: 3, 
-              mensaje: `${estadisticas.controles_completos} controles completados esperando resultado del coordinador`, 
+              mensaje: `${controlesCompletos} controles completados esperando resultado del coordinador`, 
               tipo: 'info' 
             })
           }
           
-          if (estadisticas.controles_con_resultado > 0) {
+          if (controlesConResultado > 0) {
             recordatoriosReales.push({ 
               id: 4, 
-              mensaje: `${estadisticas.controles_con_resultado} controles finalizados con resultado`, 
+              mensaje: `${controlesConResultado} controles finalizados con resultado`, 
               tipo: 'tip' 
             })
           }

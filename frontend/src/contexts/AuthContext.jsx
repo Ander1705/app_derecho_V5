@@ -338,14 +338,6 @@ export const AuthProvider = ({ children }) => {
         payload: response.data
       })
 
-      // 🚨 FORZAR REFRESH COMPLETO PARA ELIMINAR CUALQUIER ESTADO ANTERIOR
-      console.log('✅ Login exitoso - FORZANDO REFRESH para limpiar estado')
-      
-      // Pequeña pausa y luego refresh
-      setTimeout(() => {
-        window.location.reload()
-      }, 500)
-
       return { success: true }
     } catch (error) {
       let errorMessage = 'Error de autenticación'
@@ -386,18 +378,31 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const logout = useCallback(() => {
-    console.log('🚪 Logout RADICAL con refresh de página')
+    console.log('🚪 LOGOUT - Limpieza completa')
     
-    // Limpiar TODO
-    localStorage.clear()
-    sessionStorage.clear()
-    delete axios.defaults.headers.common['Authorization']
-    
-    // Actualizar estado
-    dispatch({ type: 'LOGOUT' })
-    
-    // 🚨 REFRESH INMEDIATO para garantizar limpieza total
-    window.location.reload()
+    try {
+      // 1. Limpiar headers axios INMEDIATAMENTE
+      delete axios.defaults.headers.common['Authorization']
+      
+      // 2. Limpiar storage
+      localStorage.clear()
+      sessionStorage.clear()
+      
+      // 3. Actualizar estado a logout
+      dispatch({ type: 'LOGOUT' })
+      
+      console.log('✅ LOGOUT COMPLETADO')
+      
+      // 4. FORZAR navegación al login
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 100)
+      
+    } catch (error) {
+      console.error('Error en logout:', error)
+      // Fallback: forzar reload completo
+      window.location.reload()
+    }
   }, [])
 
   const register = useCallback(async (userData) => {

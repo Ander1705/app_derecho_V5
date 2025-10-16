@@ -34,25 +34,23 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 const DashboardRedirect = () => {
   const { user, loading } = useAuth()
   
-  // 🚨 LIMPIEZA PREVENTIVA: Verificar si hay mezcla de roles
+  // 🚨 LIMPIEZA PREVENTIVA: Verificar si hay mezcla de roles (SIN RELOAD)
   useEffect(() => {
     if (!loading && user) {
       const savedRole = localStorage.getItem('userRole')
       const savedUserId = localStorage.getItem('userId')
       
-      // Si hay discrepancia CRÍTICA, limpiar EVERYTHING
+      // Si hay discrepancia, solo limpiar sin reload
       if (savedRole && savedRole !== user.role) {
         console.log('🚨 DISCREPANCIA DE ROL DETECTADA:', savedRole, 'vs', user.role)
-        localStorage.clear()
-        sessionStorage.clear()
-        window.location.reload() // FORZAR reload completo
+        localStorage.removeItem('userRole')
+        localStorage.setItem('userRole', user.role)
       }
       
       if (savedUserId && savedUserId !== user.id?.toString()) {
         console.log('🚨 DISCREPANCIA DE USER ID DETECTADA:', savedUserId, 'vs', user.id)
-        localStorage.clear()
-        sessionStorage.clear()
-        window.location.reload() // FORZAR reload completo
+        localStorage.removeItem('userId')
+        localStorage.setItem('userId', user.id?.toString())
       }
     }
   }, [user, loading])
