@@ -1,45 +1,26 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// CONFIGURACIÓN SIMPLE QUE FUNCIONA
 export default defineConfig({
-  plugins: [
-    react()
-  ],
-  resolve: {
-    alias: {
-      '@': '/src',
-    },
-  },
+  plugins: [react()],
+  
   build: {
+    // Configuración básica
     outDir: 'dist',
     sourcemap: false,
-    minify: false,
-    target: 'es2015',
     
+    // FORZAR archivo único usando esta configuración que SÍ funciona
     rollupOptions: {
       output: {
-        // 🚨 SOLO inlineDynamicImports - NO manualChunks
         inlineDynamicImports: true,
-        
-        // Archivos simples
-        entryFileNames: 'index.js',
-        assetFileNames: '[name].[ext]',
-        
-        // Formato básico
-        format: 'es'
       },
-      
-      // Sin optimizaciones
-      treeshake: false,
     },
-    
-    chunkSizeWarningLimit: 10000,
-    cssCodeSplit: false,
   },
   
   server: {
-    port: 5173,
-    host: true,
+    port: 3000,
+    host: '0.0.0.0',
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
@@ -48,8 +29,4 @@ export default defineConfig({
       }
     }
   },
-  
-  define: {
-    'process.env.NODE_ENV': '"production"'
-  }
 })

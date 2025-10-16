@@ -288,42 +288,15 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = useCallback(async (email, password) => {
+    // 🚨 SOLUCIÓN RADICAL: REFRESH COMPLETO DE PÁGINA
+    console.log('🚨 INICIANDO LOGIN - REFRESH COMPLETO PARA EVITAR MEZCLA DE ROLES')
+    
+    // 1. Limpiar TODO
+    localStorage.clear()
+    sessionStorage.clear()
+    delete axios.defaults.headers.common['Authorization']
+    
     dispatch({ type: 'LOGIN_START' })
-    
-    // 🚨 LIMPIEZA NUCLEAR - ELIMINAR TODO RASTRO DE SESIONES ANTERIORES
-    console.log('🧹 LIMPIEZA NUCLEAR - Eliminando TODO rastro de sesiones anteriores')
-    
-    try {
-      // 1. Limpiar COMPLETAMENTE localStorage múltiples veces
-      localStorage.clear()
-      localStorage.clear()
-      localStorage.clear()
-      
-      // 2. Limpiar sessionStorage múltiples veces
-      sessionStorage.clear()
-      sessionStorage.clear()
-      sessionStorage.clear()
-      
-      // 3. Limpiar axios headers múltiples veces
-      delete axios.defaults.headers.common['Authorization']
-      delete axios.defaults.headers['Authorization']
-      delete axios.defaults.headers.Authorization
-      
-      // 4. Forzar reinicio completo del estado
-      dispatch({ type: 'LOGOUT' })
-      
-      // 5. Esperar un momento para que se procese la limpieza
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      // 6. Limpiar OTRA VEZ por si acaso
-      localStorage.clear()
-      sessionStorage.clear()
-      
-      console.log('✅ LIMPIEZA NUCLEAR COMPLETADA')
-      
-    } catch (cleanupError) {
-      console.error('Error en limpieza nuclear:', cleanupError)
-    }
     
     try {
       const response = await axios.post('/api/auth/login', {
@@ -365,6 +338,14 @@ export const AuthProvider = ({ children }) => {
         payload: response.data
       })
 
+      // 🚨 FORZAR REFRESH COMPLETO PARA ELIMINAR CUALQUIER ESTADO ANTERIOR
+      console.log('✅ Login exitoso - FORZANDO REFRESH para limpiar estado')
+      
+      // Pequeña pausa y luego refresh
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
+
       return { success: true }
     } catch (error) {
       let errorMessage = 'Error de autenticación'
@@ -405,60 +386,18 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const logout = useCallback(() => {
-    console.log('🚪 Iniciando logout NUCLEAR')
+    console.log('🚪 Logout RADICAL con refresh de página')
     
-    try {
-      // 🚨 LIMPIEZA NUCLEAR MÚLTIPLE para eliminar TODO rastro
-      console.log('🧹 LIMPIEZA NUCLEAR de TODA la información de sesión')
-      
-      // 1. Limpiar localStorage múltiples veces con diferentes métodos
-      localStorage.clear()
-      localStorage.clear()
-      localStorage.clear()
-      
-      // También eliminar claves específicas por si clear() falla
-      const keysToDelete = ['token', 'auth_token', 'auth_user', 'refreshToken', 'userRole', 'userId', 'userEmail', 'lastActivity', 'session_data', 'current_session']
-      keysToDelete.forEach(key => {
-        localStorage.removeItem(key)
-        localStorage.removeItem(key) // Dos veces por seguridad
-      })
-      
-      // 2. Limpiar sessionStorage múltiples veces
-      sessionStorage.clear()
-      sessionStorage.clear()
-      sessionStorage.clear()
-      
-      // 3. Limpiar axios headers de TODAS las formas posibles
-      delete axios.defaults.headers.common['Authorization']
-      delete axios.defaults.headers['Authorization']
-      delete axios.defaults.headers.Authorization
-      if (axios.defaults.headers.common) {
-        axios.defaults.headers.common = {}
-      }
-      
-      // 4. Actualizar estado múltiples veces
-      dispatch({ type: 'LOGOUT' })
-      dispatch({ type: 'LOGOUT' })
-      
-      // 5. Limpiar una vez más después de un momento
-      setTimeout(() => {
-        localStorage.clear()
-        sessionStorage.clear()
-      }, 50)
-      
-      console.log('🚪 Logout NUCLEAR terminado - TODO eliminado múltiples veces')
-      
-    } catch (error) {
-      console.error('Error en logout nuclear:', error)
-      // Fallback: al menos intentar limpiar lo básico
-      try {
-        localStorage.clear()
-        sessionStorage.clear()
-        dispatch({ type: 'LOGOUT' })
-      } catch (fallbackError) {
-        console.error('Error en fallback de logout:', fallbackError)
-      }
-    }
+    // Limpiar TODO
+    localStorage.clear()
+    sessionStorage.clear()
+    delete axios.defaults.headers.common['Authorization']
+    
+    // Actualizar estado
+    dispatch({ type: 'LOGOUT' })
+    
+    // 🚨 REFRESH INMEDIATO para garantizar limpieza total
+    window.location.reload()
   }, [])
 
   const register = useCallback(async (userData) => {
