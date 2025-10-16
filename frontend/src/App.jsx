@@ -80,6 +80,27 @@ const DashboardRedirect = () => {
 }
 
 function App() {
+  // Solución temporal para inconsistencias de rol
+  useEffect(() => {
+    // Forzar limpieza en cada carga si hay inconsistencias
+    const urlPath = window.location.pathname;
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // Si la URL no coincide con el rol guardado, limpiar
+    if (storedUser.role) {
+      if (
+        (urlPath.includes('/coordinador') && storedUser.role !== 'coordinador') ||
+        (urlPath.includes('/profesor') && storedUser.role !== 'profesor') ||
+        (urlPath.includes('/estudiante') && storedUser.role !== 'estudiante')
+      ) {
+        console.log('🚨 Inconsistencia de rol detectada, limpiando...');
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/login';
+      }
+    }
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>

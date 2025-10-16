@@ -1,32 +1,34 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// CONFIGURACIÓN SIMPLE QUE FUNCIONA
 export default defineConfig({
   plugins: [react()],
-  
+  server: {
+    port: 5173,
+    host: true
+  },
   build: {
-    // Configuración básica
-    outDir: 'dist',
-    sourcemap: false,
-    
-    // FORZAR archivo único usando esta configuración que SÍ funciona
+    // CONFIGURACIONES para evitar problemas de minificación
+    minify: 'esbuild',
+    target: 'es2015',
+    sourcemap: false, // Desactivar sourcemaps en producción
     rollupOptions: {
       output: {
-        inlineDynamicImports: true,
-      },
-    },
-  },
-  
-  server: {
-    port: 3000,
-    host: '0.0.0.0',
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false,
+        manualChunks: {
+          // Separar vendors para evitar conflictos
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['axios']
+        }
       }
+    },
+    // Evitar problemas con variables temporales
+    esbuild: {
+      keepNames: true,
+      legalComments: 'none'
     }
   },
+  // Agregar para producción
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production')
+  }
 })

@@ -288,13 +288,18 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = useCallback(async (email, password) => {
-    // 🚨 SOLUCIÓN RADICAL: REFRESH COMPLETO DE PÁGINA
-    console.log('🚨 INICIANDO LOGIN - REFRESH COMPLETO PARA EVITAR MEZCLA DE ROLES')
+    console.log('🚨 INICIANDO LOGIN - LIMPIEZA COMPLETA PREVIA');
     
-    // 1. Limpiar TODO
-    localStorage.clear()
-    sessionStorage.clear()
-    delete axios.defaults.headers.common['Authorization']
+    // LIMPIEZA TOTAL antes de nuevo login
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) keysToRemove.push(key);
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Limpiar sessionStorage
+    sessionStorage.clear();
     
     dispatch({ type: 'LOGIN_START' })
     
@@ -378,35 +383,51 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const logout = useCallback(() => {
-    console.log('🚪 LOGOUT DEFINITIVO - Limpieza agresiva')
+    console.log('🚪 LOGOUT: Limpiando toda la sesión...');
     
-    try {
-      // 1. Limpiar INMEDIATAMENTE todo axios
-      delete axios.defaults.headers.common['Authorization']
-      delete axios.defaults.headers['Authorization']
-      
-      // 2. Limpieza AGRESIVA de storage
-      localStorage.clear()
-      sessionStorage.clear()
-      
-      // 3. Limpiar cookies si las hay
-      document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-      });
-      
-      // 4. Actualizar estado INMEDIATAMENTE
-      dispatch({ type: 'LOGOUT' })
-      
-      console.log('✅ LOGOUT AGRESIVO COMPLETADO')
-      
-      // 5. FORZAR navegación INMEDIATA
-      window.location.replace('/login')
-      
-    } catch (error) {
-      console.error('Error en logout:', error)
-      // Fallback nuclear
-      window.location.replace('/login')
+    // 1. LIMPIAR TODO el localStorage (no solo las keys específicas)
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      // Guardar todas las keys que contengan datos de la app
+      if (key && (
+        key.includes('token') || 
+        key.includes('user') || 
+        key.includes('session') ||
+        key.includes('role') ||
+        key.includes('auth')
+      )) {
+        keysToRemove.push(key);
+      }
     }
+    
+    // Eliminar todas las keys encontradas
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // 2. Limpiar específicamente las keys conocidas
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('sessionData');
+    localStorage.removeItem('lastActivity');
+    
+    // 3. Limpiar sessionStorage también
+    sessionStorage.clear();
+    
+    // 4. Limpiar cookies si existen
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+    
+    // 5. Resetear el estado
+    dispatch({ type: 'LOGOUT' })
+    
+    // 6. Eliminar token del header de axios
+    delete axios.defaults.headers.common['Authorization'];
+    
+    // 7. FORZAR recarga completa de la página para limpiar cualquier estado en memoria
+    window.location.href = '/login';
   }, [])
 
   const register = useCallback(async (userData) => {
