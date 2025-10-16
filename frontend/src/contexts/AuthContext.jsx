@@ -180,13 +180,9 @@ export const AuthProvider = ({ children }) => {
       if (state.refreshToken) {
         localStorage.setItem('refreshToken', state.refreshToken)
       }
-    } else if (state.isAuthenticated === false && !state.loading) {
-      // Solo limpiar localStorage cuando explícitamente no está autenticado Y no esté cargando
-      delete axios.defaults.headers.common['Authorization']
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('lastActivity')
     }
+    // 🚨 NUNCA LIMPIAR localStorage automáticamente - Solo al hacer login/logout manual
+    console.log('⚠️ Limpieza automática de localStorage DESHABILITADA')
   }, [state.token, state.refreshToken, state.isAuthenticated, state.loading])
 
   // Verificar token existente al cargar la aplicación
@@ -271,9 +267,9 @@ export const AuthProvider = ({ children }) => {
             message: error.message
           })
           
-          // Limpiar todos los tokens relacionados
-          clearAllStorageData()
-          dispatch({ type: 'LOGOUT' })
+          // 🚨 NO HACER LOGOUT AUTOMÁTICO - Solo marcar como no inicializado
+          console.log('⚠️ Error verificando token pero NO haciendo logout automático')
+          dispatch({ type: 'SET_INITIALIZED' })
         }
       } else {
         console.log('📭 No hay token guardado, usuario no autenticado')
