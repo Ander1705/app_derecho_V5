@@ -3,9 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [
-    react({
-      // Configuración mínima sin transformaciones
-    })
+    react()
   ],
   resolve: {
     alias: {
@@ -13,55 +11,30 @@ export default defineConfig({
     },
   },
   build: {
-    // CONFIGURACIÓN NUCLEAR - UN SOLO ARCHIVO GIGANTE
     outDir: 'dist',
     sourcemap: false,
     minify: false,
     target: 'es2015',
     
-    // ROLLUP CONFIGURADO PARA ARCHIVO ÚNICO
     rollupOptions: {
-      // NO external dependencies
-      external: [],
-      
-      // FORZAR TODO EN UN SOLO ARCHIVO
       output: {
-        // CRÍTICO: Función que fuerza todo en index
-        manualChunks: () => 'index',
-        
-        // Inline EVERYTHING
+        // 🚨 SOLO inlineDynamicImports - NO manualChunks
         inlineDynamicImports: true,
         
-        // NO tree shaking que pueda causar problemas
-        // preserveModules: false,
-        
-        // Nombres fijos
+        // Archivos simples
         entryFileNames: 'index.js',
-        chunkFileNames: 'index.js',
         assetFileNames: '[name].[ext]',
         
-        // Formato simple
-        format: 'iife',
-        name: 'App'
+        // Formato básico
+        format: 'es'
       },
       
-      // Deshabilitar optimizaciones que causen problemas
+      // Sin optimizaciones
       treeshake: false,
     },
     
-    // Límite muy alto
     chunkSizeWarningLimit: 10000,
-    
-    // Deshabilitar todo lo que pueda crear chunks
     cssCodeSplit: false,
-    
-    // Configuración de assets simple
-    assetsInlineLimit: 0,
-  },
-  
-  // NO optimizar dependencias
-  optimizeDeps: {
-    disabled: 'build',
   },
   
   server: {
@@ -76,7 +49,6 @@ export default defineConfig({
     }
   },
   
-  // Variables mínimas
   define: {
     'process.env.NODE_ENV': '"production"'
   }
