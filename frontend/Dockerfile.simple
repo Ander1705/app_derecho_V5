@@ -1,0 +1,73 @@
+# Dockerfile simplificado para el frontend React (sin BuildKit)
+FROM node:20-alpine AS builder
+
+# Instalar dependencias del sistema
+RUN apk add --no-cache git
+
+# Configurar directorio de trabajo
+WORKDIR /build
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm ci --only=production
+
+# Copiar código fuente
+COPY . .
+
+# Crear .env de producción
+RUN echo "VITE_API_URL=https://servicioucmc.online/api" > .env
+
+# Build SIN minificación (corrige el error de lexical declaration)
+RUN npm run build
+
+# Stage de producción con Nginx
+FROM nginx:alpine
+
+# Configurar zona horaria
+ENV TZ=America/Bogota
+RUN apk add --no-cache tzdata curl && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Remover configuración por defecto
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Crear configuración nginx optimizada
+RUN echo 'server {' > /etc/nginx/conf.d/default.conf && \
+    echo '    listen 3000;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    server_name localhost;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    root /usr/share/nginx/html;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    index index.html;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    ' >> /etc/nginx/conf.d/default.conf && \
+    echo '    location / {' >> /etc/nginx/conf.d/default.conf && \
+    echo '        try_files $uri $uri/ /index.html;' >> /etc/nginx/conf.d/default.conf && \
+    echo '        add_header Cache-Control "no-cache, no-store, must-revalidate";' >> /etc/nginx/conf.d/default.conf && \
+    echo '        add_header Pragma "no-cache";' >> /etc/nginx/conf.d/default.conf && \
+    echo '        add_header Expires "0";' >> /etc/nginx/conf.d/default.conf && \
+    echo '    }' >> /etc/nginx/conf.d/default.conf && \
+    echo '    ' >> /etc/nginx/conf.d/default.conf && \
+    echo '    location /assets {' >> /etc/nginx/conf.d/default.conf && \
+    echo '        expires 1y;' >> /etc/nginx/conf.d/default.conf && \
+    echo '        add_header Cache-Control "public, immutable";' >> /etc/nginx/conf.d/default.conf && \
+    echo '    }' >> /etc/nginx/conf.d/default.conf && \
+    echo '    ' >> /etc/nginx/conf.d/default.conf && \
+    echo '    location /health {' >> /etc/nginx/conf.d/default.conf && \
+    echo '        access_log off;' >> /etc/nginx/conf.d/default.conf && \
+    echo '        return 200 "healthy\\n";' >> /etc/nginx/conf.d/default.conf && \
+    echo '        add_header Content-Type text/plain;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    }' >> /etc/nginx/conf.d/default.conf && \
+    echo '}' >> /etc/nginx/conf.d/default.conf
+
+# Copiar build desde el stage anterior
+COPY --from=builder /build/dist /usr/share/nginx/html
+
+# Exponer puerto
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Comando de inicio
+CMD ["nginx", "-g", "daemon off;"]

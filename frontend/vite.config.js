@@ -8,17 +8,17 @@ export default defineConfig({
     host: true
   },
   build: {
-    // CAMBIO CRÍTICO: Desactivar minificación problemática
-    minify: false,  // CAMBIAR de 'esbuild' a false
-    sourcemap: true, // Activar para debug
+    minify: false,  // DESACTIVADO para evitar el error
+    sourcemap: false,
     target: 'es2015',
-    outDir: 'dist'
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   },
-  esbuild: {
-    // Mantener nombres de variables
-    keepNames: true,
-    minifyIdentifiers: false,
-    minifySyntax: false,
-    minifyWhitespace: false
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production')
   }
 })
