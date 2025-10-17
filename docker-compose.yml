@@ -1,442 +1,122 @@
-# ==============================================================================
-# DOCKER COMPOSE OPTIMIZADO - Consultorio Jurídico UCMC
-# Desarrollador: Anderson Felipe Montaña Castelblanco
-# Configuración para máximo rendimiento en producción
-# ==============================================================================
-
 version: '3.8'
 
-# ==============================================================================
-# REDES
-# ==============================================================================
-networks:
-  consultorio-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
-# ==============================================================================
-# SERVICIOS
-# ==============================================================================
 services:
-
-  # ============================================================================
-  # BASE DE DATOS POSTGRESQL
-  # ============================================================================
+  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: consultorio-postgres
+    container_name: app_derecho_postgres
     restart: unless-stopped
-
     environment:
       POSTGRES_DB: ${DB_NAME:-app_derecho_db}
       POSTGRES_USER: ${DB_USER:-app_derecho_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-app_derecho_pass_2025}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=es_CO.UTF-8"
-
-      # Configuraciones de rendimiento
-      POSTGRES_SHARED_BUFFERS: 256MB
-      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
-      POSTGRES_WORK_MEM: 16MB
-      POSTGRES_MAINTENANCE_WORK_MEM: 256MB
-      POSTGRES_CHECKPOINT_COMPLETION_TARGET: 0.7
-      POSTGRES_WAL_BUFFERS: 16MB
-      POSTGRES_DEFAULT_STATISTICS_TARGET: 100
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./go-backend/scripts/optimize_database.sql:/docker-entrypoint-initdb.d/01-optimize.sql
-      - ./storage/postgres_backups:/backups
-
     ports:
-      - "${DB_PORT:-5432}:5432"
-
+      - "${DB_PORT:-5433}:5432"
     networks:
-      - consultorio-network
-
-    command: >
-      postgres
-      -c shared_buffers=256MB
-      -c effective_cache_size=1GB
-      -c work_mem=16MB
-      -c maintenance_work_mem=256MB
-      -c checkpoint_completion_target=0.7
-      -c wal_buffers=16MB
-      -c default_statistics_target=100
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=2
-      -c max_connections=200
-      -c shared_preload_libraries='pg_stat_statements'
-      -c track_counts=on
-      -c track_functions=all
-      -c logging_collector=on
-      -c log_directory='pg_log'
-      -c log_filename='postgresql-%Y-%m-%d_%H%M%S.log'
-      -c log_min_duration_statement=1000
-
+      - app_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-app_derecho_user} -d ${DB_NAME:-app_derecho_db}"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 30s
+      retries: 3
 
-    deploy:
-      resources:
-        limits:
-          memory: 1GB
-          cpus: '1.0'
-        reservations:
-          memory: 512MB
-          cpus: '0.5'
-
-  # ============================================================================
-  # REDIS PARA CACHING
-  # ============================================================================
+  # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: consultorio-redis
+    container_name: app_derecho_redis
     restart: unless-stopped
-
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_pass_2025}
-
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_pass_2025}
     volumes:
       - redis_data:/data
-      - ./storage/redis_config:/usr/local/etc/redis
-
     ports:
       - "${REDIS_PORT:-6379}:6379"
-
     networks:
-      - consultorio-network
-
-    command: >
-      redis-server
-      --requirepass ${REDIS_PASSWORD:-redis_pass_2025}
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --save 900 1
-      --save 300 10
-      --save 60 10000
-      --appendonly yes
-      --appendfsync everysec
-      --tcp-keepalive 60
-      --timeout 300
-
+      - app_network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 10s
+      retries: 3
 
-    deploy:
-      resources:
-        limits:
-          memory: 512MB
-          cpus: '0.5'
-        reservations:
-          memory: 128MB
-          cpus: '0.1'
-
-  # ============================================================================
-  # BACKEND GO API
-  # ============================================================================
+  # Go Backend
   backend:
     build:
       context: ./go-backend
       dockerfile: Dockerfile
-      args:
-        - BUILD_DATE=${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
-        - VERSION=${VERSION:-1.0.0}
-
-    container_name: consultorio-backend
+    container_name: app_derecho_backend
     restart: unless-stopped
-
     environment:
-      # Configuración del servidor
       SERVER_PORT: 8000
       ENV: production
       GIN_MODE: release
-
-      # Base de datos
+      
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-app_derecho_db}
       DB_USER: ${DB_USER:-app_derecho_user}
       DB_PASSWORD: ${DB_PASSWORD:-app_derecho_pass_2025}
       DB_SSL_MODE: disable
-
-      # Redis
+      
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_pass_2025}
-
-      # JWT
+      
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-super_secret_jwt_key_2025_consultorio_ucmc}
       JWT_EXPIRATION_TIME: 24h
-
-      # SMTP
+      
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      SMTP_FROM: ${SMTP_FROM:-consultoriojuridico.kennedy@universidadmayor.edu.co}
-
-      # Optimizaciones Go
-      GOMAXPROCS: 2
-      GOMEMLIMIT: 512MiB
-      GOGC: 100
-
-      # Variables adicionales
-      UPLOAD_PATH: /app/storage/uploads
-      LOG_LEVEL: info
-      CACHE_TTL: 15m
-
+      SMTP_USERNAME: ${SMTP_USERNAME:-upkucmc@gmail.com}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-afcv gkut vdml owfx}
+      SMTP_FROM: ${SMTP_FROM:-upkucmc@gmail.com}
     volumes:
       - backend_uploads:/app/storage/uploads
       - backend_logs:/app/storage/logs
-      - ./go-backend/assets:/app/assets:ro
-
     ports:
       - "${API_PORT:-8000}:8000"
-
     networks:
-      - consultorio-network
-
+      - app_network
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 30s
+      retries: 3
 
-    deploy:
-      resources:
-        limits:
-          memory: 1GB
-          cpus: '1.0'
-        reservations:
-          memory: 256MB
-          cpus: '0.25'
-
-  # ============================================================================
-  # FRONTEND REACT
-  # ============================================================================
+  # React Frontend
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
-        - REACT_APP_VERSION=${VERSION:-1.0.0}
-        - REACT_APP_BUILD_DATE=${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
-        - NODE_ENV=production
-
-    container_name: consultorio-frontend
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8000/api}
+    container_name: app_derecho_frontend
     restart: unless-stopped
-
-    environment:
-      NGINX_WORKER_PROCESSES: auto
-      NGINX_WORKER_CONNECTIONS: 1024
-      NGINX_KEEPALIVE_TIMEOUT: 65
-
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
-
     networks:
-      - consultorio-network
-
+      - app_network
     depends_on:
-      - backend
-
+      backend:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 30s
-
-    deploy:
-      resources:
-        limits:
-          memory: 256MB
-          cpus: '0.5'
-        reservations:
-          memory: 64MB
-          cpus: '0.1'
-
-  # ============================================================================
-  # NGINX LOAD BALANCER Y PROXY REVERSO (OPCIONAL)
-  # ============================================================================
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: consultorio-nginx
-    restart: unless-stopped
-    profiles: ["production"]
-
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/sites-available:/etc/nginx/sites-available:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./storage/nginx_logs:/var/log/nginx
-      - ./storage/nginx_cache:/var/cache/nginx
-
-    ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
-
-    networks:
-      - consultorio-network
-
-    depends_on:
-      - frontend
-      - backend
-
-    environment:
-      NGINX_WORKER_PROCESSES: auto
-      NGINX_WORKER_CONNECTIONS: 1024
-
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
       retries: 3
-      start_period: 10s
 
-    deploy:
-      resources:
-        limits:
-          memory: 128MB
-          cpus: '0.25'
-        reservations:
-          memory: 32MB
-          cpus: '0.05'
+networks:
+  app_network:
+    driver: bridge
 
-  # ============================================================================
-  # SERVICIO DE MONITOREO (OPCIONAL)
-  # ============================================================================
-  monitoring:
-    image: prom/prometheus:latest
-    container_name: consultorio-monitoring
-    restart: unless-stopped
-    profiles: ["monitoring"]
-
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./storage/prometheus_data:/prometheus
-
-    ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
-
-    networks:
-      - consultorio-network
-
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-
-    deploy:
-      resources:
-        limits:
-          memory: 512MB
-          cpus: '0.5'
-        reservations:
-          memory: 128MB
-          cpus: '0.1'
-
-# ==============================================================================
-# VOLÚMENES
-# ==============================================================================
 volumes:
   postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./storage/postgres_data
-
   redis_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./storage/redis_data
-
   backend_uploads:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./storage/uploads
-
   backend_logs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./storage/logs
-
-# ==============================================================================
-# COMANDOS ÚTILES PARA ADMINISTRACIÓN
-# ==============================================================================
-#
-# DESARROLLO:
-#   docker-compose up -d postgres redis backend frontend
-#   docker-compose logs -f backend
-#
-# PRODUCCIÓN COMPLETA:
-#   docker-compose --profile production up -d
-#   docker-compose --profile monitoring up -d
-#
-# REBUILD OPTIMIZADO:
-#   docker-compose build --no-cache --parallel
-#   docker-compose up -d --force-recreate
-#
-# MONITOREO:
-#   docker-compose logs -f --tail=100 backend
-#   docker-compose exec redis redis-cli monitor
-#   docker-compose exec postgres psql -U app_derecho_user -d app_derecho_db
-#
-# BACKUP AUTOMATIZADO:
-#   docker-compose exec postgres pg_dump -U app_derecho_user app_derecho_db | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
-#
-# RESTAURAR BACKUP:
-#   gunzip -c backup_YYYYMMDD_HHMMSS.sql.gz | docker-compose exec -T postgres psql -U app_derecho_user -d app_derecho_db
-#
-# OPTIMIZACIÓN Y LIMPIEZA:
-#   docker-compose exec postgres psql -U app_derecho_user -d app_derecho_db -f /docker-entrypoint-initdb.d/01-optimize.sql
-#   docker system prune -af --volumes
-#
-# ESCALAMIENTO:
-#   docker-compose up -d --scale backend=3 --scale frontend=2
-#
-# HEALTH CHECK:
-#   curl http://localhost:8000/health
-#   curl http://localhost:3000/health
-#   docker-compose ps
-# ==============================================================================
-
-# ==============================================================================
-# METADATA
-# ==============================================================================
-x-labels: &default-labels
-  - "org.opencontainers.image.vendor=Consultorio Jurídico UCMC"
-  - "org.opencontainers.image.title=Sistema de Gestión Consultorio Jurídico"
-  - "org.opencontainers.image.description=Sistema completo para gestión de consultas jurídicas"
-  - "org.opencontainers.image.version=${VERSION:-1.0.0}"
-  - "org.opencontainers.image.created=${BUILD_DATE}"
-  - "org.opencontainers.image.source=https://github.com/consultorio-juridico-ucmc"
-  - "org.opencontainers.image.licenses=MIT"

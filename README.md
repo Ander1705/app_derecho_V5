@@ -1,207 +1,77 @@
 # 🏛️ Sistema Consultorio Jurídico UCMC
 
-## Universidad Colegio Mayor de Cundinamarca
-**Facultad de Derecho - Consultorio Jurídico Kennedy**
+Sistema completo para gestión de consultas jurídicas de la Universidad Colegio Mayor de Cundinamarca.
 
-Sistema integral de gestión jurídica desarrollado con arquitectura moderna **Go + PostgreSQL + React** para la administración eficiente de controles operativos, usuarios y documentos jurídicos con flujo de trabajo colaborativo.
+## 🚀 Inicio Rápido
 
----
-
-## 📋 Tabla de Contenidos
-
-- [🏛️ Sistema Consultorio Jurídico UCMC](#️-sistema-consultorio-jurídico-ucmc)
-  - [Universidad Colegio Mayor de Cundinamarca](#universidad-colegio-mayor-de-cundinamarca)
-  - [📋 Tabla de Contenidos](#-tabla-de-contenidos)
-  - [✨ Características Principales](#-características-principales)
-    - [🎯 Sistema de 3 Roles Diferenciados](#-sistema-de-3-roles-diferenciados)
-    - [🔄 Flujo de Trabajo Colaborativo](#-flujo-de-trabajo-colaborativo)
-    - [📄 Generación de PDFs Profesionales](#-generación-de-pdfs-profesionales)
-    - [📊 Sistema de Estadísticas y Reportes](#-sistema-de-estadísticas-y-reportes)
-  - [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
-    - [Backend (Go)](#backend-go)
-    - [Frontend (React)](#frontend-react)
-    - [Base de Datos (PostgreSQL)](#base-de-datos-postgresql)
-  - [🚀 Instalación y Despliegue](#-instalación-y-despliegue)
-    - [Opción 1: Docker (Recomendado)](#opción-1-docker-recomendado)
-    - [Opción 2: Instalación Manual](#opción-2-instalación-manual)
-  - [🐳 Despliegue con Docker](#-despliegue-con-docker)
-    - [Desarrollo](#desarrollo)
-    - [Producción](#producción)
-  - [⚙️ Configuración](#️-configuración)
-    - [Variables de Entorno Backend](#variables-de-entorno-backend)
-    - [Variables de Entorno Frontend](#variables-de-entorno-frontend)
-  - [🌐 API Endpoints](#-api-endpoints)
-    - [Autenticación](#autenticación)
-    - [Control Operativo](#control-operativo)
-    - [Gestión de Usuarios](#gestión-de-usuarios)
-    - [Estadísticas](#estadísticas)
-  - [📁 Estructura del Proyecto](#-estructura-del-proyecto)
-  - [🔄 GitHub Actions CI/CD](#-github-actions-cicd)
-    - [Configuración de Secrets](#configuración-de-secrets)
-  - [🛠️ Desarrollo](#️-desarrollo)
-    - [Backend Go](#backend-go-1)
-    - [Frontend React](#frontend-react-1)
-  - [📝 Funcionalidades Específicas](#-funcionalidades-específicas)
-    - [PDF Formulario Jurídico](#pdf-formulario-jurídico)
-    - [Sistema de Notificaciones](#sistema-de-notificaciones)
-    - [Gestión de Archivos](#gestión-de-archivos)
-  - [🔍 Troubleshooting](#-troubleshooting)
-    - [Problemas Comunes](#problemas-comunes)
-  - [📊 Monitoreo y Performance](#-monitoreo-y-performance)
-  - [🛡️ Seguridad](#️-seguridad)
-  - [📞 Soporte](#-soporte)
-
----
-
-## ✨ Características Principales
-
-### 🎯 Sistema de 3 Roles Diferenciados
-- **👨‍🎓 Estudiante**: Creación y gestión de controles operativos
-- **👩‍🏫 Profesor**: Supervisión académica y completado de conceptos jurídicos
-- **👨‍💼 Coordinador**: Gestión completa de usuarios, asignación de estados y estadísticas
-
-### 🔄 Flujo de Trabajo Colaborativo
-1. **Estudiante** crea control operativo con datos del consultante
-2. **Sistema** notifica automáticamente al profesor asignado
-3. **Profesor** completa el concepto del asesor jurídico
-4. **Coordinador** asigna estado final y resultado del caso
-5. **Sistema** genera PDF oficial y mantiene trazabilidad completa
-
-### 📄 Generación de PDFs Profesionales
-- Formulario oficial en formato oficio (216mm × 330mm)
-- Diseño exacto según especificaciones institucionales
-- Truncación inteligente de texto para evitar desbordamiento
-- Campos dinámicos que respetan datos ingresados
-- Encabezado institucional con logo UCMC
-
-### 📊 Sistema de Estadísticas y Reportes
-- Dashboard personalizado por rol de usuario
-- Filtros avanzados por área jurídica, estado y fechas
-- Métricas de productividad académica
-- Reportes de actividad por estudiante y profesor
-
----
-
-## 🏗️ Arquitectura del Sistema
-
-### Backend (Go)
-- **Framework**: Gin HTTP Framework
-- **ORM**: GORM para PostgreSQL
-- **Autenticación**: JWT con middleware personalizado
-- **Generación PDF**: gofpdf con diseño institucional
-- **Upload de archivos**: Gestión segura con validación de tipos
-
-### Frontend (React)
-- **Framework**: React 18 con Hooks
-- **Enrutamiento**: React Router DOM
-- **Estilos**: CSS modular con diseño responsivo
-- **Estado**: Context API para gestión global
-- **Comunicación**: Axios para API calls
-
-### Base de Datos (PostgreSQL)
-- **Esquema optimizado** para consultas rápidas
-- **Índices estratégicos** en campos de búsqueda frecuente
-- **Relaciones eficientes** entre tablas de usuarios y controles
-- **Respaldos automáticos** configurables
-
----
-
-## 🚀 Instalación y Despliegue
-
-### Opción 1: Docker (Recomendado)
-
+### Configuración Inicial
 ```bash
-# Clonar repositorio
-git clone https://github.com/tu-usuario/app_derecho_V3.git
-cd app_derecho_V3
+# Configurar proyecto
+./deploy.sh setup
 
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus configuraciones
+# Iniciar servicios
+./deploy.sh start
 
-# Levantar servicios
-docker-compose up -d
-
-# Verificar servicios
-docker-compose ps
-docker-compose logs -f
+# Verificar funcionamiento
+./deploy.sh health
 ```
 
-### Opción 2: Instalación Manual
+### URLs de Acceso
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **PostgreSQL**: localhost:5433
+- **Redis**: localhost:6379
 
-**Prerrequisitos:**
-- Go 1.21+
-- Node.js 18+
-- PostgreSQL 15+
-- Git
+## 🛠️ Comandos Disponibles
 
-**Backend:**
+```bash
+./deploy.sh dev       # Entorno de desarrollo
+./deploy.sh build     # Construir imágenes
+./deploy.sh start     # Iniciar servicios
+./deploy.sh stop      # Detener servicios
+./deploy.sh restart   # Reiniciar servicios
+./deploy.sh logs      # Ver logs
+./deploy.sh status    # Estado de servicios
+./deploy.sh health    # Verificar salud
+./deploy.sh backup    # Backup de BD
+./deploy.sh clean     # Limpiar contenedores
+./deploy.sh reset     # Reset completo
+```
+
+## 📁 Estructura del Proyecto
+
+```
+├── go-backend/           # API en Go
+├── frontend/            # React + Vite
+├── deployment/          # Configuraciones
+├── data/               # Datos persistentes
+├── docker-compose.yml  # Orquestación
+├── deploy.sh          # Script principal
+└── .env              # Variables de entorno
+```
+
+## 🔧 Desarrollo
+
+### Backend (Go)
 ```bash
 cd go-backend
-go mod download
-go mod verify
-
-# Configurar variables de entorno
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_NAME=app_derecho_db
-export DB_USER=app_derecho_user
-export DB_PASSWORD=app_derecho_pass_2025
-
-# Ejecutar
 go run cmd/main.go
 ```
 
-**Frontend:**
+### Frontend (React)
 ```bash
 cd frontend
-npm install
-npm start
+npm run dev
 ```
 
-**Base de Datos:**
+### Base de Datos
 ```bash
-# Crear base de datos
-createdb app_derecho_db
+# Conectar a PostgreSQL
+docker-compose exec postgres psql -U app_derecho_user -d app_derecho_db
 
-# Conectar y crear usuario
-psql app_derecho_db
-CREATE USER app_derecho_user WITH PASSWORD 'app_derecho_pass_2025';
-GRANT ALL PRIVILEGES ON DATABASE app_derecho_db TO app_derecho_user;
-```
-
----
-
-## 🐳 Despliegue con Docker
-
-### Desarrollo
-```bash
-# Desarrollo con hot reload
-docker-compose up -d
-
-# Ver logs en tiempo real
-docker-compose logs -f backend
-docker-compose logs -f frontend
-```
-
-### Producción
-```bash
-# Despliegue con nginx
-docker-compose --profile production up -d
-
-# Build sin cache
-docker-compose build --no-cache
-docker-compose up -d --force-recreate
-```
-
-**Backup de base de datos:**
-```bash
-docker-compose exec postgres pg_dump -U app_derecho_user app_derecho_db > backup.sql
-```
-
-**Restore de base de datos:**
-```bash
-docker-compose exec -T postgres psql -U app_derecho_user -d app_derecho_db < backup.sql
+# Logs de servicios
+./deploy.sh logs backend
+./deploy.sh logs frontend
 ```
 
 ---
