@@ -53,8 +53,8 @@ services:
       ENV: production
       GIN_MODE: release
       
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_HOST: servicioucmc.online
+      DB_PORT: 5433
       DB_NAME: ${DB_NAME:-app_derecho_db}
       DB_USER: ${DB_USER:-app_derecho_user}
       DB_PASSWORD: ${DB_PASSWORD:-app_derecho_pass_2025}
