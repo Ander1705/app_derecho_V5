@@ -190,17 +190,26 @@ func (h *ControlOperativoHandler) ListarControles(c *gin.Context) {
 	case "estudiante":
 		// Los estudiantes solo ven sus propios controles
 		filters.CreatedByID = user.ID
+		filters.Activo = &[]bool{true}[0] // Asegurar que solo vean controles activos
 	case "profesor":
 		// Los profesores ven controles donde aparecen como responsables
-		// Usar filtro específico por profesor responsable
-		filters.ProfesorResponsable = user.Email
+		// Usar el nombre completo del profesor, no el email
+		nombreCompleto := fmt.Sprintf("%s %s", strings.TrimSpace(user.Nombres), strings.TrimSpace(user.Apellidos))
+		filters.ProfesorResponsable = nombreCompleto
+		filters.Activo = &[]bool{true}[0]
+		fmt.Printf("🔍 PROFESOR filtro: Buscando controles para '%s'\n", nombreCompleto)
 	case "coordinador":
-		// Los coordinadores ven todos los controles (sin filtro adicional)
+		// Los coordinadores ven todos los controles activos
+		filters.Activo = &[]bool{true}[0]
+		fmt.Printf("🔍 COORDINADOR: Ver todos los controles activos\n")
 	default:
 		c.JSON(http.StatusForbidden, gin.H{"error": "Acceso denegado"})
 		return
 	}
 
+	fmt.Printf("🔍 HANDLER - Usuario: %s (Role: %s, ID: %d)\n", user.NombreUsuario, user.Role, user.ID)
+	fmt.Printf("🔍 HANDLER - Filtros aplicados: %+v\n", filters)
+	
 	// Usar el servicio de consultas optimizado
 	result, err := h.queryService.GetControlesOperativos(pagination, filters)
 	if err != nil {
@@ -209,6 +218,7 @@ func (h *ControlOperativoHandler) ListarControles(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("✅ HANDLER - Controles encontrados: %d\n", result.TotalRecords)
 	c.JSON(http.StatusOK, result)
 }
 

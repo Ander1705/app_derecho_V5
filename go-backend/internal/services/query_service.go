@@ -203,6 +203,7 @@ func (qs *QueryService) GetCalificaciones(pagination PaginationParams, userRole 
 
 // applyControlOperativoFilters aplica filtros a la consulta de controles operativos
 func (qs *QueryService) applyControlOperativoFilters(query *gorm.DB, filters FilterParams, search string) *gorm.DB {
+	fmt.Printf("🔍 QUERY SERVICE - Aplicando filtros: %+v\n", filters)
 	// Filtro por estado de flujo
 	if filters.EstadoFlujo != "" {
 		query = query.Where("estado_flujo = ?", filters.EstadoFlujo)
@@ -226,11 +227,17 @@ func (qs *QueryService) applyControlOperativoFilters(query *gorm.DB, filters Fil
 	// Filtro por profesor responsable
 	if filters.ProfesorResponsable != "" {
 		query = query.Where("LOWER(nombre_docente_responsable) LIKE ?", "%"+strings.ToLower(filters.ProfesorResponsable)+"%")
+		fmt.Printf("🔍 Aplicando filtro profesor: '%s'\n", filters.ProfesorResponsable)
 	}
 
-	// Filtro por estado activo
+	// Filtro por estado activo (SIEMPRE filtrar por activos)
 	if filters.Activo != nil {
 		query = query.Where("activo = ?", *filters.Activo)
+		fmt.Printf("🔍 Aplicando filtro activo = %v\n", *filters.Activo)
+	} else {
+		// Por defecto, solo mostrar registros activos
+		query = query.Where("activo = true")
+		fmt.Printf("🔍 Aplicando filtro activo = true (por defecto)\n")
 	}
 
 	// Filtros de fecha
