@@ -4,226 +4,204 @@ Sistema completo para gestión de consultas jurídicas de la Universidad Colegio
 
 ## 🚀 Inicio Rápido
 
-### Configuración Inicial
+### Configuración de Producción
 ```bash
-# Configurar proyecto
-./deploy.sh setup
+# Clonar repositorio
+git clone https://github.com/tu-usuario/app_derecho_V5.git
+cd app_derecho_V5
 
-# Iniciar servicios
-./deploy.sh start
+# Configurar variables de entorno
+cp .env.production .env
+
+# Iniciar servicios en producción
+docker-compose up -d
 
 # Verificar funcionamiento
-./deploy.sh health
+curl https://servicioucmc.online/health
 ```
 
 ### URLs de Acceso
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **PostgreSQL**: localhost:5433
-- **Redis**: localhost:6379
+- **Sistema Web**: https://servicioucmc.online
+- **API Backend**: https://servicioucmc.online/api
+- **Base de Datos**: servicioucmc.online:5433
 
-## 🛠️ Comandos Disponibles
+## 👥 Usuarios del Sistema
 
-```bash
-./deploy.sh dev       # Entorno de desarrollo
-./deploy.sh build     # Construir imágenes
-./deploy.sh start     # Iniciar servicios
-./deploy.sh stop      # Detener servicios
-./deploy.sh restart   # Reiniciar servicios
-./deploy.sh logs      # Ver logs
-./deploy.sh status    # Estado de servicios
-./deploy.sh health    # Verificar salud
-./deploy.sh backup    # Backup de BD
-./deploy.sh clean     # Limpiar contenedores
-./deploy.sh reset     # Reset completo
+### Coordinador Principal
+- **Email**: consultoriojuridico.kennedy@universidadmayor.edu.co
+- **Contraseña**: Umayor2025**
+- **Permisos**: Administración completa del sistema
+
+### Roles Disponibles
+- **Coordinador**: Gestión completa, estadísticas, mantenimiento
+- **Profesor**: Revisión de casos, calificaciones de estudiantes
+- **Estudiante**: Creación de controles operativos, seguimiento
+
+## 🔧 Arquitectura del Sistema
+
+### Backend (Go + Gin)
+```
+go-backend/
+├── cmd/                 # Punto de entrada
+├── internal/
+│   ├── handlers/        # Controladores HTTP
+│   ├── models/          # Modelos de datos
+│   ├── services/        # Lógica de negocio
+│   ├── middleware/      # Middleware personalizado
+│   └── config/          # Configuración
+├── pkg/
+│   ├── auth/            # Autenticación JWT
+│   └── pdf/             # Generación de PDFs
+└── storage/             # Archivos subidos
 ```
 
-## 📁 Estructura del Proyecto
-
+### Frontend (React + Vite)
 ```
-├── go-backend/           # API en Go
-├── frontend/            # React + Vite
-├── deployment/          # Configuraciones
-├── data/               # Datos persistentes
-├── docker-compose.yml  # Orquestación
-├── deploy.sh          # Script principal
-└── .env              # Variables de entorno
-```
-
-## 🔧 Desarrollo
-
-### Backend (Go)
-```bash
-cd go-backend
-go run cmd/main.go
+frontend/
+├── public/              # Archivos estáticos
+├── src/
+│   ├── components/      # Componentes reutilizables
+│   ├── pages/           # Páginas principales
+│   ├── contexts/        # Gestión de estado
+│   └── utils/           # Utilidades
+└── dist/                # Build de producción
 ```
 
-### Frontend (React)
-```bash
-cd frontend
-npm run dev
+### Base de Datos (PostgreSQL)
+```sql
+-- Tablas principales
+users                    # Usuarios del sistema
+control_operativos       # Casos jurídicos
+calificaciones          # Evaluaciones de estudiantes
+notificaciones          # Sistema de notificaciones
+documento_adjuntos      # Archivos PDF adjuntos
 ```
-
-### Base de Datos
-```bash
-# Conectar a PostgreSQL
-docker-compose exec postgres psql -U app_derecho_user -d app_derecho_db
-
-# Logs de servicios
-./deploy.sh logs backend
-./deploy.sh logs frontend
-```
-
----
-
-## ⚙️ Configuración
-
-### Variables de Entorno Backend
-```env
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=app_derecho_db
-DB_USER=app_derecho_user
-DB_PASSWORD=app_derecho_pass_2025
-DB_SSL_MODE=disable
-
-# Server
-SERVER_PORT=8000
-ENV=production
-
-# JWT
-JWT_SECRET=consultorio-juridico-secret-key-2025
-JWT_EXPIRATION_HOURS=24
-
-# SMTP
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=upkucmc@gmail.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM=upkucmc@gmail.com
-```
-
-### Variables de Entorno Frontend
-```env
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_VERSION=1.0.0
-```
-
----
 
 ## 🌐 API Endpoints
 
 ### Autenticación
-- `POST /api/auth/login` - Login de usuarios
-- `POST /api/auth/registro/estudiante` - Registro de estudiantes
-- `POST /api/auth/registro/profesor` - Registro de profesores
-- `GET /api/auth/me` - Información del usuario actual
-
-### Control Operativo
-- `POST /api/control-operativo` - Crear control operativo
-- `GET /api/control-operativo/list` - Listar controles (con filtros)
-- `GET /api/control-operativo/:id` - Obtener control específico
-- `GET /api/control-operativo/:id/pdf` - Generar PDF del control
-- `PUT /api/control-operativo/:id/estado-resultado` - Actualizar estado
-
-### Gestión de Usuarios
-- `GET /api/coordinador/usuarios` - Listar usuarios (solo coordinador)
-- `PUT /api/usuario/:id/estado` - Cambiar estado de usuario
-- `GET /api/profesores` - Listar profesores activos
-
-### Estadísticas
-- `GET /api/coordinador/estadisticas` - Estadísticas generales
-- `GET /api/coordinador/estadisticas-completas` - Estadísticas detalladas
-
----
-
-## 📁 Estructura del Proyecto
-
-```
-app_derecho_V3/
-├── 📁 go-backend/              # Backend API en Go
-│   ├── 📁 cmd/                 # Punto de entrada
-│   ├── 📁 internal/            # Código interno
-│   │   ├── 📁 config/          # Configuración
-│   │   ├── 📁 database/        # Conexión DB
-│   │   ├── 📁 handlers/        # Controladores HTTP
-│   │   ├── 📁 middleware/      # Middleware personalizado
-│   │   ├── 📁 models/          # Modelos de datos
-│   │   └── 📁 services/        # Lógica de negocio
-│   ├── 📁 pkg/                 # Paquetes reutilizables
-│   │   ├── 📁 auth/            # Autenticación JWT
-│   │   └── 📁 pdf/             # Generación de PDFs
-│   ├── 📁 storage/             # Almacenamiento de archivos
-│   ├── 🐳 Dockerfile           # Imagen Docker backend
-│   ├── 📄 go.mod               # Dependencias Go
-│   └── 📄 main                 # Binario compilado
-├── 📁 frontend/                # Frontend React
-│   ├── 📁 public/              # Archivos públicos
-│   ├── 📁 src/                 # Código fuente React
-│   │   ├── 📁 components/      # Componentes reutilizables
-│   │   ├── 📁 contexts/        # Context API
-│   │   ├── 📁 pages/           # Páginas principales
-│   │   └── 📁 utils/           # Utilidades
-│   ├── 🐳 Dockerfile           # Imagen Docker frontend
-│   ├── 📄 nginx.conf           # Configuración Nginx
-│   └── 📄 package.json         # Dependencias Node.js
-├── 📁 .github/                 # GitHub Actions
-│   └── 📁 workflows/           # Workflows CI/CD
-├── 📁 data/                    # Volúmenes persistentes
-├── 🐳 docker-compose.yml       # Orquestación completa
-├── 📄 .dockerignore            # Exclusiones Docker
-├── 📄 .gitignore               # Exclusiones Git
-└── 📄 README.md                # Esta documentación
+```http
+POST /api/auth/login                    # Login de usuarios
+POST /api/auth/register                 # Registro de usuarios
+GET  /api/auth/me                       # Perfil del usuario
+POST /api/auth/verify-email             # Verificación de email
+POST /api/auth/forgot-password          # Recuperar contraseña
 ```
 
----
-
-## 🔄 GitHub Actions CI/CD
-
-El proyecto incluye workflows automatizados para:
-
-- ✅ **Tests automatizados** de backend y frontend
-- 🐳 **Build y push** de imágenes Docker
-- 🚀 **Despliegue automático** a VPS en cambios a `main`
-- 📢 **Notificaciones** a Slack del estado del deploy
-
-### Configuración de Secrets
-
-En GitHub Settings > Secrets and Variables > Actions:
-
-```
-VPS_HOST=tu-servidor.com
-VPS_USER=usuario-ssh
-VPS_SSH_KEY=-----BEGIN PRIVATE KEY-----...
-VPS_PORT=22
-REACT_APP_API_URL=https://api.tu-dominio.com
-SLACK_WEBHOOK_URL=https://hooks.slack.com/...
+### Control Operativo (Casos Jurídicos)
+```http
+POST /api/control-operativo             # Crear nuevo caso
+GET  /api/control-operativo/list        # Listar casos con filtros
+GET  /api/control-operativo/search      # Búsqueda avanzada
+GET  /api/control-operativo/:id         # Obtener caso específico
+GET  /api/control-operativo/:id/pdf     # Generar PDF del caso
+PUT  /api/control-operativo/:id/estado-resultado  # Actualizar estado
+POST /api/upload/temp                   # Subir archivos PDF
 ```
 
----
+### Gestión de Profesores
+```http
+GET  /api/profesores                    # Listar profesores activos
+GET  /api/profesor/controles-asignados  # Casos asignados al profesor
+PUT  /api/profesor/control-operativo/:id/concepto  # Completar concepto jurídico
+POST /api/profesor/calificaciones       # Crear calificación de estudiante
+PUT  /api/profesor/calificaciones/:id   # Actualizar calificación
+```
 
-## 🛠️ Desarrollo
+### Gestión de Coordinadores
+```http
+GET  /api/coordinador/usuarios          # Listar todos los usuarios
+PUT  /api/coordinador/usuario/:id/estado # Activar/desactivar usuario
+GET  /api/coordinador/estadisticas      # Estadísticas del sistema
+GET  /api/coordinador/controles-completos # Casos completados
+PUT  /api/coordinador/control-operativo/:id/resultado # Asignar resultado final
+```
 
-### Backend Go
+### Notificaciones
+```http
+GET  /api/notificaciones                # Listar notificaciones del usuario
+PUT  /api/notificaciones/:id/leida     # Marcar como leída
+```
+
+## 📋 Funcionalidades Principales
+
+### Sistema de Casos Jurídicos
+- **Creación de controles operativos** por estudiantes
+- **Asignación automática** a profesores especialistas
+- **Seguimiento de estados**: pendiente → en proceso → completo → con resultado
+- **Generación automática de PDFs** en formato oficial UCMC
+- **Adjuntar documentos PDF** de soporte al caso
+
+### Generación de PDFs Oficiales
+- **Formato institucional**: Hoja oficio (216mm × 330mm)
+- **Logo y encabezado** oficial UCMC
+- **6 secciones estructuradas**:
+  1. Datos del usuario y caso
+  2. Información completa del consultante
+  3. Descripción detallada del problema jurídico
+  4. Concepto académico del estudiante
+  5. Concepto profesional del asesor jurídico
+  6. Declaración y términos de uso
+- **Concatenación automática** con documentos adjuntos
+- **Caracteres especiales** correctamente procesados
+
+### Sistema de Roles y Permisos
+
+#### Estudiantes
+- Crear nuevos controles operativos
+- Cargar documentos PDF adjuntos
+- Ver sus propios casos y seguimiento
+- Establecer estado resultado final después del concepto del profesor
+- Recibir notificaciones de cambios
+
+#### Profesores
+- Ver casos asignados según su especialidad
+- Completar conceptos jurídicos profesionales
+- Calificar desempeño de estudiantes
+- Acceso a herramientas de evaluación
+- Notificaciones de nuevos casos asignados
+
+#### Coordinadores
+- Administración completa del sistema
+- Gestión de usuarios (activar/desactivar)
+- Estadísticas y reportes detallados
+- Asignación manual de resultados
+- Herramientas de mantenimiento de base de datos
+- Acceso a todas las funcionalidades del sistema
+
+### Búsquedas y Filtros Avanzados
+- **Búsqueda por ID, nombre, cédula** del consultante
+- **Filtros por área jurídica**: Civil, Penal, Laboral, Comercial, Familia, etc.
+- **Filtros por estado**: pendiente, completo, con resultado
+- **Filtros por fechas** de creación
+- **Búsqueda de texto libre** en descripción de casos
+- **Paginación optimizada** para grandes volúmenes
+
+### Sistema de Notificaciones
+- **Notificaciones en tiempo real** para cambios de estado
+- **Contadores dinámicos** de notificaciones no leídas
+- **Notificaciones por rol**:
+  - Estudiantes: Estado de sus casos, resultados
+  - Profesores: Nuevos casos asignados, recordatorios
+  - Coordinadores: Resúmenes del sistema, casos completados
+
+## 🛠️ Comandos de Desarrollo
+
+### Backend
 ```bash
 cd go-backend
 
-# Instalar dependencias
-go mod download
+# Ejecutar en desarrollo
+go run cmd/main.go
 
-# Ejecutar con hot reload (air)
-go install github.com/cosmtrek/air@latest
-air
+# Compilar para producción
+go build -o main cmd/main.go
 
 # Tests
 go test ./...
-
-# Build
-go build -o main cmd/main.go
 ```
 
-### Frontend React
+### Frontend
 ```bash
 cd frontend
 
@@ -231,143 +209,180 @@ cd frontend
 npm install
 
 # Desarrollo
-npm start
-
-# Tests
-npm test
+npm run dev
 
 # Build de producción
 npm run build
 ```
 
----
+### Docker
+```bash
+# Construir y ejecutar todo el stack
+docker-compose up -d --build
 
-## 📝 Funcionalidades Específicas
+# Ver logs
+docker-compose logs -f
 
-### PDF Formulario Jurídico
-- **Formato oficial**: Hoja oficio 216mm × 330mm
-- **Diseño institucional**: Logo y encabezado UCMC
-- **6 secciones principales**:
-  1. Datos del usuario (fecha, docente, estudiante, área)
-  2. Información del consultante (datos personales completos)
-  3. Descripción del caso (área de texto libre)
-  4. Concepto del estudiante (análisis académico)
-  5. Concepto del asesor jurídico (supervisión profesional)
-  6. Declaración del usuario (términos y condiciones)
+# Reiniciar servicios
+docker-compose restart
 
-### Sistema de Notificaciones
-- **Notificaciones en tiempo real** para cambios de estado
-- **Contadores dinámicos** de notificaciones no leídas
-- **Filtros por tipo** de notificación
-- **Marcado automático** como leídas
+# Limpiar todo
+docker-compose down -v --remove-orphans
+```
 
-### Gestión de Archivos
-- **Upload seguro** con validación de tipos de archivo
-- **Almacenamiento organizado** por control operativo
-- **Compresión automática** de imágenes
-- **Conversión a PDF** de documentos compatibles
+## 🗃️ Base de Datos
 
----
+### Configuración de Producción
+```env
+DB_HOST=servicioucmc.online
+DB_PORT=5433
+DB_NAME=app_derecho_db
+DB_USER=app_derecho_user
+DB_PASSWORD=app_derecho_pass_2025
+```
 
-## 🔍 Troubleshooting
+### Conexión Directa
+```bash
+# Conectar a base de datos de producción
+PGPASSWORD=app_derecho_pass_2025 psql -h servicioucmc.online -p 5433 -U app_derecho_user -d app_derecho_db
+
+# Verificar tablas
+\dt
+
+# Ver usuarios del sistema
+SELECT nombre_usuario, email, role FROM users;
+```
+
+### Estructura de Tablas Principales
+```sql
+-- Usuarios del sistema
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    nombre_usuario VARCHAR(100) UNIQUE,
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255),
+    role VARCHAR(50) DEFAULT 'estudiante',
+    nombres VARCHAR(100),
+    apellidos VARCHAR(100),
+    activo BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Casos jurídicos
+CREATE TABLE control_operativos (
+    id SERIAL PRIMARY KEY,
+    nombre_consultante VARCHAR(255),
+    area_consulta VARCHAR(100),
+    descripcion_caso TEXT,
+    concepto_estudiante TEXT,
+    concepto_asesor TEXT,
+    estado_flujo VARCHAR(50) DEFAULT 'pendiente_profesor',
+    estado_resultado VARCHAR(50),
+    profesor_asignado_id INTEGER REFERENCES users(id),
+    created_by_id INTEGER REFERENCES users(id),
+    activo BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## 🚀 Deploy Automático
+
+### GitHub Actions
+El sistema incluye CI/CD automatizado que:
+- **Ejecuta tests** en cada push
+- **Construye imágenes Docker** optimizadas
+- **Despliega automáticamente** a producción
+- **Verifica salud** del sistema post-deploy
+
+### Configuración de Secrets
+```env
+VPS_HOST=servicioucmc.online
+VPS_USER=root
+SSH_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----...
+VITE_API_URL=https://servicioucmc.online/api
+```
+
+## 🔒 Seguridad
+
+### Medidas Implementadas
+- **Autenticación JWT** con tokens seguros
+- **Encriptación bcrypt** para contraseñas
+- **Validación de entrada** en todos los endpoints
+- **CORS configurado** para dominios autorizados
+- **Rate limiting** en endpoints sensibles
+- **Validación de archivos** PDF subidos
+- **Prevención SQL injection** con ORM GORM
+- **Headers de seguridad** implementados
+
+### Variables de Entorno Sensibles
+```env
+JWT_SECRET_KEY=super_secret_jwt_key_2025_consultorio_ucmc
+SMTP_PASSWORD=contraseña_aplicación_gmail
+DB_PASSWORD=app_derecho_pass_2025
+REDIS_PASSWORD=redis_pass_2025
+```
+
+## 📊 Monitoreo
+
+### Health Checks
+- **Backend**: https://servicioucmc.online/health
+- **Base de datos**: Verificación automática de conexión
+- **Redis**: Cache de sesiones y notificaciones
+
+### Métricas Disponibles
+- Tiempo de respuesta de APIs
+- Cantidad de usuarios activos
+- Casos creados por día/mes
+- Rendimiento de generación de PDFs
+- Uso de almacenamiento de archivos
+
+## 🐛 Troubleshooting
 
 ### Problemas Comunes
 
 **Error de conexión a base de datos:**
 ```bash
-# Verificar PostgreSQL activo
-sudo systemctl status postgresql
-sudo systemctl start postgresql
-
-# Verificar credenciales
-psql -U app_derecho_user -d app_derecho_db -h localhost
+# Verificar conexión
+PGPASSWORD=app_derecho_pass_2025 psql -h servicioucmc.online -p 5433 -U app_derecho_user -d app_derecho_db -c "SELECT current_database();"
 ```
 
-**Error de puertos ocupados:**
+**Error de autenticación:**
 ```bash
-# Verificar puertos en uso
-netstat -tulpn | grep :8000
-netstat -tulpn | grep :3000
-
-# Liberar puertos
-sudo fuser -k 8000/tcp
-sudo fuser -k 3000/tcp
+# Verificar hash de contraseña del coordinador
+SELECT email, substring(password_hash, 1, 20) FROM users WHERE role = 'coordinador';
 ```
 
-**Problemas con Docker:**
+**Problemas con PDFs:**
 ```bash
-# Limpiar contenedores
-docker-compose down -v --remove-orphans
-docker system prune -a
-
-# Rebuild completo
-docker-compose build --no-cache
-docker-compose up -d --force-recreate
-```
-
-**Error de permisos en archivos:**
-```bash
-# Ajustar permisos de storage
-sudo chown -R $USER:$USER go-backend/storage/
+# Verificar permisos de directorios
+ls -la go-backend/storage/
 chmod -R 755 go-backend/storage/
 ```
 
----
-
-## 📊 Monitoreo y Performance
-
-**Health Checks:**
-- Backend: `http://localhost:8000/health`
-- Frontend: `http://localhost:3000/health`
-
-**Métricas disponibles:**
-- Tiempo de respuesta de API
-- Uso de memoria y CPU
-- Conexiones activas a base de datos
-- Tamaño de archivos subidos
-
-**Logs centralizados:**
+**Docker no funciona:**
 ```bash
-# Ver todos los logs
-docker-compose logs -f
-
-# Logs específicos por servicio
-docker-compose logs -f backend
-docker-compose logs -f postgres
+# Limpiar y reconstruir
+docker-compose down -v
+docker system prune -a
+docker-compose up -d --build
 ```
 
----
-
-## 🛡️ Seguridad
-
-- ✅ **Autenticación JWT** con tokens seguros
-- ✅ **Validación de entrada** en todos los endpoints
-- ✅ **CORS configurado** correctamente
-- ✅ **Headers de seguridad** implementados
-- ✅ **Rate limiting** en endpoints sensibles
-- ✅ **Encriptación de contraseñas** con bcrypt
-- ✅ **Validación de archivos** subidos
-- ✅ **SQL injection** prevención con ORM
-
----
-
-## 📞 Soporte
+## 📞 Soporte Técnico
 
 **Universidad Colegio Mayor de Cundinamarca**  
 Facultad de Derecho - Consultorio Jurídico Kennedy
 
-**Contacto Técnico:**
-- 📧 Email: consultoriojuridico.kennedy@unicolmayor.edu.co
-- 📱 Teléfono: (+57) 1 123-4567
-- 🏢 Dirección: Calle 6C No. 94I – 25 Edificio Nuevo Piso 4 – UPK, Bogotá D.C.
+**Contacto:**
+- 📧 **Email**: consultoriojuridico.kennedy@universidadmayor.edu.co
+- 📱 **Teléfono**: (+57) 1 123-4567  
+- 🏢 **Dirección**: Calle 6C No. 94I – 25 Edificio Nuevo Piso 4 – UPK, Bogotá D.C.
 
-**Documentación adicional:**
-- [Manual de Usuario](docs/manual-usuario.pdf)
-- [Guía de Administrador](docs/guia-administrador.pdf)
-- [API Documentation](docs/api-docs.md)
+**URLs del Sistema:**
+- **Aplicación Web**: https://servicioucmc.online
+- **API**: https://servicioucmc.online/api
+- **Estado del Sistema**: https://servicioucmc.online/health
 
 ---
 
-**Sistema desarrollado con ❤️ para la Universidad Colegio Mayor de Cundinamarca**
-
-*Optimizado para el manejo eficiente de consultorios jurídicos universitarios con alta demanda de casos y múltiples usuarios simultáneos.*
+**Sistema desarrollado para la Universidad Colegio Mayor de Cundinamarca**  
+*Optimizado para el manejo eficiente de consultorios jurídicos universitarios*
