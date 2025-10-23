@@ -77,11 +77,11 @@ const (
 	// Conversión px a mm según CLAUDE.md (1px = 0.264583mm a 96 DPI)
 	PX_TO_MM = 0.264583
 	
-	// Alturas ampliadas según solicitud usuario para mejor uso del formato oficio
+	// Alturas AJUSTADAS para formato CARTA (279.4mm vs 330mm OFICIO)
 	ALTURA_HEADER_22PX = 22.0 * PX_TO_MM  // 22px → mm
 	ALTURA_CELDA_20PX  = 20.0 * PX_TO_MM  // 20px → mm 
-	ALTURA_DESCRIPCION = 250.0 * PX_TO_MM // 250px → mm para BREVE DESCRIPCIÓN (ampliado para más texto)
-	ALTURA_CONCEPTOS   = 180.0 * PX_TO_MM // 180px → mm para CONCEPTOS (ampliado para más texto)
+	ALTURA_DESCRIPCION = 135.0 * PX_TO_MM // 135px → mm para BREVE DESCRIPCIÓN (reducido para carta)
+	ALTURA_CONCEPTOS   = 105.0 * PX_TO_MM // 105px → mm para CONCEPTOS (reducido para carta)
 	
 	// Fuentes según especificaciones EXACTAS CLAUDE.md
 	FUENTE_TITULO_13PT    = 13  // Arial Bold 13pt
@@ -179,17 +179,22 @@ func (g *PDFGenerator) generarEncabezadoExacto(pdf *gofpdf.Fpdf) {
 	logoX := MARGEN_IZQUIERDO + (ANCHO_UTIL / 2.0) - (logoAncho / 2.0)  // Centrado en página carta
 	logoY := pdf.GetY()
 	
-	// CARGAR LOGO con múltiples rutas de fallback
+	// CARGAR LOGO con múltiples rutas y mejor manejo
 	logoPaths := []string{
+		"./assets/images/escudo.png",
 		"assets/images/escudo.png",
+		"./go-backend/assets/images/escudo.png",
 		"go-backend/assets/images/escudo.png",
+		"./frontend/public/escudo.png",
 		"frontend/public/escudo.png",
-		"../frontend/public/escudo.png",
+		"/app/assets/images/escudo.png",      // Ruta Docker
+		"/app/go-backend/assets/images/escudo.png", // Ruta Docker alternativa
 	}
 	
 	logoLoaded := false
 	for _, logoPath := range logoPaths {
 		if _, err := os.Stat(logoPath); err == nil {
+			fmt.Printf("🖼️ Logo encontrado en: %s\n", logoPath)
 			pdf.ImageOptions(logoPath, logoX, logoY, logoAncho, logoAlto, false, gofpdf.ImageOptions{
 				ImageType: "PNG",
 				ReadDpi:   true,
@@ -200,7 +205,8 @@ func (g *PDFGenerator) generarEncabezadoExacto(pdf *gofpdf.Fpdf) {
 	}
 	
 	if !logoLoaded {
-		// Dibujar logo fallback centrado
+		fmt.Printf("⚠️ Logo no encontrado, usando fallback\n")
+		// Dibujar logo fallback
 		g.dibujarLogoFallback(pdf, logoX, logoY, logoAncho, logoAlto)
 	}
 	
@@ -248,40 +254,44 @@ func (g *PDFGenerator) generarEncabezadoExacto(pdf *gofpdf.Fpdf) {
 	pdf.Ln(12 * PX_TO_MM)
 }
 
-// dibujarLogoFallback - Logo fallback ALARGADO (menos aplastado)
+// dibujarLogoFallback - Logo fallback mejorado para UCMC
 func (g *PDFGenerator) dibujarLogoFallback(pdf *gofpdf.Fpdf, x, y, ancho, alto float64) {
-	// Fondo del escudo - ALARGADO para que no se vea aplastado
-	pdf.SetFillColor(240, 240, 240) // Gris claro
+	// Escudo universitario más profesional
+	pdf.SetFillColor(0, 51, 102)    // Azul universitario
 	pdf.SetDrawColor(0, 0, 0)       // Borde negro
-	pdf.SetLineWidth(0.5)
+	pdf.SetLineWidth(0.8)
 	
-	// Forma de escudo ALARGADO (más alto que ancho para verse mejor)
+	// Forma de escudo clásico universitario
 	pdf.Polygon([]gofpdf.PointType{
 		{X: x + ancho/2, Y: y},                // Punta superior
-		{X: x + ancho*0.80, Y: y + alto*0.15}, // Derecha superior (más estrecho)
-		{X: x + ancho*0.80, Y: y + alto*0.75}, // Derecha inferior
-		{X: x + ancho/2, Y: y + alto},         // Punta inferior
-		{X: x + ancho*0.20, Y: y + alto*0.75}, // Izquierda inferior
-		{X: x + ancho*0.20, Y: y + alto*0.15}, // Izquierda superior (más estrecho)
+		{X: x + ancho*0.85, Y: y + alto*0.12}, // Derecha superior
+		{X: x + ancho*0.85, Y: y + alto*0.65}, // Derecha media
+		{X: x + ancho/2, Y: y + alto*0.95},    // Punta inferior
+		{X: x + ancho*0.15, Y: y + alto*0.65}, // Izquierda media
+		{X: x + ancho*0.15, Y: y + alto*0.12}, // Izquierda superior
 	}, "FD")
 	
-	// Cruz universitaria en el centro (ajustada para escudo alargado)
-	pdf.SetFillColor(50, 50, 50)
-	crossW := ancho * 0.12  // Más estrecho para escudo alargado
-	crossH := alto * 0.45   // Más alto para escudo alargado
+	// Cruz dorada en el centro
+	pdf.SetFillColor(255, 215, 0)    // Dorado
+	crossW := ancho * 0.08
+	crossH := alto * 0.35
 	centerX := x + ancho/2
-	centerY := y + alto*0.45 // Centrada en el escudo alargado
+	centerY := y + alto*0.40
 	
 	// Cruz vertical
 	pdf.Rect(centerX - crossW/2, centerY - crossH/2, crossW, crossH, "F")
 	// Cruz horizontal  
 	pdf.Rect(centerX - crossH/2, centerY - crossW/2, crossH, crossW, "F")
 	
-	// Texto "UCMC" - ajustado para escudo alargado
-	pdf.SetXY(x, y + alto*0.85)
-	pdf.SetFont("Arial", "B", 6)
-	pdf.SetTextColor(50, 50, 50)
-	pdf.CellFormat(ancho, 4, "UCMC", "", 0, "C", false, 0, "")
+	// Banda inferior con texto
+	pdf.SetFillColor(255, 255, 255)  // Blanco
+	pdf.Rect(x + ancho*0.15, y + alto*0.75, ancho*0.70, alto*0.15, "F")
+	
+	// Texto "UCMC" 
+	pdf.SetXY(x, y + alto*0.80)
+	pdf.SetFont("Arial", "B", 7)
+	pdf.SetTextColor(0, 51, 102)  // Azul universitario
+	pdf.CellFormat(ancho, 3, "UCMC", "", 0, "C", false, 0, "")
 	pdf.SetTextColor(0, 0, 0) // Restaurar color negro
 }
 
@@ -511,26 +521,28 @@ func (g *PDFGenerator) generarSeccionIII_Exacta(pdf *gofpdf.Fpdf, control *model
 	
 	y := pdf.GetY()
 	
-	// ÁREA UNIFORME HARDCODEADA - Mismo tamaño que secciones IV y V
+	// ÁREA OPTIMIZADA para formato CARTA - Sección III
+	alturaSeccionIII := ALTURA_DESCRIPCION  // Usar constante definida
 	pdf.SetLineWidth(0.75)
-	pdf.Rect(MARGEN_IZQUIERDO, y, ANCHO_UTIL, 35.0, "D")  // 35mm ajustado para carta
+	pdf.Rect(MARGEN_IZQUIERDO, y, ANCHO_UTIL, alturaSeccionIII, "D")
 	
-	// Escribir texto con padding interno - ÁREA AMPLIADA para más contenido
+	// Escribir texto con padding interno
 	if descripcionProcesada != "" {
 		pdf.SetXY(MARGEN_IZQUIERDO+3, y+3)
 		lines := g.splitTextForWidth(descripcionProcesada, 85)
 		
-		// Mostrar MÁS líneas - área ampliada HARDCODEADA
+		// Ajustar número de líneas según altura disponible
+		maxLines := int((alturaSeccionIII - 6) / 4)  // 4mm por línea, 6mm padding
 		for i, line := range lines {
-			if i < 15 && float64(i*4) < 60 {  // HARDCODEADO: hasta 15 líneas
+			if i < maxLines {
 				pdf.SetXY(MARGEN_IZQUIERDO+3, y+3+float64(i*4))
 				pdf.Cell(ANCHO_UTIL-6, 4, line)
 			}
 		}
 	}
 	
-	// Posicionar para siguiente sección - HARDCODEADO
-	pdf.SetXY(MARGEN_IZQUIERDO, y+35.0)  // Después del área ajustada
+	// Posicionar para siguiente sección
+	pdf.SetXY(MARGEN_IZQUIERDO, y+alturaSeccionIII)
 	// Espaciado 8px según CLAUDE.md
 	pdf.Ln(8 * PX_TO_MM)
 }
@@ -555,26 +567,29 @@ func (g *PDFGenerator) generarSeccionIV_Exacta(pdf *gofpdf.Fpdf, control *models
 	
 	y := pdf.GetY()
 	
-	// RECUADRO OPTIMIZADO HARDCODEADO - Sección IV reducida para mejor ajuste
+	// RECUADRO OPTIMIZADO para formato CARTA - Sección IV
+	alturaSeccionIV := ALTURA_CONCEPTOS  // Usar constante definida
 	pdf.SetLineWidth(0.75)
-	pdf.Rect(MARGEN_IZQUIERDO, y, ANCHO_UTIL, 32.0, "D")  // 32mm para carta
+	pdf.Rect(MARGEN_IZQUIERDO, y, ANCHO_UTIL, alturaSeccionIV, "D")
 	
-	// Escribir texto del concepto - ÁREA AMPLIADA para más contenido
+	// Escribir texto del concepto
 	if conceptoProcesado != "" {
 		pdf.SetXY(MARGEN_IZQUIERDO+3, y+3)
 		lines := g.splitTextForWidth(conceptoProcesado, 85)
-		// Mostrar MÁS líneas - área ampliada HARDCODEADA - Sección IV
+		
+		// Ajustar número de líneas según altura disponible (reservar espacio para firma)
+		maxLines := int((alturaSeccionIV - 16) / 4)  // 16mm reservados para firma
 		for i, line := range lines {
-			if i < 10 && float64(i*4) < 40 {  // HARDCODEADO: hasta 10 líneas
+			if i < maxLines {
 				pdf.SetXY(MARGEN_IZQUIERDO+3, y+3+float64(i*4))
 				pdf.Cell(ANCHO_UTIL-6, 4, line)
 			}
 		}
 	}
 	
-	// "Firma Estudiante:" ALINEADO A LA DERECHA - HARDCODEADO
+	// "Firma Estudiante:" ALINEADO A LA DERECHA
 	firmaX := MARGEN_IZQUIERDO + ANCHO_UTIL - 35  // 35mm desde el borde derecho
-	firmaY := y + 32.0 - 6       // 6mm desde abajo del área ajustada
+	firmaY := y + alturaSeccionIV - 6       // 6mm desde abajo del área
 	
 	pdf.SetXY(firmaX, firmaY-3)
 	pdf.Cell(30, 3, ProcesarTextoUTF8("Firma Estudiante:"))
@@ -583,8 +598,8 @@ func (g *PDFGenerator) generarSeccionIV_Exacta(pdf *gofpdf.Fpdf, control *models
 	pdf.SetXY(firmaX, firmaY)
 	pdf.Cell(30, 3, "________________")
 	
-	// Mover cursor después del recuadro - HARDCODEADO
-	pdf.SetXY(MARGEN_IZQUIERDO, y+32.0)  // Después del área ajustada
+	// Mover cursor después del recuadro
+	pdf.SetXY(MARGEN_IZQUIERDO, y+alturaSeccionIV)
 	// Espaciado 8px según CLAUDE.md
 	pdf.Ln(8 * PX_TO_MM)
 }
@@ -609,26 +624,29 @@ func (g *PDFGenerator) generarSeccionV_Exacta(pdf *gofpdf.Fpdf, control *models.
 	
 	y := pdf.GetY()
 	
-	// RECUADRO OPTIMIZADO HARDCODEADO - Sección V reducida para mejor ajuste
+	// RECUADRO OPTIMIZADO para formato CARTA - Sección V (FINAL DE PÁGINA 1)
+	alturaSeccionV := ALTURA_CONCEPTOS  // Usar constante definida
 	pdf.SetLineWidth(0.75)
-	pdf.Rect(MARGEN_IZQUIERDO, y, ANCHO_UTIL, 32.0, "D")  // 32mm para carta
+	pdf.Rect(MARGEN_IZQUIERDO, y, ANCHO_UTIL, alturaSeccionV, "D")
 	
-	// Escribir texto del concepto - ÁREA AMPLIADA para más contenido
+	// Escribir texto del concepto
 	if conceptoProcesado != "" {
 		pdf.SetXY(MARGEN_IZQUIERDO+3, y+3)
 		lines := g.splitTextForWidth(conceptoProcesado, 85)
-		// Mostrar MÁS líneas - área ampliada HARDCODEADA - Sección V
+		
+		// Ajustar número de líneas según altura disponible (reservar espacio para firma)
+		maxLines := int((alturaSeccionV - 16) / 4)  // 16mm reservados para firma
 		for i, line := range lines {
-			if i < 10 && float64(i*4) < 40 {  // HARDCODEADO: hasta 10 líneas
+			if i < maxLines {
 				pdf.SetXY(MARGEN_IZQUIERDO+3, y+3+float64(i*4))
 				pdf.Cell(ANCHO_UTIL-6, 4, line)
 			}
 		}
 	}
 	
-	// "Firma Asesor:" ALINEADO A LA DERECHA - HARDCODEADO
+	// "Firma Asesor:" ALINEADO A LA DERECHA - CORREGIDO para no cortarse
 	firmaX := MARGEN_IZQUIERDO + ANCHO_UTIL - 30  // 30mm desde el borde derecho
-	firmaY := y + 32.0 - 6       // 6mm desde abajo del área ajustada
+	firmaY := y + alturaSeccionV - 6       // 6mm desde abajo del área
 	
 	pdf.SetXY(firmaX, firmaY-3)
 	pdf.Cell(25, 3, ProcesarTextoUTF8("Firma Asesor:"))
@@ -637,8 +655,7 @@ func (g *PDFGenerator) generarSeccionV_Exacta(pdf *gofpdf.Fpdf, control *models.
 	pdf.SetXY(firmaX, firmaY)
 	pdf.Cell(25, 3, "________________")
 	
-	// Mover cursor después del recuadro - FINAL DE PÁGINA 1 - HARDCODEADO
-	pdf.SetXY(MARGEN_IZQUIERDO, y+32.0)  // Después del área ajustada
+	// FINAL DE PÁGINA 1 - cursor al final del área
 }
 
 // generarSeccionVI_Exacta - PÁGINA 2 SECCIÓN VI EXACTA según CLAUDE.md
