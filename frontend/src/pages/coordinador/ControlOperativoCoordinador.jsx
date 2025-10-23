@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
-import axios from 'axios'
-import API_BASE_URL from '../../config/api'
+import { api } from '../../config/api'
 import { 
   PencilSquareIcon, 
   ArrowDownTrayIcon,
@@ -66,13 +65,6 @@ const ControlOperativoCoordinador = () => {
   }, []) // Solo ejecutar una vez al montar
 
   // Ya no necesitamos useEffect para búsqueda - se maneja directamente en onChange
-
-  // Aplicar filtros automáticamente cuando cambien los filtros locales
-  useEffect(() => {
-    if (controles.length > 0 && !searchMode) {
-      aplicarFiltros()
-    }
-  }, [filtros.mes, filtros.ano, filtros.area, controles, searchMode, aplicarFiltros])
 
   const meses = [
     { value: '1', label: 'Enero' },
@@ -158,6 +150,13 @@ const ControlOperativoCoordinador = () => {
     setControlesFiltrados(controlesParaFiltrar)
   }, [controles, filtros.area, filtros.mes, filtros.ano])
 
+  // Aplicar filtros automáticamente cuando cambien los filtros locales
+  useEffect(() => {
+    if (controles.length > 0 && !searchMode) {
+      aplicarFiltros()
+    }
+  }, [filtros.mes, filtros.ano, filtros.area, controles, searchMode, aplicarFiltros])
+
   const limpiarFiltros = () => {
     console.log('🧹 Limpiando filtros...')
     setFiltros({
@@ -174,17 +173,14 @@ const ControlOperativoCoordinador = () => {
   const cargarControlesCompletos = async (estadoFiltro = null) => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
       
       // Construir URL con parámetros de filtro
-      let url = '/api/coordinador/controles-completos'
+      let url = '/coordinador/controles-completos'
       if (estadoFiltro === 'pendiente') {
         url += '?estado=pendiente'
       }
       
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const response = await api.get(url)
       
       // Ordenar por fecha de creación descendente (más recientes primero)
       const controlesOrdenados = (response.data || [])
@@ -230,10 +226,9 @@ const ControlOperativoCoordinador = () => {
   // Función para buscar en tiempo real
   const ejecutarBusquedaTiempoReal = async (busqueda) => {
     try {
-      const token = localStorage.getItem('token')
-      console.log('🔑 Token:', token ? 'Presente' : 'NO encontrado')
+      console.log('🔍 Iniciando búsqueda en tiempo real:', busqueda)
       
-      let url = '/api/control-operativo/search?'
+      let url = '/control-operativo/search?'
       const params = new URLSearchParams()
       
       if (/^\d+$/.test(busqueda)) {
@@ -249,9 +244,7 @@ const ControlOperativoCoordinador = () => {
       url += params.toString()
       console.log('🔍 URL de búsqueda completa:', url)
       
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const response = await api.get(url)
       
       console.log('📡 Respuesta completa:', response.data)
       const resultados = response.data.controles || []
@@ -324,12 +317,10 @@ const ControlOperativoCoordinador = () => {
 
     try {
       setAsignandoResultado(true)
-      const token = localStorage.getItem('token')
       
-      const response = await axios.put(
-        `/api/coordinador/control-operativo/${selectedControl.id}/resultado`,
-        { estado_resultado: estadoResultado },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.put(
+        `/coordinador/control-operativo/${selectedControl.id}/resultado`,
+        { estado_resultado: estadoResultado }
       )
 
 
@@ -376,11 +367,9 @@ const ControlOperativoCoordinador = () => {
 
   const descargarPDF = async (control) => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await axios.get(
-        `/api/control-operativo/${control.id}/pdf`,
+      const response = await api.get(
+        `/control-operativo/${control.id}/pdf`,
         { 
-          headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'
         }
       )

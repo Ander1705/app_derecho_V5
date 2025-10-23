@@ -22,7 +22,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     -o main cmd/main.go
 
 # Stage de producción
-FROM alpine:latest
+FROM alpine:latest AS runtime
 
 # Instalar dependencias mínimas
 RUN apk --no-cache add ca-certificates tzdata curl

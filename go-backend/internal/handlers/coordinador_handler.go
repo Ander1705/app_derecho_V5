@@ -38,11 +38,27 @@ func (h *CoordinadorHandler) ListarUsuarios(c *gin.Context) {
 	}
 
 	var usuarios []models.User
+	
+	// DEBUG: Primero contar todos los usuarios
+	var totalUsers int64
+	h.db.Model(&models.User{}).Count(&totalUsers)
+	fmt.Printf("🔍 DEBUG: Total usuarios en BD: %d\n", totalUsers)
+	
+	// DEBUG: Contar solo estudiantes y profesores
+	var estudiantesProfs int64
+	h.db.Model(&models.User{}).Where("role IN ('estudiante', 'profesor')").Count(&estudiantesProfs)
+	fmt.Printf("🔍 DEBUG: Estudiantes+Profesores en BD: %d\n", estudiantesProfs)
+	
 	result := h.db.Where("role IN ('estudiante', 'profesor') AND activo = true").
 		Order("created_at DESC").
 		Find(&usuarios)
 	
 	fmt.Printf("🔍 COORDINADOR: Listando usuarios activos, encontrados: %d\n", len(usuarios))
+	
+	// DEBUG: Mostrar IDs encontrados
+	for i, u := range usuarios {
+		fmt.Printf("🔍 DEBUG Usuario %d: ID=%d, email=%s, role=%s\n", i+1, u.ID, u.Email, u.Role)
+	}
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener usuarios"})
@@ -231,11 +247,11 @@ func (h *CoordinadorHandler) ObtenerEstadisticas(c *gin.Context) {
 		TotalControles        int64 `json:"total_controles"`
 	}
 
-	// Contar estudiantes registrados
-	h.db.Model(&models.User{}).Where("role = 'estudiante'").Count(&estadisticas.EstudiantesRegistrados)
+	// Contar estudiantes registrados (SOLO ACTIVOS)
+	h.db.Model(&models.User{}).Where("role = 'estudiante' AND activo = true").Count(&estadisticas.EstudiantesRegistrados)
 	
-	// Contar profesores registrados  
-	h.db.Model(&models.User{}).Where("role = 'profesor'").Count(&estadisticas.ProfesoresRegistrados)
+	// Contar profesores registrados (SOLO ACTIVOS)
+	h.db.Model(&models.User{}).Where("role = 'profesor' AND activo = true").Count(&estadisticas.ProfesoresRegistrados)
 	
 	// Contar controles pendientes (completos pero sin resultado)
 	h.db.Model(&models.ControlOperativo{}).

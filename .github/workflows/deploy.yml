@@ -60,23 +60,42 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            echo "🔄 Iniciando deploy..."
-            cd ~/app_derecho_V5
+            echo "🔄 Iniciando deploy a producción..."
+            cd /var/www/app_derecho
 
             echo "📥 Pulling latest changes..."
             git pull origin main
+
+            echo "📋 Copiando configuración de producción..."
+            if [ ! -f .env ]; then
+              cp .env.production .env
+            fi
 
             echo "🛑 Stopping containers..."
             docker-compose down
 
             echo "🏗️ Building containers..."
-            docker-compose build --no-cache frontend backend
+            docker-compose build --no-cache
 
             echo "🚀 Starting containers..."
             docker-compose up -d
 
+            echo "⏳ Esperando servicios..."
+            sleep 30
+
+            echo "🏥 Verificando salud..."
+            docker-compose ps
+            
+            echo "🧪 Testing API..."
+            if curl -f http://localhost:8001/health; then
+              echo "✅ API funcionando en puerto 8001"
+            else
+              echo "❌ Error en API"
+              exit 1
+            fi
+
             echo "🧹 Cleaning up..."
             docker system prune -f
 
-            echo "✅ Deploy completado!"
-            docker ps | grep consultorio
+            echo "✅ Deploy completado exitosamente!"
+            echo "🌐 Servicio disponible en: https://servicioucmc.online"

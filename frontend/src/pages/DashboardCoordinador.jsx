@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
-import API_BASE_URL from '../config/api'
+import { api } from '../config/api'
 import { 
   UserGroupIcon,
   ClipboardDocumentListIcon,
@@ -56,21 +55,15 @@ const DashboardCoordinador = () => {
       setLoading(true)
       console.log('🔄 Cargando datos REALES del dashboard coordinador...')
       
-      const token = localStorage.getItem('token')
-      
-      // 🎯 CARGAR ESTADÍSTICAS REALES DEL ENDPOINT ESPECÍFICO
+      // 🎯 CARGAR ESTADÍSTICAS REALES DEL ENDPOINT ESPECÍFICO (usando api configurada)
       
       // 1. Obtener estadísticas del coordinador (incluye todas las métricas)
-      const estadisticasResponse = await axios.get('/api/coordinador/estadisticas', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const estadisticasResponse = await api.get('/coordinador/estadisticas')
       const estadisticas = estadisticasResponse.data || {}
       console.log('📊 Estadísticas recibidas del backend:', estadisticas)
       
       // 2. Obtener controles para actividad reciente y áreas de consulta
-      const controlesResponse = await axios.get('/api/coordinador/controles-completos', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const controlesResponse = await api.get('/coordinador/controles-completos')
       const controles = controlesResponse.data || []
       console.log('📋 Controles recibidos del backend:', controles.length, 'controles')
       

@@ -58,6 +58,7 @@ func main() {
 	coordinadorHandler := handlers.NewCoordinadorHandler(db, notificationService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	calificacionHandler := handlers.NewCalificacionHandler(db, notificationService)
+	maintenanceHandler := handlers.NewMaintenanceHandler(db)
 
 	// Obtener configuraciones de optimización
 	optConfig := config.GetOptimizedConfig()
@@ -179,6 +180,11 @@ func main() {
 			coordinadorRoutes.GET("/estadisticas-completas", coordinadorHandler.ObtenerEstadisticasCompletas)
 			coordinadorRoutes.POST("/calificaciones", calificacionHandler.CrearCalificacion)
 			coordinadorRoutes.PUT("/calificaciones/:id", calificacionHandler.ActualizarCalificacion)
+			
+			// Rutas de mantenimiento (solo coordinadores)
+			coordinadorRoutes.GET("/maintenance/status", maintenanceHandler.VerificarEstadoBaseDatos)
+			coordinadorRoutes.POST("/maintenance/clean-db", maintenanceHandler.LimpiarBaseDatos)
+			coordinadorRoutes.POST("/maintenance/clean-all", maintenanceHandler.LimpiarBaseDatosCompleta)
 		}
 
 		// Rutas de profesores para dropdown (accesible por estudiantes)

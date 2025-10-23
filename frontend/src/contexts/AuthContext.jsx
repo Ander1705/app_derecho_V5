@@ -288,18 +288,11 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = useCallback(async (email, password) => {
-    console.log('🚨 INICIANDO LOGIN - LIMPIEZA COMPLETA PREVIA');
+    console.log('🚨 INICIANDO LOGIN - Limpieza selectiva');
     
-    // LIMPIEZA TOTAL antes de nuevo login
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key) keysToRemove.push(key);
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    
-    // Limpiar sessionStorage
-    sessionStorage.clear();
+    // LIMPIEZA SELECTIVA solo de datos de autenticación
+    const authKeys = ['token', 'auth_token', 'user', 'sessionData', 'userRole', 'userId', 'refreshToken', 'lastActivity'];
+    authKeys.forEach(key => localStorage.removeItem(key));
     
     dispatch({ type: 'LOGIN_START' })
     
@@ -383,34 +376,14 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const logout = useCallback(() => {
-    console.log('🚪 LOGOUT: Limpiando toda la sesión...');
+    console.log('🚪 LOGOUT: Limpiando sesión de usuario');
     
-    // 1. LIMPIAR TODO el localStorage (no solo las keys específicas)
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      // Guardar todas las keys que contengan datos de la app
-      if (key && (
-        key.includes('token') || 
-        key.includes('user') || 
-        key.includes('session') ||
-        key.includes('role') ||
-        key.includes('auth')
-      )) {
-        keysToRemove.push(key);
-      }
-    }
-    
-    // Eliminar todas las keys encontradas
-    keysToRemove.forEach(key => {
-      localStorage.removeItem(key);
-    });
-    
-    // 2. Limpiar específicamente las keys conocidas
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('sessionData');
-    localStorage.removeItem('lastActivity');
+    // LIMPIEZA SELECTIVA solo de datos de autenticación
+    const authKeys = [
+      'token', 'auth_token', 'user', 'sessionData', 'userRole', 
+      'userId', 'refreshToken', 'lastActivity', 'current_session'
+    ];
+    authKeys.forEach(key => localStorage.removeItem(key));
     
     // 3. Limpiar sessionStorage también
     sessionStorage.clear();

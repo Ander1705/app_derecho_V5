@@ -120,14 +120,14 @@ func (s *AuthService) RegistrarEstudiante(req models.RegistroEstudianteRequest) 
 		return nil, errors.New("código estudiantil inválido")
 	}
 
-	// Crear usuario (no verificado inicialmente)
+	// Crear usuario (verificado automáticamente para pruebas)
 	user := models.User{
 		NombreUsuario:   req.NombreUsuario,
 		Email:           req.Email,
 		PasswordHash:    hashedPassword,
 		Role:            "estudiante",
 		Activo:          true,
-		EmailVerified:   false,
+		EmailVerified:   false, // HABILITADO: Verificación por correo electrónico
 		TipoDocumento:   req.TipoDocumento,
 		NumeroDocumento: req.NumeroDocumento,
 		Nombres:         req.Nombres,
@@ -188,14 +188,14 @@ func (s *AuthService) RegistrarProfesor(req models.RegistroProfesorRequest) (*mo
 		return nil, errors.New("error procesando contraseña")
 	}
 
-	// Crear usuario (no verificado inicialmente)
+	// Crear usuario (verificado automáticamente para pruebas)
 	user := models.User{
 		NombreUsuario:   req.NombreUsuario,
 		Email:           req.Email,
 		PasswordHash:    hashedPassword,
 		Role:            "profesor",
 		Activo:          true,
-		EmailVerified:   false,
+		EmailVerified:   false, // HABILITADO: Verificación por correo electrónico
 		TipoDocumento:   req.TipoDocumento,
 		NumeroDocumento: req.NumeroDocumento,
 		Nombres:         req.Nombres,

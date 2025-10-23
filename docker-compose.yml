@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database - PRODUCCIÓN PUERTO 5433
   postgres:
     image: postgres:16-alpine
     container_name: app_derecho_postgres
@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT:-5433}:5432"
+      - "5433:5432"
     networks:
       - app_network
     healthcheck:
@@ -45,6 +45,7 @@ services:
     build:
       context: ./go-backend
       dockerfile: Dockerfile
+      target: runtime
     container_name: app_derecho_backend
     restart: unless-stopped
     environment:
@@ -75,7 +76,7 @@ services:
       - backend_uploads:/app/storage/uploads
       - backend_logs:/app/storage/logs
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "8001:8000"
     networks:
       - app_network
     depends_on:
