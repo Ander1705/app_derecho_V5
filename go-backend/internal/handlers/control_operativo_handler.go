@@ -97,17 +97,11 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 		return
 	}
 
-	// **OPTIMIZACIÓN CRÍTICA**: Cargar solo las relaciones necesarias para la respuesta inmediata
-	var controlCompleto models.ControlOperativo
-	if err := h.db.Select("*").Preload("CreatedBy", func(db *gorm.DB) *gorm.DB {
-		return db.Select("id, nombres, apellidos, email, role") // Solo campos necesarios
-	}).First(&controlCompleto, control.ID).Error; err != nil {
-		fmt.Printf("⚠️ Warning: Error cargando relaciones básicas del control: %v\n", err)
-		// Continuar con control básico si falla el preload
-		controlCompleto = control
-	}
+	// **OPTIMIZACIÓN MÁXIMA**: Respuesta inmediata sin preloads
+	// Solo agregar datos del usuario ya disponibles en contexto
+	control.CreatedBy = *user
 
-	// **OPTIMIZACIÓN**: Procesamiento asíncrono inmediato sin bloqueo
+	// **PROCESAMIENTO ASÍNCRONO**: Todo lo que no es crítico para respuesta inmediata
 	go func() {
 		// Procesar documentos adjuntos de manera asíncrona
 		if len(req.DocumentosAdjuntos) > 0 {
@@ -120,9 +114,10 @@ func (h *ControlOperativoHandler) CrearControl(c *gin.Context) {
 		}
 	}()
 
+	// **RESPUESTA INSTANTÁNEA**: Sin consultas adicionales a BD
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Control operativo creado exitosamente",
-		"control": controlCompleto,
+		"control": control,
 	})
 }
 
