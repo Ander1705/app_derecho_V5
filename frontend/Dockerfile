@@ -13,18 +13,25 @@ COPY package*.json ./
 # Instalar dependencias
 RUN npm ci --only=production
 
-# Copiar código fuente
-COPY . .
-
-# Crear configuración para producción SIN minificación  
+# Configurar variable ANTES de copiar código fuente
 ARG VITE_API_URL=https://servicioucmc.online/api
-RUN echo "VITE_API_URL=${VITE_API_URL}" > .env.production
-RUN echo "VITE_API_URL=${VITE_API_URL}" > .env
-
-# Build SIN minificación (soluciona error 'O')
 ENV VITE_API_URL=${VITE_API_URL}
+
+# Copiar código fuente EXCEPTO archivos .env
+COPY public ./public
+COPY src ./src
+COPY index.html ./
+COPY vite.config.js ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+
+# Crear configuración para producción DESPUÉS de copiar
+RUN echo "VITE_API_URL=${VITE_API_URL}" > .env.production
+RUN echo "VITE_API_URL=${VITE_API_URL}" > .env.local
 RUN echo "🔍 DEBUG: VITE_API_URL durante build = $VITE_API_URL"
 RUN cat .env.production
+
+# Build SIN minificación (soluciona error 'O')
 RUN npm run build
 
 # Stage de producción con Nginx
