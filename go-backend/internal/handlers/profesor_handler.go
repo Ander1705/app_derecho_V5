@@ -59,16 +59,21 @@ func (h *ProfesorHandler) ObtenerControlesAsignados(c *gin.Context) {
 	}
 
 	// **OPTIMIZACIÓN CRÍTICA**: Consulta con preloads optimizados solo en campos necesarios
+	// Buscar por ID de profesor asignado Y también por nombre completo del profesor
 	var controles []models.ControlOperativo
+	
+	// Obtener nombre completo del profesor actual
+	nombreCompleto := fmt.Sprintf("%s %s", strings.TrimSpace(user.Nombres), strings.TrimSpace(user.Apellidos))
+	
 	dbResult := h.db.Select("control_operativos.*").
 		Preload("CreatedBy", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id, nombres, apellidos, email, role") // Solo campos necesarios
 		}).
-		Where("profesor_asignado_id = ? AND activo = true", user.ID).
+		Where("(profesor_asignado_id = ? OR nombre_docente_responsable = ?) AND activo = true", user.ID, nombreCompleto).
 		Order("created_at DESC").
 		Find(&controles)
 	
-	fmt.Printf("🔍 PROFESOR: Buscando controles para profesor ID %d, encontrados: %d\n", user.ID, len(controles))
+	fmt.Printf("🔍 PROFESOR: Buscando controles para profesor ID %d (%s), encontrados: %d\n", user.ID, nombreCompleto, len(controles))
 
 	if dbResult.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener controles"})
