@@ -173,7 +173,7 @@ func generateCacheKey(c *gin.Context) string {
 	// Agregar user-agent para cache por cliente
 	keyData.UserAgent = c.GetHeader("User-Agent")
 
-	// Agregar ID de usuario si está disponible
+	// Agregar ID de usuario si está disponible (solo si el middleware auth ya se ejecutó)
 	if user, exists := c.Get("user"); exists {
 		if userMap, ok := user.(map[string]interface{}); ok {
 			keyData.UserID = userMap["id"]
