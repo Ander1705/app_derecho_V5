@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import InfoModal from '../../components/ui/InfoModal'
 import API_BASE_URL from '../../config/api'
@@ -9,6 +9,7 @@ import API_BASE_URL from '../../config/api'
 const ControlesAsignados = () => {
   const { user } = useAuth()
   const { isDark } = useTheme()
+  const navigate = useNavigate()
   const [controles, setControles] = useState([])
   const [controlesOriginales, setControlesOriginales] = useState([])
   const [loading, setLoading] = useState(true)
@@ -18,7 +19,7 @@ const ControlesAsignados = () => {
   const [saving, setSaving] = useState(false)
   const [searchMode, setSearchMode] = useState(false)
   const [controlesFiltrados, setControlesFiltrados] = useState([])
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [filtros, setFiltros] = useState({
     busqueda: '',
     mes: '',
@@ -305,6 +306,12 @@ const ControlesAsignados = () => {
             control.estado_flujo === 'pendiente_profesor'
           )
           console.log('📋 Controles pendientes encontrados:', controlesParaFiltrar.length)
+          break
+        case 'por_calificar':
+          controlesParaFiltrar = controlesParaFiltrar.filter(control => 
+            control.estado_flujo === 'completo' && !control.ya_calificado
+          )
+          console.log('⭐ Controles por calificar encontrados:', controlesParaFiltrar.length)
           break
         case 'completados':
           controlesParaFiltrar = controlesParaFiltrar.filter(control => 
@@ -665,7 +672,7 @@ const ControlesAsignados = () => {
         </div>
 
         {/* Estadísticas rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg`}>
             <div className="flex items-center">
               <div className="p-3 bg-yellow-100 rounded-lg">
@@ -715,6 +722,25 @@ const ControlesAsignados = () => {
                 </p>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   {(controles || []).length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Nueva tarjeta: Por Calificar */}
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg border-l-4 border-orange-500`}>
+            <div className="flex items-center">
+              <div className="p-3 bg-orange-100 rounded-lg">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  ⭐ Por Calificar
+                </p>
+                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {(controles || []).filter(c => c && c.estado_flujo === 'completo' && !c.ya_calificado).length}
                 </p>
               </div>
             </div>
@@ -817,6 +843,7 @@ const ControlesAsignados = () => {
                 >
                   <option value="todos">Todos ({controlesFiltrados.length})</option>
                   <option value="pendientes">Pendientes ({controles.filter(c => c.estado_flujo === 'pendiente_profesor').length})</option>
+                  <option value="por_calificar">⭐ Por Calificar ({controles.filter(c => c.estado_flujo === 'completo' && !c.ya_calificado).length})</option>
                   <option value="completados">Completados ({controles.filter(c => c.estado_flujo === 'completo' || c.estado_flujo === 'con_resultado').length})</option>
                 </select>
               </div>
