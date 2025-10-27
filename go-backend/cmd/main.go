@@ -86,7 +86,9 @@ func main() {
 	// CORS optimizado
 	router.Use(middleware.CORSMiddleware())
 
-	// Cache middleware para endpoints específicos (TTL de 15 minutos) - TEMPORALMENTE DESHABILITADO
+	// Cache middleware DESHABILITADO - CAUSABA TIMEOUT EN CONTROL OPERATIVO
+	// TODO: Reactivar cache después de corregir el middleware
+	/*
 	cacheExcludePaths := []string{
 		"/api/auth/login",
 		"/api/auth/registro/estudiante", 
@@ -95,8 +97,8 @@ func main() {
 		"/api/upload/temp",
 		"/api/profesor/controles-asignados",
 	}
-	// COMENTADO TEMPORALMENTE - CAUSABA TIMEOUT EN CONTROL OPERATIVO
-	// router.Use(middleware.CacheMiddleware(15*time.Minute, cacheExcludePaths...))
+	router.Use(middleware.CacheMiddleware(15*time.Minute, cacheExcludePaths...))
+	*/
 
 	// Iniciar limpieza automática de cache cada 5 minutos
 	middleware.StartCacheCleanup(5 * time.Minute)
