@@ -19,8 +19,10 @@ COPY . .
 # Crear configuración para producción SIN minificación  
 ARG VITE_API_URL=https://servicioucmc.online/api
 RUN echo "VITE_API_URL=${VITE_API_URL}" > .env.production
+RUN echo "VITE_API_URL=${VITE_API_URL}" > .env
 
 # Build SIN minificación (soluciona error 'O')
+ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 
 # Stage de producción con Nginx
