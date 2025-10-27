@@ -23,6 +23,8 @@ RUN echo "VITE_API_URL=${VITE_API_URL}" > .env
 
 # Build SIN minificación (soluciona error 'O')
 ENV VITE_API_URL=${VITE_API_URL}
+RUN echo "🔍 DEBUG: VITE_API_URL durante build = $VITE_API_URL"
+RUN cat .env.production
 RUN npm run build
 
 # Stage de producción con Nginx
