@@ -63,8 +63,8 @@ const DashboardCoordinador = () => {
       console.log('📊 Estadísticas recibidas del backend:', estadisticas)
       
       // 2. Obtener controles para actividad reciente y áreas de consulta
-      const controlesResponse = await api.get('/coordinador/controles-completos')
-      const controles = controlesResponse.data || []
+      const controlesResponse = await api.get('/control-operativo/list')
+      const controles = controlesResponse.data?.data || []
       console.log('📋 Controles recibidos del backend:', controles.length, 'controles')
       
       // 3. Usar estadísticas reales del backend
@@ -80,6 +80,9 @@ const DashboardCoordinador = () => {
         areasCount[area] = (areasCount[area] || 0) + 1
       })
       
+      console.log('🏷️ Áreas encontradas en controles:', areasCount)
+      console.log('📋 Controles completos para debug:', controles.map(c => ({ id: c.id, area: c.area_consulta, nombre: c.nombre_consultante })))
+      
       const colores = ['blue', 'green', 'red', 'purple', 'orange', 'indigo', 'pink']
       const areasConsultaReales = Object.entries(areasCount || {})
         .map(([area, cantidad], index) => ({
@@ -88,6 +91,8 @@ const DashboardCoordinador = () => {
           color: colores[index % colores.length]
         }))
         .sort((a, b) => b.cantidad - a.cantidad)
+      
+      console.log('📊 Áreas procesadas para mostrar:', areasConsultaReales)
       
       // 5. Generar actividad reciente real
       const actividadReal = (controles || [])
