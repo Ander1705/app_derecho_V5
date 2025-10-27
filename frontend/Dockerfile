@@ -32,7 +32,7 @@ RUN apk add --no-cache tzdata curl && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 
 # Configuración Nginx optimizada
-COPY deployment/configs/nginx-frontend.conf /etc/nginx/conf.d/default.conf
+COPY nginx-frontend.conf /etc/nginx/conf.d/default.conf
 
 # Copiar build desde el stage anterior
 COPY --from=builder /app/dist /usr/share/nginx/html
