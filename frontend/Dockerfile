@@ -10,12 +10,15 @@ WORKDIR /app
 # Copiar archivos de dependencias
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm ci --only=production
-
-# Configurar variable ANTES de copiar código fuente
+# Configurar variable INMEDIATAMENTE - HARDCODED para debug
 ARG VITE_API_URL=https://servicioucmc.online/api
-ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_API_URL=https://servicioucmc.online/api
+
+# DEBUG: Verificar la variable antes de install
+RUN echo "🔍 HARDCODED VITE_API_URL = $VITE_API_URL"
+
+# Instalar TODAS las dependencias (necesitamos vite para build)
+RUN npm ci
 
 # Copiar código fuente EXCEPTO archivos .env
 COPY public ./public
