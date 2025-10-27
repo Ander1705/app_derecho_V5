@@ -58,7 +58,7 @@ const ControlesAsignados = () => {
         console.log('🔄 Actualizando controles asignados automáticamente...')
         cargarControlesAsignados()
       }
-    }, 30000) // 30 segundos
+    }, 5000) // 5 segundos para tiempo real
     
     return () => clearInterval(interval)
   }, [loading])
@@ -671,9 +671,11 @@ const ControlesAsignados = () => {
           </p>
         </div>
 
-        {/* Estadísticas rápidas */}
+        {/* Estadísticas rápidas - CLICKEABLES */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg`}>
+          <div 
+            onClick={() => setFiltros({...filtros, estado: 'pendientes'})}
+            className={`${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'} rounded-lg p-6 shadow-lg cursor-pointer transition-all duration-200 hover:shadow-xl border-l-4 border-yellow-500`}>
             <div className="flex items-center">
               <div className="p-3 bg-yellow-100 rounded-lg">
                 <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -691,7 +693,9 @@ const ControlesAsignados = () => {
             </div>
           </div>
 
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg`}>
+          <div 
+            onClick={() => setFiltros({...filtros, estado: 'completados'})}
+            className={`${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'} rounded-lg p-6 shadow-lg cursor-pointer transition-all duration-200 hover:shadow-xl border-l-4 border-green-500`}>
             <div className="flex items-center">
               <div className="p-3 bg-green-100 rounded-lg">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -727,8 +731,10 @@ const ControlesAsignados = () => {
             </div>
           </div>
 
-          {/* Nueva tarjeta: Por Calificar */}
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 shadow-lg border-l-4 border-orange-500`}>
+          {/* Nueva tarjeta: Por Calificar - CLICKEABLE */}
+          <div 
+            onClick={() => setFiltros({...filtros, estado: 'por_calificar'})}
+            className={`${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'} rounded-lg p-6 shadow-lg cursor-pointer transition-all duration-200 hover:shadow-xl border-l-4 border-orange-500`}>
             <div className="flex items-center">
               <div className="p-3 bg-orange-100 rounded-lg">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

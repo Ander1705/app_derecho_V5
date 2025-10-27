@@ -271,25 +271,53 @@ const MisControles = () => {
 
   const descargarPDF = async (controlId, nombreConsultante) => {
     try {
+      console.log(`🔄 Descargando PDF para control ${controlId}`)
       const token = localStorage.getItem('token')
+      
+      if (!token) {
+        alert('Error: No hay token de autenticación')
+        return
+      }
+
       const response = await axios.get(`/api/control-operativo/${controlId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob'
+        responseType: 'blob',
+        timeout: 30000 // 30 segundos timeout
       })
+
+      if (!response.data || response.data.size === 0) {
+        throw new Error('PDF vacío recibido del servidor')
+      }
 
       const blob = new Blob([response.data], { type: 'application/pdf' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `Control_Operativo_${nombreConsultante}_${controlId}.pdf`
+      a.download = `Control_Operativo_${nombreConsultante || 'Sin_Nombre'}_${controlId}.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
       
       console.log('✅ PDF descargado exitosamente')
+      
     } catch (error) {
       console.error('❌ Error descargando PDF:', error)
+      let errorMsg = 'Error desconocido'
+      
+      if (error.response?.status === 401) {
+        errorMsg = 'Error de autenticación. Inicia sesión nuevamente.'
+      } else if (error.response?.status === 404) {
+        errorMsg = 'Control operativo no encontrado'
+      } else if (error.response?.status === 403) {
+        errorMsg = 'No tienes permisos para descargar este PDF'
+      } else if (error.code === 'ECONNABORTED') {
+        errorMsg = 'Timeout: El servidor tardó demasiado en responder'
+      } else {
+        errorMsg = error.message || 'Error descargando PDF'
+      }
+      
+      alert(`❌ ${errorMsg}`)
     }
   }
 
