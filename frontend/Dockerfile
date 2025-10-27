@@ -16,8 +16,8 @@ RUN npm ci --only=production
 # Copiar código fuente
 COPY . .
 
-# Crear configuración para producción SIN minificación
-ARG VITE_API_URL=http://localhost:8000/api
+# Crear configuración para producción SIN minificación  
+ARG VITE_API_URL=https://servicioucmc.online/api
 RUN echo "VITE_API_URL=${VITE_API_URL}" > .env.production
 
 # Build SIN minificación (soluciona error 'O')
