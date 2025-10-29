@@ -12,7 +12,8 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   SparklesIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  ArrowRightIcon
 } from '@heroicons/react/24/outline'
 
 const DashboardProfesor = () => {
@@ -58,7 +59,7 @@ const DashboardProfesor = () => {
       if (!token) {
         console.error('❌ Sin token de autenticación')
         setError('No autenticado')
-        window.location.href = '/login'
+        // No redirigir automáticamente para evitar loops
         return
       }
 
@@ -216,7 +217,7 @@ const DashboardProfesor = () => {
           {/* Columna Principal */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Métricas */}
+            {/* Métricas Clickeables */}
             <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6`}>
               <h2 className={`text-xl font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'} mb-6 flex items-center`}>
                 <ChartBarIcon className={`h-5 w-5 mr-2`} />
@@ -224,63 +225,75 @@ const DashboardProfesor = () => {
               </h2>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className={`text-center p-4 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-blue-50'}`}>
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+                <Link 
+                  to="/controles-asignados" 
+                  className={`group text-center p-4 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-blue-50 hover:bg-blue-100'}`}
+                >
+                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center transition-colors ${isDark ? 'bg-blue-900/30 group-hover:bg-blue-900/50' : 'bg-blue-100 group-hover:bg-blue-200'}`}>
                     <ClipboardDocumentListIcon className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                   </div>
-                  <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className={`text-2xl font-bold mb-1 transition-colors ${isDark ? 'text-gray-100 group-hover:text-blue-400' : 'text-gray-900 group-hover:text-blue-600'}`}>
                     {metricas.controlesAsignados}
                   </div>
                   <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     Controles Asignados
                   </div>
-                </div>
+                </Link>
                 
-                <div className={`text-center p-4 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-green-50'}`}>
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${isDark ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                <Link 
+                  to="/controles-asignados?filter=completados" 
+                  className={`group text-center p-4 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-green-50 hover:bg-green-100'}`}
+                >
+                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center transition-colors ${isDark ? 'bg-green-900/30 group-hover:bg-green-900/50' : 'bg-green-100 group-hover:bg-green-200'}`}>
                     <CheckCircleIcon className={`h-6 w-6 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
                   </div>
-                  <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className={`text-2xl font-bold mb-1 transition-colors ${isDark ? 'text-gray-100 group-hover:text-green-400' : 'text-gray-900 group-hover:text-green-600'}`}>
                     {metricas.controlesCompletados}
                   </div>
                   <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     Completados
                   </div>
-                </div>
+                </Link>
                 
-                <div className={`text-center p-4 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-orange-50'}`}>
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${isDark ? 'bg-orange-900/30' : 'bg-orange-100'}`}>
+                <Link 
+                  to="/controles-asignados?filter=pendientes" 
+                  className={`group text-center p-4 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-orange-50 hover:bg-orange-100'}`}
+                >
+                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center transition-colors ${isDark ? 'bg-orange-900/30 group-hover:bg-orange-900/50' : 'bg-orange-100 group-hover:bg-orange-200'}`}>
                     <ClockIcon className={`h-6 w-6 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
                   </div>
-                  <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className={`text-2xl font-bold mb-1 transition-colors ${isDark ? 'text-gray-100 group-hover:text-orange-400' : 'text-gray-900 group-hover:text-orange-600'}`}>
                     {metricas.controlesPendientes}
                   </div>
                   <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     Pendientes
                   </div>
-                </div>
+                </Link>
                 
-                <div className={`text-center p-4 rounded-lg ${isDark ? 'bg-gray-700/50' : 'bg-purple-50'}`}>
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${isDark ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                <Link 
+                  to="/mis-estudiantes" 
+                  className={`group text-center p-4 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${isDark ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-purple-50 hover:bg-purple-100'}`}
+                >
+                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center transition-colors ${isDark ? 'bg-purple-900/30 group-hover:bg-purple-900/50' : 'bg-purple-100 group-hover:bg-purple-200'}`}>
                     <UserGroupIcon className={`h-6 w-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
                   </div>
-                  <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div className={`text-2xl font-bold mb-1 transition-colors ${isDark ? 'text-gray-100 group-hover:text-purple-400' : 'text-gray-900 group-hover:text-purple-600'}`}>
                     {metricas.estudiantesUnicos}
                   </div>
                   <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     Estudiantes
                   </div>
-                </div>
+                </Link>
               </div>
             </div>
 
-            {/* Acciones Rápidas */}
+            {/* Acciones Rápidas Expandidas */}
             <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6`}>
               <h2 className={`text-xl font-semibold ${isDark ? 'text-purple-400' : 'text-university-purple'} mb-6`}>
                 Acciones Rápidas
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Link
                   to="/controles-asignados"
                   className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
@@ -293,6 +306,7 @@ const DashboardProfesor = () => {
                       <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-blue-600`}>Ver Controles</h3>
                       <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Controles asignados</p>
                     </div>
+                    <ArrowRightIcon className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-400'} group-hover:text-blue-600 transition-colors`} />
                   </div>
                 </Link>
 
@@ -308,6 +322,23 @@ const DashboardProfesor = () => {
                       <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-green-600`}>Calificaciones</h3>
                       <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Gestionar calificaciones</p>
                     </div>
+                    <ArrowRightIcon className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-400'} group-hover:text-green-600 transition-colors`} />
+                  </div>
+                </Link>
+
+                <Link
+                  to="/mis-estudiantes"
+                  className={`group rounded-xl p-5 border-2 transition-all duration-200 ${isDark ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-700 hover:border-gray-600' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'} hover:shadow-md`}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isDark ? 'bg-purple-900/30 group-hover:bg-purple-900/40' : 'bg-purple-100 group-hover:bg-purple-200'}`}>
+                      <UserGroupIcon className={`h-6 w-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} group-hover:text-purple-600`}>Mis Estudiantes</h3>
+                      <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Estudiantes asignados</p>
+                    </div>
+                    <ArrowRightIcon className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-400'} group-hover:text-purple-600 transition-colors`} />
                   </div>
                 </Link>
               </div>
