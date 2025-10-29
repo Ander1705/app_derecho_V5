@@ -24,8 +24,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 # Stage de producción
 FROM alpine:latest AS runtime
 
-# Instalar dependencias mínimas
-RUN apk --no-cache add ca-certificates tzdata curl
+# Instalar dependencias mínimas + Ghostscript para concatenación de PDFs
+RUN apk --no-cache add ca-certificates tzdata curl ghostscript
 
 # Configurar zona horaria
 ENV TZ=America/Bogota
@@ -43,7 +43,7 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/assets ./assets
 
 # Crear directorios y configurar permisos
-RUN mkdir -p storage/uploads storage/logs && \
+RUN mkdir -p storage/uploads storage/logs storage/temp && \
     chown -R appuser:appgroup /app
 
 # Cambiar a usuario no-root

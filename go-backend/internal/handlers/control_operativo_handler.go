@@ -424,7 +424,8 @@ func (h *ControlOperativoHandler) GenerarPDF(c *gin.Context) {
 	pdfBytes, err := h.pdfGenerator.GenerarControlOperativo(&control)
 	
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generando PDF"})
+		fmt.Printf("❌ ERROR GENERANDO PDF: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error generando PDF: %v", err)})
 		return
 	}
 
