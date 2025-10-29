@@ -1,7 +1,9 @@
 import axios from 'axios'
 
 // Configuración base de la API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://servicioucmc.online/api'
+// En producción, usar rutas relativas para que nginx maneje el proxy
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? '/api' : 'https://servicioucmc.online/api')
 
 // Configurar axios con interceptores para producción
 const api = axios.create({
