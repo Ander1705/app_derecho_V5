@@ -30,30 +30,9 @@ import PerfilEstudiante from './pages/estudiante/PerfilEstudiante'
 import CalificacionesIntro from './pages/CalificacionesIntro'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
-// Componente para mostrar el dashboard correcto según el rol
+// Componente para mostrar el dashboard correcto según el rol - SIMPLIFICADO
 const DashboardRedirect = () => {
   const { user, loading } = useAuth()
-  
-  // 🚨 LIMPIEZA PREVENTIVA: Verificar si hay mezcla de roles (SIN RELOAD)
-  useEffect(() => {
-    if (!loading && user) {
-      const savedRole = localStorage.getItem('userRole')
-      const savedUserId = localStorage.getItem('userId')
-      
-      // Si hay discrepancia, solo limpiar sin reload
-      if (savedRole && savedRole !== user.role) {
-        console.log('🚨 DISCREPANCIA DE ROL DETECTADA:', savedRole, 'vs', user.role)
-        localStorage.removeItem('userRole')
-        localStorage.setItem('userRole', user.role)
-      }
-      
-      if (savedUserId && savedUserId !== user.id?.toString()) {
-        console.log('🚨 DISCREPANCIA DE USER ID DETECTADA:', savedUserId, 'vs', user.id)
-        localStorage.removeItem('userId')
-        localStorage.setItem('userId', user.id?.toString())
-      }
-    }
-  }, [user, loading])
   
   // Esperar a que termine la carga antes de redirigir
   if (loading) {
@@ -80,26 +59,7 @@ const DashboardRedirect = () => {
 }
 
 function App() {
-  // Solución temporal para inconsistencias de rol
-  useEffect(() => {
-    // Forzar limpieza en cada carga si hay inconsistencias
-    const urlPath = window.location.pathname;
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    // Si la URL no coincide con el rol guardado, limpiar
-    if (storedUser.role) {
-      if (
-        (urlPath.includes('/coordinador') && storedUser.role !== 'coordinador') ||
-        (urlPath.includes('/profesor') && storedUser.role !== 'profesor') ||
-        (urlPath.includes('/estudiante') && storedUser.role !== 'estudiante')
-      ) {
-        console.log('🚨 Inconsistencia de rol detectada, limpiando...');
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = '/login';
-      }
-    }
-  }, []);
+  // Sin verificaciones automáticas que causen loops
 
   return (
     <ThemeProvider>

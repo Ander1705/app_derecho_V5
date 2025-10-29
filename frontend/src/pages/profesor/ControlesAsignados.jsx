@@ -50,34 +50,25 @@ const ControlesAsignados = () => {
     cargarControlesAsignados()
   }, [])
 
-  // Actualización automática cada 30 segundos (optimizada)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Solo actualizar si no se está cargando actualmente
-      if (!loading) {
-        console.log('🔄 Actualizando controles asignados automáticamente...')
-        cargarControlesAsignados()
-      }
-    }, 5000) // 5 segundos para tiempo real
-    
-    return () => clearInterval(interval)
-  }, [loading])
-
-  // Actualización cuando se regresa a la pestaña
-  useEffect(() => {
-    const handleFocus = () => {
-      console.log('👁️ Pestaña enfocada, actualizando controles...')
-      cargarControlesAsignados()
-    }
-    
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [])
+  // Actualización automática DESHABILITADA para evitar loops
 
   // Efecto para actualizar filtros cuando cambian los parámetros de URL
   useEffect(() => {
-    const estadoUrl = searchParams.get('estado') || (searchParams.get('filtro') === 'pendientes' ? 'pendientes' : 'todos')
-    console.log('🔄 Parámetro estado de URL cambió:', estadoUrl)
+    const filterParam = searchParams.get('filter')
+    const estadoParam = searchParams.get('estado')
+    
+    let estadoUrl = 'todos'
+    
+    // Mapear los parámetros del dashboard a estados internos
+    if (filterParam === 'completados' || estadoParam === 'completados') {
+      estadoUrl = 'completados'
+    } else if (filterParam === 'pendientes' || estadoParam === 'pendientes') {
+      estadoUrl = 'pendientes'
+    } else if (filterParam === 'por_calificar' || estadoParam === 'por_calificar') {
+      estadoUrl = 'por_calificar'
+    }
+    
+    console.log('🔄 Parámetros de URL detectados:', { filterParam, estadoParam, estadoFinal: estadoUrl })
     
     // Limpiar búsqueda al cambiar filtros desde dashboard
     setSearchTerm('')
@@ -86,13 +77,14 @@ const ControlesAsignados = () => {
     setFiltros(prevFiltros => ({
       ...prevFiltros,
       estado: estadoUrl,
-      busqueda: '' // También limpiar la búsqueda en filtros
+      busqueda: ''
     }))
     
-    // Restaurar datos originales
+    // Restaurar datos originales y aplicar filtro inmediatamente
     if (controlesOriginales.length > 0) {
       setControles(controlesOriginales)
-      setControlesFiltrados(controlesOriginales)
+      // Aplicar filtro inmediatamente después de cambiar estado
+      setTimeout(() => aplicarFiltrosManual(controlesOriginales, estadoUrl), 100)
     }
   }, [searchParams, controlesOriginales])
 
@@ -223,6 +215,43 @@ const ControlesAsignados = () => {
     }
     return anos
   })()
+
+  // Función para aplicar filtros manualmente (usada desde URL params)
+  const aplicarFiltrosManual = (controlesBase, estadoFiltro) => {
+    let controlesParaFiltrar = [...controlesBase]
+    
+    console.log('🎛️ Aplicando filtro manual de estado:', estadoFiltro)
+    console.log('📋 Controles base para filtrar:', controlesParaFiltrar.length)
+    
+    // Filtro por estado
+    if (estadoFiltro !== 'todos') {
+      switch (estadoFiltro) {
+        case 'pendientes':
+          controlesParaFiltrar = controlesParaFiltrar.filter(control => 
+            control.estado_flujo === 'pendiente_profesor'
+          )
+          console.log('📋 Controles pendientes encontrados:', controlesParaFiltrar.length)
+          break
+        case 'por_calificar':
+          controlesParaFiltrar = controlesParaFiltrar.filter(control => 
+            control.estado_flujo === 'completo' && !control.ya_calificado
+          )
+          console.log('⭐ Controles por calificar encontrados:', controlesParaFiltrar.length)
+          break
+        case 'completados':
+          controlesParaFiltrar = controlesParaFiltrar.filter(control => 
+            control.estado_flujo === 'completo' || control.estado_flujo === 'con_resultado'
+          )
+          console.log('📋 Controles completados encontrados:', controlesParaFiltrar.length)
+          break
+      }
+    } else {
+      console.log('📋 Mostrando todos los controles:', controlesParaFiltrar.length)
+    }
+
+    setControlesFiltrados(controlesParaFiltrar)
+    setControles(controlesParaFiltrar)
+  }
 
   const aplicarFiltros = () => {
     let controlesParaFiltrar = [...controles]

@@ -185,100 +185,46 @@ export const AuthProvider = ({ children }) => {
     console.log('⚠️ Limpieza automática de localStorage DESHABILITADA')
   }, [state.token, state.refreshToken, state.isAuthenticated, state.loading])
 
-  // Verificar token existente al cargar la aplicación
+  // Verificar token existente al cargar la aplicación - SIMPLIFICADO
   useEffect(() => {
-    console.log('🚀 INICIANDO AuthContext - useEffect principal')
+    console.log('🚀 INICIANDO AuthContext - Carga simplificada')
     
     const initializeAuth = async () => {
-      console.log('🔍 initializeAuth ejecutándose...')
-      
       const savedToken = localStorage.getItem('auth_token') || localStorage.getItem('token')
-      const savedRefreshToken = localStorage.getItem('refreshToken')
-      const savedLastActivity = localStorage.getItem('lastActivity')
       const sessionData = localStorage.getItem('session_data')
-      const currentSession = localStorage.getItem('current_session')
       
-      console.log('📋 Datos de sesión encontrados:', {
-        hasToken: !!savedToken,
-        hasSessionData: !!sessionData,
-        currentSession,
-        lastActivity: savedLastActivity
-      })
+      console.log('📋 Verificación simple de token:', { hasToken: !!savedToken, hasSessionData: !!sessionData })
       
       if (savedToken && sessionData) {
-        const now = Date.now()
-        
-        // 🚨 VERIFICACIÓN DE TIMEOUT COMPLETAMENTE DESHABILITADA
-        console.log('⚠️ Verificación de timeout DESHABILITADA - Manteniendo sesión siempre')
-        // NO verificar timeout NUNCA
-        
         try {
+          // Solo verificar que el token funciona sin hacer validaciones complejas
           axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`
-          console.log('🚀 Verificando token con el servidor...')
-          console.log('🌐 URL de verificación:', '/api/auth/me')
-          
           const response = await axios.get('/api/auth/me')
           const serverUser = response.data
           
-          // 🚨 VERIFICACIÓN DE CONSISTENCIA COMPLETAMENTE DESHABILITADA
-          console.log('⚠️ Verificaciones de consistencia DESHABILITADAS - Aceptando cualquier usuario/rol')
-          // NO verificar consistencia NUNCA - solo actualizar datos
-          
-          // Solo actualizar si todo es consistente
-          console.log('✅ Sesión consistente - Manteniendo usuario actual')
-          localStorage.setItem('auth_user', JSON.stringify(serverUser))
-          localStorage.setItem('userRole', serverUser.role)
-          localStorage.setItem('userId', serverUser.id.toString())
-          localStorage.setItem('userEmail', serverUser.email)
-          
-          console.log('✅ Token válido y consistente, restaurando sesión:', {
-            userId: serverUser.id,
-            userEmail: serverUser.email,
-            userRole: serverUser.role,
-            responseStatus: response.status
-          })
+          console.log('✅ Token válido, restaurando sesión simple')
           
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
               user: serverUser,
               access_token: savedToken,
-              refresh_token: savedRefreshToken
+              refresh_token: localStorage.getItem('refreshToken')
             }
           })
           
-          // Actualizar actividad inmediatamente al restaurar sesión
-          const currentTime = Date.now()
-          localStorage.setItem('lastActivity', currentTime.toString())
-          dispatch({ type: 'UPDATE_ACTIVITY' })
-          
-          console.log('🔄 Sesión restaurada exitosamente:', {
-            isAuthenticated: true,
-            hasToken: true,
-            activityUpdated: true
-          })
-          
         } catch (error) {
-          console.error('❌ Error verificando token:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            url: error.config?.url,
-            message: error.message
-          })
-          
-          // 🚨 NO HACER LOGOUT AUTOMÁTICO - Solo marcar como no inicializado
-          console.log('⚠️ Error verificando token pero NO haciendo logout automático')
+          console.log('⚠️ Token inválido, marcando como no autenticado')
           dispatch({ type: 'SET_INITIALIZED' })
         }
       } else {
-        console.log('📭 No hay token guardado, usuario no autenticado')
+        console.log('📭 No hay sesión, usuario no autenticado')
         dispatch({ type: 'SET_INITIALIZED' })
       }
     }
 
     initializeAuth()
-  }, [clearAllStorageData])
+  }, [])
 
   // Interceptor para manejar tokens expirados (COMPLETAMENTE DESHABILITADO)
   useEffect(() => {
