@@ -385,4 +385,4 @@ Facultad de Derecho - Consultorio Jurídico Kennedy
 ---
 
 **Sistema desarrollado para la Universidad Colegio Mayor de Cundinamarca**  
-*Optimizado para el manejo eficiente de consultorios jurídicos universitarios*
+*Optimizado para el manejo eficiente de consultorios jurídicos universitarios*# CORS Fix Applied mié 29 oct 2025 12:46:45 -05
